@@ -17,6 +17,10 @@ public final class PlatformListSelectorScreen extends ListSelectorScreen<Platfor
 		super(true, false, false, onClose, previousScreen);
 	}
 
+	public PlatformListSelectorScreen(Consumer<ObjectArrayList<Platform>> onClose) {
+		super(false, false, false, onClose, (WindowBase) null);
+	}
+
 	@Override
 	protected void setData(ListComponent<Platform> listComponent, ObjectCollection<Platform> dataList, ObjectArrayList<ObjectObjectImmutablePair<Identifier, ListItem.ActionConsumer<Platform>>> actions) {
 		ListComponent.setSavedRails(listComponent, dataList, actions);

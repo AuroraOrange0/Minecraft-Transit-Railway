@@ -366,7 +366,7 @@ public final class ModelPropertiesPart extends ModelPropertiesPartSchema {
 		final String text = formatText(vehicle);
 
 		if (!text.isEmpty()) {
-			MainRenderer.scheduleRender(QueuedRenderLayer.TEXT, (matrixStack, vertexConsumer, offset) -> {
+			MainRenderer.scheduleTextRender((matrixStack, offset) -> {
 				storedMatrixTransformations.transform(matrixStack, offset);
 				matrixStack.translate(modelDisplayPart.x, modelDisplayPart.y, modelDisplayPart.z);
 				Drawing.rotateYDegrees(matrixStack, modelDisplayPart.flipped ? 180 : 0);

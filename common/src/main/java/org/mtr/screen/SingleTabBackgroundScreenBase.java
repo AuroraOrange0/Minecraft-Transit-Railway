@@ -6,9 +6,7 @@ import gg.essential.elementa.constraints.*;
 import net.minecraft.client.gui.screen.Screen;
 import org.jspecify.annotations.Nullable;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectImmutableList;
-import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectObjectImmutablePair;
 import org.mtr.tool.GuiHelper;
-import org.mtr.tool.ReleasedDynamicTextureRegistry;
 import org.mtr.widget.BackgroundComponent;
 import org.mtr.widget.ScrollPanelComponent;
 
@@ -20,8 +18,8 @@ import java.awt.*;
  */
 public abstract class SingleTabBackgroundScreenBase extends WindowBase {
 
-	protected final BackgroundComponent backgroundComponent;
 	protected final ScrollComponent contentContainer;
+	private final BackgroundComponent backgroundComponent;
 
 	protected SingleTabBackgroundScreenBase(String title) {
 		this((WindowBase) null, title);
@@ -29,29 +27,29 @@ public abstract class SingleTabBackgroundScreenBase extends WindowBase {
 
 	protected SingleTabBackgroundScreenBase(@Nullable WindowBase previousScreen, String title) {
 		super(previousScreen);
-		backgroundComponent = createBackgroundComponent(title);
+		backgroundComponent = createBackgroundComponent();
 		contentContainer = setupContentContainer(title);
 	}
 
 	@Deprecated
 	protected SingleTabBackgroundScreenBase(@Nullable Screen previousScreenLegacy, String title) {
 		super(previousScreenLegacy);
-		backgroundComponent = createBackgroundComponent(title);
+		backgroundComponent = createBackgroundComponent();
 		contentContainer = setupContentContainer(title);
 	}
 
-	private BackgroundComponent createBackgroundComponent(String title) {
-		return new BackgroundComponent(getWindow(), ObjectImmutableList.of(new ObjectObjectImmutablePair<>(ReleasedDynamicTextureRegistry.BRUSH_TEXTURE.get(), title)));
+	private BackgroundComponent createBackgroundComponent() {
+		return new BackgroundComponent(getWindow(), ObjectImmutableList.of());
 	}
 
 	private ScrollComponent setupContentContainer(String title) {
 		final UIWrappedText titleText = (UIWrappedText) new UIWrappedText("", false)
-			.setChildOf(backgroundComponent.containers[0])
+			.setChildOf(backgroundComponent)
 			.setWidth(new RelativeConstraint())
 			.setColor(new Color(GuiHelper.MINECRAFT_GUI_TITLE_TEXT_COLOR));
 		titleText.setText(title);
 		return ((ScrollPanelComponent) new ScrollPanelComponent(true)
-			.setChildOf(backgroundComponent.containers[0])
+			.setChildOf(backgroundComponent)
 			.setY(new SiblingConstraint(GuiHelper.DEFAULT_PADDING))
 			.setWidth(new RelativeConstraint())
 			.setHeight(new SubtractiveConstraint(new FillConstraint(), new PixelConstraint(GuiHelper.DEFAULT_PADDING)))).contentContainer;

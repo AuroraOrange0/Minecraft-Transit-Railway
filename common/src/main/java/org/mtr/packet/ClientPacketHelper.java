@@ -10,9 +10,10 @@ import net.minecraft.util.math.BlockPos;
 import org.mtr.MTR;
 import org.mtr.block.*;
 import org.mtr.client.MinecraftClientData;
-import org.mtr.core.data.Lift;
-import org.mtr.core.data.Rail;
-import org.mtr.core.data.TransportMode;
+import org.mtr.core.data.*;
+import org.mtr.libraries.it.unimi.dsi.fastutil.longs.LongAVLTreeSet;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import org.mtr.resource.SignResource;
 import org.mtr.screen.*;
 
 import java.util.function.Consumer;
@@ -35,8 +36,10 @@ public final class ClientPacketHelper {
 				openScreen(new DriverKeyDispenserScreen(blockPos, driverKeyDispenserBlockEntity), screen -> screen instanceof DriverKeyDispenserScreen);
 			} else if (blockEntity instanceof BlockPIDSBase.BlockEntityBase pidsBaseBlockEntity) {
 				openScreen(new PIDSConfigScreen(blockPos, pidsBaseBlockEntity), screen -> screen instanceof RailwaySignScreen);
-			} else if (blockEntity instanceof BlockRailwaySign.RailwaySignBlockEntity || blockEntity instanceof BlockRouteSignBase.BlockEntityBase) {
-				openScreen(new RailwaySignScreen(blockPos), screen -> screen instanceof RailwaySignScreen);
+			} else if (blockEntity instanceof BlockRailwaySign.RailwaySignBlockEntity railwaySignBlockEntity) {
+				openScreen(new RailwaySignScreen(blockPos, railwaySignBlockEntity), screen -> screen instanceof RailwaySignScreen);
+			} else if (blockEntity instanceof BlockRouteSignBase.BlockEntityBase routeSignBlockEntity) {
+				openRouteListSelectorScreen(blockPos, routeSignBlockEntity);
 			} else if (blockEntity instanceof BlockLiftTrackFloor.LiftTrackFloorBlockEntity liftTrackFloorBlockEntity) {
 				openScreen(new LiftTrackFloorScreen(blockPos, liftTrackFloorBlockEntity), screen -> screen instanceof LiftTrackFloorScreen);
 			} else if (blockEntity instanceof BlockSignalBase.BlockEntityBase signalBaseBlockEntity) {
@@ -110,5 +113,23 @@ public final class ClientPacketHelper {
 				consumer.accept(blockEntity);
 			}
 		}
+	}
+
+	private static void openRouteListSelectorScreen(BlockPos blockPos, BlockRouteSignBase.BlockEntityBase routeSignBlockEntity) {
+		final PlatformListSelectorScreen platformListSelectorScreen = new PlatformListSelectorScreen(selectedRoutes -> new PacketUpdateRailwaySignConfig(
+			blockPos,
+			new LongAVLTreeSet[]{new LongAVLTreeSet(selectedRoutes.stream().map(NameColorDataBase::getId).toList())},
+			new String[0]
+		).send(MinecraftClient.getInstance().world));
+
+		final ObjectArrayList<Platform> platforms = SignResource.getPlatforms(blockPos);
+		platformListSelectorScreen.setAvailableList(platforms);
+		platforms.forEach(platform -> {
+			if (routeSignBlockEntity.getPlatformId() == platform.getId()) {
+				platformListSelectorScreen.selectData(platform);
+			}
+		});
+
+		UMinecraft.setCurrentScreenObj(platformListSelectorScreen);
 	}
 }

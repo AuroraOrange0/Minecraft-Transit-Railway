@@ -24,9 +24,13 @@ import org.mtr.client.MinecraftClientData;
 import org.mtr.core.data.Lift;
 import org.mtr.core.data.LiftDirection;
 import org.mtr.data.IGui;
+import org.mtr.font.FontRenderHelper;
+import org.mtr.font.FontRenderOptions;
 import org.mtr.item.ItemLiftButtonsLinkModifier;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectObjectImmutablePair;
 import org.mtr.tool.Drawing;
+
+import java.awt.*;
 
 public class RenderLiftPanel<T extends BlockLiftPanelBase.BlockEntityBase> extends BlockEntityRendererExtension<T> implements IGui, IBlock {
 
@@ -91,9 +95,22 @@ public class RenderLiftPanel<T extends BlockLiftPanelBase.BlockEntityBase> exten
 			});
 
 			// Floor Number
-			MainRenderer.scheduleRender(QueuedRenderLayer.TEXT, (matrixStack, vertexConsumer, offset) -> {
+			MainRenderer.scheduleTextRender((matrixStack, offset) -> {
 				storedMatrixTransformations2.transform(matrixStack, offset);
-//				IDrawing.drawStringWithFont(matrixStack, vertexConsumer, currentFloorNumber, HorizontalAlignment.CENTER, VerticalAlignment.CENTER, 0, -0.47F, 0.1875F, 0.1875F, 1, ARGB_BLACK, false, DEFAULT_LIGHT, null);
+				FontRenderHelper.render(matrixStack,
+					currentFloorNumber,
+					FontRenderOptions.builder()
+						.horizontalTextAlignment(FontRenderOptions.Alignment.CENTER)
+						.verticalTextAlignment(FontRenderOptions.Alignment.CENTER)
+						.horizontalPositioning(FontRenderOptions.Alignment.CENTER)
+						.verticalPositioning(FontRenderOptions.Alignment.CENTER)
+						.offsetY(-0.47F)
+						.horizontalSpace(0.1875F)
+						.verticalSpace(0.1875F)
+						.color(Color.BLACK)
+						.textOverflow(FontRenderOptions.TextOverflow.COMPRESS)
+						.build()
+				);
 				matrixStack.pop();
 			});
 

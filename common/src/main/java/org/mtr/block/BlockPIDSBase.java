@@ -117,8 +117,9 @@ public abstract class BlockPIDSBase extends Block implements BlockEntityProvider
 		public void setData(String[] messages, boolean[] hideArrivalArray, LongAVLTreeSet platformIds, int displayPage) {
 			System.arraycopy(messages, 0, this.messages, 0, Math.min(messages.length, this.messages.length));
 			System.arraycopy(hideArrivalArray, 0, this.hideArrivalArray, 0, Math.min(hideArrivalArray.length, this.hideArrivalArray.length));
+			final LongAVLTreeSet platformIdsCopy = new LongAVLTreeSet(platformIds);
 			this.platformIds.clear();
-			this.platformIds.addAll(platformIds);
+			this.platformIds.addAll(platformIdsCopy);
 			this.displayPage = displayPage;
 			markDirty();
 		}

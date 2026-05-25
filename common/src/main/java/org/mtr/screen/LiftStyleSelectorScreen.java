@@ -38,12 +38,6 @@ public final class LiftStyleSelectorScreen extends DashboardListSelectorScreen {
 		}
 	}
 
-	@Override
-	protected void onSelectionChanged() {
-		super.onSelectionChanged();
-		RegistryClient.sendPacketToServer(new PacketUpdateData(new UpdateDataRequest(MinecraftClientData.getInstance()).addLift(lift)));
-	}
-
 	public static LiftStyleSelectorScreen create(Lift lift, @Nullable WindowBase previousScreen) {
 		final ObjectImmutableList<LiftResource> allLifts = CustomResourceLoader.getLifts();
 		final ObjectArrayList<DashboardListItem> liftsForList = new ObjectArrayList<>();

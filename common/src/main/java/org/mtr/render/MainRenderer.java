@@ -88,18 +88,18 @@ public class MainRenderer {
 	private static final int FLASHING_INTERVAL = 1000;
 	private static final int TOTAL_RENDER_STAGES = 2;
 	/**
-	 * Cached enum-values arrays. {@link Enum#values()} allocates a fresh defensive copy on
-	 * every call; the render loop walks these many times per frame so we hold a single
+	 * Cached enum-values arrays. The render loop walks these many times per frame so we hold a single
 	 * shared snapshot. See {@code docs/PERFORMANCE.md} §3.3.
 	 */
 	private static final QueuedRenderLayer[] QUEUED_RENDER_LAYERS = QueuedRenderLayer.values();
-	private static final RenderStage[] RENDER_STAGES = RenderStage.values();
 	/**
 	 * Reusable identifier for {@link #scheduleRender(QueuedRenderLayer, ScheduledRender)} — see {@code docs/PERFORMANCE.md} §4.3.
 	 */
 	private static final Identifier EMPTY_IDENTIFIER = Identifier.of("");
 	private static final ObjectArrayList<ObjectArrayList<Object2ObjectArrayMap<Identifier, ObjectArrayList<ScheduledRender>>>> RENDERS = new ObjectArrayList<>(TOTAL_RENDER_STAGES);
 	private static final ObjectArrayList<ObjectArrayList<Object2ObjectArrayMap<Identifier, ObjectArrayList<ScheduledRender>>>> CURRENT_RENDERS = new ObjectArrayList<>(TOTAL_RENDER_STAGES);
+	private static final ObjectArrayList<ScheduledTextRender> TEXT_RENDERS = new ObjectArrayList<>(TOTAL_RENDER_STAGES);
+	private static final ObjectArrayList<ScheduledTextRender> CURRENT_TEXT_RENDERS = new ObjectArrayList<>(TOTAL_RENDER_STAGES);
 	private static final Object2ObjectOpenHashMap<NewOptimizedModel, Object2ObjectOpenHashMap<RenderStage, ObjectArrayList<ObjectIntImmutablePair<StoredMatrixTransformations>>>> MODEL_RENDERS = new Object2ObjectOpenHashMap<>();
 	private static final Object2ObjectOpenHashMap<NewOptimizedModel, Object2ObjectOpenHashMap<RenderStage, ObjectArrayList<ObjectIntImmutablePair<StoredMatrixTransformations>>>> MODEL_RENDERS_TRANSLUCENT = new Object2ObjectOpenHashMap<>();
 
@@ -177,6 +177,10 @@ public class MainRenderer {
 			}
 		}
 
+		CURRENT_TEXT_RENDERS.clear();
+		CURRENT_TEXT_RENDERS.addAll(TEXT_RENDERS);
+		TEXT_RENDERS.clear();
+
 		for (int i = 0; i < TOTAL_RENDER_STAGES; i++) {
 			for (int j = 0; j < QUEUED_RENDER_LAYERS.length; j++) {
 				final QueuedRenderLayer queuedRenderLayer = QUEUED_RENDER_LAYERS[j];
@@ -190,14 +194,13 @@ public class MainRenderer {
 						case EXTERIOR -> MoreRenderLayers.getExterior(key);
 						case EXTERIOR_TRANSLUCENT -> MoreRenderLayers.getExteriorTranslucent(key);
 						case LINES -> RenderLayer.getLines();
-						default -> null;
 					};
-					if (renderLayer != null) {
-						value.forEach(renderer -> renderer.accept(matrixStack, vertexConsumerProvider.getBuffer(renderLayer), offset));
-					}
+					value.forEach(renderer -> renderer.accept(matrixStack, vertexConsumerProvider.getBuffer(renderLayer), offset));
 				});
 			}
 		}
+
+		CURRENT_TEXT_RENDERS.forEach(scheduledTextRender -> scheduledTextRender.accept(matrixStack, offset));
 	}
 
 	/**
@@ -240,6 +243,15 @@ public class MainRenderer {
 	 */
 	public static void scheduleRender(QueuedRenderLayer queuedRenderLayer, ScheduledRender scheduledRender) {
 		scheduleRender(EMPTY_IDENTIFIER, false, queuedRenderLayer, scheduledRender);
+	}
+
+	/**
+	 * Schedule a text render to run later this frame.
+	 *
+	 * @param scheduledTextRender the draw callback invoked during the drain pass
+	 */
+	public static void scheduleTextRender(ScheduledTextRender scheduledTextRender) {
+		TEXT_RENDERS.add(scheduledTextRender);
 	}
 
 	/**
@@ -325,5 +337,16 @@ public class MainRenderer {
 		 * @param offset         camera-relative world offset
 		 */
 		void accept(MatrixStack matrixStack, VertexConsumer vertexConsumer, Vec3d offset);
+	}
+
+	@FunctionalInterface
+	public interface ScheduledTextRender {
+		/**
+		 * Run the deferred text draw against the given buffer and offset.
+		 *
+		 * @param matrixStack the frame's matrix stack, already positioned for world space
+		 * @param offset      camera-relative world offset
+		 */
+		void accept(MatrixStack matrixStack, Vec3d offset);
 	}
 }

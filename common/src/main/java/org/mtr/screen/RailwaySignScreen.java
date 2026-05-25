@@ -5,7 +5,6 @@ import gg.essential.elementa.components.UIContainer;
 import gg.essential.elementa.constraints.*;
 import gg.essential.universal.UMinecraft;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.world.ClientWorld;
 import net.minecraft.util.math.BlockPos;
 import org.jspecify.annotations.Nullable;
 import org.mtr.block.BlockRailwaySign;
@@ -38,52 +37,45 @@ public final class RailwaySignScreen extends WindowBase {
 	private static final int LARGE_SIGN_WIDTH_UNITS = 4;
 	private static final int SIGN_COLUMNS = SMALL_SIGN_COLUMNS + LARGE_SIGN_COLUMNS;
 
-	public RailwaySignScreen(BlockPos signPos) {
-		final ClientWorld clientWorld = MinecraftClient.getInstance().world;
-		if (clientWorld != null && clientWorld.getBlockEntity(signPos) instanceof BlockRailwaySign.RailwaySignBlockEntity railwaySignBlockEntity) {
-			selectedIds = railwaySignBlockEntity.getSelectedIds();
-			signIds = railwaySignBlockEntity.getSignIds();
+	public RailwaySignScreen(BlockPos signPos, BlockRailwaySign.RailwaySignBlockEntity railwaySignBlockEntity) {
+		selectedIds = railwaySignBlockEntity.getSelectedIds();
+		signIds = railwaySignBlockEntity.getSignIds();
 
-			if (signIds.length > 0) {
-				this.signPos = signPos;
-				final BackgroundComponent backgroundComponent = new BackgroundComponent(getWindow(), ObjectImmutableList.of());
+		if (signIds.length > 0) {
+			this.signPos = signPos;
+			final BackgroundComponent backgroundComponent = new BackgroundComponent(getWindow(), ObjectImmutableList.of());
 
-				final UIContainer topContainer = (UIContainer) new UIContainer()
-					.setChildOf(backgroundComponent)
-					.setWidth(new RelativeConstraint())
-					.setHeight(new PixelConstraint(MAX_SIGN_TILE_HEIGHT + 2));
+			final UIContainer topContainer = (UIContainer) new UIContainer()
+				.setChildOf(backgroundComponent)
+				.setWidth(new RelativeConstraint())
+				.setHeight(new PixelConstraint(MAX_SIGN_TILE_HEIGHT + 2));
 
-				final SignPreviewComponent signPreviewComponent = (SignPreviewComponent) new SignPreviewComponent(signPos, selectedIds, signIds)
-					.setChildOf(topContainer)
-					.setWidth(new CoerceAtMostConstraint(new SubtractiveConstraint(new RelativeConstraint(), new PixelConstraint(GuiHelper.DEFAULT_PADDING * 2 + MAX_SEARCH_WIDTH)), new PixelConstraint(MAX_SIGN_TILE_HEIGHT * signIds.length + 2)))
-					.setHeight(GuiHelper.createAspectConstraintWithPadding(1F / signIds.length, 1));
+			final SignPreviewComponent signPreviewComponent = (SignPreviewComponent) new SignPreviewComponent(signPos, selectedIds, signIds)
+				.setChildOf(topContainer)
+				.setWidth(new CoerceAtMostConstraint(new SubtractiveConstraint(new RelativeConstraint(), new PixelConstraint(GuiHelper.DEFAULT_PADDING * 2 + MAX_SEARCH_WIDTH)), new PixelConstraint(MAX_SIGN_TILE_HEIGHT * signIds.length + 2)))
+				.setHeight(GuiHelper.createAspectConstraintWithPadding(1F / signIds.length, 1));
 
-				final TextInputComponent searchComponent = (TextInputComponent) new TextInputComponent()
-					.setChildOf(topContainer)
-					.setX(new PixelConstraint(0, true))
-					.setWidth(new CoerceAtMostConstraint(new SubtractiveConstraint(new RelativeConstraint(), new PixelConstraint(GuiHelper.DEFAULT_PADDING * 2)), new PixelConstraint(MAX_SEARCH_WIDTH)))
-					.setHeight(new PixelConstraint(20));
+			final TextInputComponent searchComponent = (TextInputComponent) new TextInputComponent()
+				.setChildOf(topContainer)
+				.setX(new PixelConstraint(0, true))
+				.setWidth(new CoerceAtMostConstraint(new SubtractiveConstraint(new RelativeConstraint(), new PixelConstraint(GuiHelper.DEFAULT_PADDING * 2)), new PixelConstraint(MAX_SEARCH_WIDTH)))
+				.setHeight(new PixelConstraint(20));
 
-				searchComponent.setPlaceholderText(TranslationProvider.GUI_MTR_SEARCH.getString());
+			searchComponent.setPlaceholderText(TranslationProvider.GUI_MTR_SEARCH.getString());
 
-				final UIContainer container = (UIContainer) new UIContainer()
-					.setChildOf(backgroundComponent)
-					.setY(new SiblingConstraint(GuiHelper.DEFAULT_PADDING))
-					.setWidth(new RelativeConstraint())
-					.setHeight(new SubtractiveConstraint(new FillConstraint(), new PixelConstraint(GuiHelper.DEFAULT_PADDING)));
+			final UIContainer container = (UIContainer) new UIContainer()
+				.setChildOf(backgroundComponent)
+				.setY(new SiblingConstraint(GuiHelper.DEFAULT_PADDING))
+				.setWidth(new RelativeConstraint())
+				.setHeight(new SubtractiveConstraint(new FillConstraint(), new PixelConstraint(GuiHelper.DEFAULT_PADDING)));
 
-				final ObjectArrayList<SignResource> signResources1 = new ObjectArrayList<>();
-				final ObjectArrayList<SignResource> signResources2 = new ObjectArrayList<>();
-				CustomResourceLoader.getSortedSigns().forEach(signResource -> (signResource.hasCustomText ? signResources2 : signResources1).add(signResource));
-				createMainComponents(container, SMALL_SIGN_COLUMNS, SMALL_SIGN_WIDTH_UNITS, signPreviewComponent, searchComponent, signResources1);
-				createMainComponents(container, LARGE_SIGN_COLUMNS, LARGE_SIGN_WIDTH_UNITS, signPreviewComponent, searchComponent, signResources2);
-			} else {
-				this.signPos = null;
-			}
+			final ObjectArrayList<SignResource> signResources1 = new ObjectArrayList<>();
+			final ObjectArrayList<SignResource> signResources2 = new ObjectArrayList<>();
+			CustomResourceLoader.getSortedSigns().forEach(signResource -> (signResource.hasCustomText ? signResources2 : signResources1).add(signResource));
+			createMainComponents(container, SMALL_SIGN_COLUMNS, SMALL_SIGN_WIDTH_UNITS, signPreviewComponent, searchComponent, signResources1);
+			createMainComponents(container, LARGE_SIGN_COLUMNS, LARGE_SIGN_WIDTH_UNITS, signPreviewComponent, searchComponent, signResources2);
 		} else {
 			this.signPos = null;
-			selectedIds = new LongAVLTreeSet[0];
-			signIds = new String[0];
 		}
 	}
 

@@ -311,11 +311,11 @@ public class DynamicTextureCache implements IGui {
 			}
 
 			while (fontCjk == null) {
-				ResourceManagerHelper.readResource(Identifier.of(MTR.MOD_ID, "font/noto-serif-cjk-tc-semibold.ttf"), inputStream -> {
+				ResourceManagerHelper.readResource(Identifier.of(MTR.MOD_ID, "font/noto-serif-tc-semibold.ttf"), inputStream -> {
 					try {
 						fontCjk = Font.createFont(Font.TRUETYPE_FONT, inputStream);
 					} catch (Exception e) {
-						MTR.LOGGER.error("Failed to load the Noto Serif CJK TC Semibold font for dynamic text rendering", e);
+						MTR.LOGGER.error("Failed to load the Noto Serif TC Semibold font for dynamic text rendering", e);
 					}
 				});
 			}

@@ -106,14 +106,14 @@ public class RenderLiftButtons extends BlockEntityRendererExtension<BlockLiftBut
 		if (buttonStates[0]) {
 			MainRenderer.scheduleRender(BUTTON_TEXTURE, false, buttonStates[2] || lookingAtBottomHalf ? QueuedRenderLayer.LIGHT_TRANSLUCENT : QueuedRenderLayer.EXTERIOR, (matrixStack, vertexConsumer, offset) -> {
 				storedMatrixTransformations2.transform(matrixStack, offset);
-				IDrawing.drawTexture(matrixStack, vertexConsumer, -1.5F / 16, (buttonStates[1] ? 0.5F : 2.5F) / 16, 3F / 16, 3F / 16, 0, 0, 1, 1, facing, buttonStates[2] ? PRESSED_COLOR : lookingAtBottomHalf ? HOVER_COLOR : ARGB_GRAY, light);
+				IDrawing.drawTexture(matrixStack, vertexConsumer, -1.5F / 16, (buttonStates[1] ? 0.5F : 2.5F) / 16, 3F / 16, 3F / 16, 0, 0, 1, 1, facing, buttonStates[2] ? PRESSED_COLOR : (lookingAtBottomHalf ? HOVER_COLOR : ARGB_GRAY), light);
 				matrixStack.pop();
 			});
 		}
 		if (buttonStates[1]) {
 			MainRenderer.scheduleRender(BUTTON_TEXTURE, false, buttonStates[3] || lookingAtTopHalf ? QueuedRenderLayer.LIGHT_TRANSLUCENT : QueuedRenderLayer.EXTERIOR, (matrixStack, vertexConsumer, offset) -> {
 				storedMatrixTransformations2.transform(matrixStack, offset);
-				IDrawing.drawTexture(matrixStack, vertexConsumer, -1.5F / 16, (buttonStates[0] ? 4.5F : 2.5F) / 16, 3F / 16, 3F / 16, 0, 1, 1, 0, facing, buttonStates[3] ? PRESSED_COLOR : lookingAtTopHalf ? HOVER_COLOR : ARGB_GRAY, light);
+				IDrawing.drawTexture(matrixStack, vertexConsumer, -1.5F / 16, (buttonStates[0] ? 4.5F : 2.5F) / 16, 3F / 16, 3F / 16, 0, 1, 1, 0, facing, buttonStates[3] ? PRESSED_COLOR : (lookingAtTopHalf ? HOVER_COLOR : ARGB_GRAY), light);
 				matrixStack.pop();
 			});
 		}

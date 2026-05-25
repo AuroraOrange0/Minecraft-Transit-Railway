@@ -32,8 +32,6 @@ public final class ConfigScreen extends SingleTabBackgroundScreenBase {
 		createCheckbox(TranslationProvider.OPTIONS_MTR_SHOW_ANNOUNCEMENT_MESSAGES.getString(), client.getChatAnnouncements(), client::toggleChatAnnouncements);
 		createCheckbox(TranslationProvider.OPTIONS_MTR_USE_TTS_ANNOUNCEMENTS.getString(), client.getTextToSpeechAnnouncements(), client::toggleTextToSpeechAnnouncements);
 		createCheckbox(TranslationProvider.OPTIONS_MTR_HIDE_TRANSLUCENT_PARTS.getString(), client.getHideTranslucentParts(), client::toggleHideTranslucentParts);
-
-		GuiHelper.createSpacing(contentContainer);
 		createLanguageOptions();
 
 		dynamicTextureResolutionInputComponent = createNumberInput(TranslationProvider.OPTIONS_MTR_DYNAMIC_TEXTURE_RESOLUTION.getString(), Client.DYNAMIC_RESOLUTION_COUNT - 1, client.getDynamicTextureResolution());
@@ -44,13 +42,12 @@ public final class ConfigScreen extends SingleTabBackgroundScreenBase {
 		createCheckbox(TranslationProvider.OPTIONS_MTR_USE_MTR_FONT.getString(), client.getUseMTRFont(), client::toggleUseMTRFont);
 		createCheckbox(TranslationProvider.OPTIONS_MTR_DISABLE_SHADOWS_FOR_SHADERS.getString(), client.getDisableShadowsForShaders(), client::toggleDisableShadowsForShaders);
 
-		GuiHelper.createSpacing(contentContainer);
 		final ButtonComponent supportButton = (ButtonComponent) new ButtonComponent(false)
 			.setChildOf(contentContainer)
-			.setY(new SiblingConstraint(GuiHelper.DEFAULT_PADDING))
-			.setWidth(new PixelConstraint(LEFT_WIDTH));
+			.setY(new SiblingConstraint())
+			.setWidth(new RelativeConstraint());
 
-		supportButton.setText(TranslationProvider.GUI_MTR_SUPPORT.getString());
+		supportButton.setText(TranslationProvider.OPTIONS_MTR_SUPPORT_PATREON.getString());
 		supportButton.onClick(() -> Util.getOperatingSystem().open("https://www.patreon.com/minecraft_transit_railway"));
 	}
 
@@ -81,7 +78,7 @@ public final class ConfigScreen extends SingleTabBackgroundScreenBase {
 
 		final ButtonComponent languageButton = (ButtonComponent) new ButtonComponent(false)
 			.setChildOf(contentContainer)
-			.setX(new SiblingConstraint(GuiHelper.DEFAULT_PADDING))
+			.setY(new SiblingConstraint())
 			.setWidth(new PixelConstraint(LEFT_WIDTH));
 
 		languageButton.setText(client.getLanguageDisplay().translationKey.getString());
@@ -89,10 +86,11 @@ public final class ConfigScreen extends SingleTabBackgroundScreenBase {
 			client.cycleLanguageDisplay();
 			languageButton.setText(client.getLanguageDisplay().translationKey.getString());
 		});
+
+		GuiHelper.createSpacing(contentContainer);
 	}
 
 	private NumberInputComponent createNumberInput(String label, double max, double initialValue) {
-		GuiHelper.createSpacing(contentContainer);
 		GuiHelper.createLabel(contentContainer, label);
 
 		final NumberInputComponent numberInputComponent = (NumberInputComponent) new NumberInputComponent(0, max, 1, false, null)
@@ -100,6 +98,7 @@ public final class ConfigScreen extends SingleTabBackgroundScreenBase {
 			.setY(new SiblingConstraint())
 			.setWidth(new PixelConstraint(LEFT_WIDTH));
 
+		GuiHelper.createSpacing(contentContainer);
 		numberInputComponent.setValue(initialValue);
 		return numberInputComponent;
 	}

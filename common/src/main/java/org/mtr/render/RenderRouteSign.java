@@ -74,7 +74,7 @@ public class RenderRouteSign<T extends BlockRouteSignBase.BlockEntityBase> exten
 			QueuedRenderLayer.EXTERIOR,
 			(matrixStack, vertexConsumer, offset) -> {
 				storedMatrixTransformations.transform(matrixStack, offset);
-				IDrawing.drawTexture(matrixStack, vertexConsumer, 1 - SIDE, MIDDLE + (isTop ? 0 : 1), 0, 1 - SIDE, isTop ? 0 : BOTTOM, 0, SIDE, isTop ? 0 : BOTTOM, 0, SIDE, MIDDLE + (isTop ? 0 : 1), 0, 0, 0, isTop ? TEXTURE_BREAK : 1, 1, facing.getOpposite(), -1, light);
+				IDrawing.drawTexture(matrixStack, vertexConsumer, SIDE, MIDDLE + (isTop ? 0 : 1), 0, 1 - SIDE, MIDDLE + (isTop ? 0 : 1), 0, 1 - SIDE, isTop ? 0 : BOTTOM, 0, SIDE, isTop ? 0 : BOTTOM, 0, 0, 0, isTop ? TEXTURE_BREAK : 1, 1, facing.getOpposite(), -1, light);
 				matrixStack.pop();
 			}
 		);

@@ -231,8 +231,9 @@ public class BlockRailwaySign extends Block implements IBlock, BlockEntityProvid
 
 		public void setData(LongAVLTreeSet[] selectedIds, @Nullable String[] signIds) {
 			for (int i = 0; i < this.signIds.length; i++) {
+				final LongAVLTreeSet selectedIdsCopy = new LongAVLTreeSet(selectedIds[i]);
 				this.selectedIds[i].clear();
-				this.selectedIds[i].addAll(selectedIds[i]);
+				this.selectedIds[i].addAll(selectedIdsCopy);
 			}
 
 			if (this.signIds.length == signIds.length) {

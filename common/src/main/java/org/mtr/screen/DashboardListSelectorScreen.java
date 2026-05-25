@@ -13,9 +13,7 @@ import org.mtr.tool.GuiHelper;
 import org.mtr.widget.ListComponent;
 import org.mtr.widget.ListItem;
 
-/**
- * Elementa selector for dashboard-style ID/name/color entries.
- */
+// TODO this class should be deprecated in favour of ListSelectorScreen
 public class DashboardListSelectorScreen extends ListSelectorScreen<DashboardListItem, DashboardListItem> implements IGui {
 
 	protected final ObjectImmutableList<DashboardListItem> allData;

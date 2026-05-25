@@ -25,6 +25,8 @@ import org.mtr.core.data.LiftFloor;
 import org.mtr.core.data.Position;
 import org.mtr.core.tool.Vector;
 import org.mtr.data.IGui;
+import org.mtr.font.FontRenderHelper;
+import org.mtr.font.FontRenderOptions;
 import org.mtr.item.ItemLiftRefresher;
 import org.mtr.libraries.it.unimi.dsi.fastutil.ints.IntObjectImmutablePair;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList;
@@ -34,6 +36,7 @@ import org.mtr.registry.Items;
 import org.mtr.resource.LiftResource;
 import org.mtr.tool.Drawing;
 
+import java.awt.*;
 import java.util.function.Function;
 
 public class RenderLifts implements IGui {
@@ -217,9 +220,22 @@ public class RenderLifts implements IGui {
 		final ObjectObjectImmutablePair<LiftDirection, ObjectObjectImmutablePair<String, String>> liftDetails = getLiftDetails(world, lift, MTR.positionToBlockPos(lift.getCurrentFloor().getPosition()));
 		final LiftDirection liftDirection = liftDetails.left();
 
-		MainRenderer.scheduleRender(QueuedRenderLayer.TEXT, (matrixStack, vertexConsumer, offset) -> {
+		MainRenderer.scheduleTextRender((matrixStack, offset) -> {
 			storedMatrixTransformations.transform(matrixStack, offset);
-//			IDrawing.drawStringWithFont(matrixStack, vertexConsumer, liftDetails.right().left(), IGui.HorizontalAlignment.CENTER, VerticalAlignment.BOTTOM, 0, height, width, -1, 18 / width, LIFT_DISPLAY_COLOR, false, DEFAULT_LIGHT, null);
+			FontRenderHelper.render(matrixStack,
+				liftDetails.right().left(),
+				FontRenderOptions.builder()
+					.horizontalTextAlignment(FontRenderOptions.Alignment.CENTER)
+					.verticalTextAlignment(FontRenderOptions.Alignment.END)
+					.horizontalPositioning(FontRenderOptions.Alignment.CENTER)
+					.verticalPositioning(FontRenderOptions.Alignment.END)
+					.offsetY(height)
+					.horizontalSpace(width * 0.8F)
+					.verticalSpace(width * 0.6F)
+					.color(new Color(LIFT_DISPLAY_COLOR))
+					.textOverflow(FontRenderOptions.TextOverflow.COMPRESS)
+					.build()
+			);
 			matrixStack.pop();
 		});
 

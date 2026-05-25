@@ -10,14 +10,11 @@ import net.minecraft.text.Text;
 import net.minecraft.util.math.BlockPos;
 import org.mtr.MTRClient;
 import org.mtr.block.BlockPIDSBase;
-import org.mtr.client.MinecraftClientData;
 import org.mtr.core.data.Platform;
 import org.mtr.core.data.Station;
-import org.mtr.core.tool.Utilities;
-import org.mtr.data.IGui;
 import org.mtr.generated.lang.TranslationProvider;
 import org.mtr.libraries.it.unimi.dsi.fastutil.longs.LongAVLTreeSet;
-import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArraySet;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectImmutableList;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectObjectImmutablePair;
 import org.mtr.packet.PacketUpdatePIDSConfig;
@@ -26,8 +23,6 @@ import org.mtr.tool.ReleasedDynamicTextureRegistry;
 import org.mtr.widget.*;
 
 import java.awt.*;
-import java.util.Collections;
-import java.util.stream.Collectors;
 
 /**
  * Elementa screen for configuring PIDS custom messages and platform filters.
@@ -72,6 +67,8 @@ public class PIDSConfigScreen extends WindowBase {
 			.setY(new SiblingConstraint(GuiHelper.DEFAULT_PADDING))
 			.setWidth(new PixelConstraint(LEFT_WIDTH));
 
+		GuiHelper.createSpacing(scrollComponent1);
+
 		selectAllCheckbox = (CheckboxComponent) new CheckboxComponent()
 			.setChildOf(scrollComponent1)
 			.setY(new SiblingConstraint())
@@ -105,7 +102,7 @@ public class PIDSConfigScreen extends WindowBase {
 
 			messagesTextInputs[i] = (TextInputComponent) new TextInputComponent()
 				.setChildOf(rowContainer)
-				.setWidth(new ScaleConstraint(new RelativeConstraint(), 0.75F))
+				.setWidth(new ScaleConstraint(new RelativeConstraint(), 0.6F))
 				.setHeight(new PixelConstraint(20));
 
 			messagesTextInputs[i].setText(messages[i]);
@@ -113,7 +110,7 @@ public class PIDSConfigScreen extends WindowBase {
 			hideArrivalCheckboxes[i] = (CheckboxComponent) new CheckboxComponent()
 				.setChildOf(rowContainer)
 				.setX(new SiblingConstraint(GuiHelper.DEFAULT_PADDING))
-				.setWidth(new SubtractiveConstraint(new ScaleConstraint(new RelativeConstraint(), 0.25F), new PixelConstraint(GuiHelper.DEFAULT_PADDING)));
+				.setWidth(new SubtractiveConstraint(new ScaleConstraint(new RelativeConstraint(), 0.4F), new PixelConstraint(GuiHelper.DEFAULT_PADDING)));
 
 			hideArrivalCheckboxes[i].setText(TranslationProvider.GUI_MTR_HIDE_ARRIVAL.getString());
 			hideArrivalCheckboxes[i].setChecked(hideArrivalArray[i]);
@@ -160,31 +157,31 @@ public class PIDSConfigScreen extends WindowBase {
 	public static void openPlatformFilter(BlockPos blockPos, CheckboxComponent selectAllCheckbox, LongAVLTreeSet filterPlatformIds, WindowBase thisScreen) {
 		final Station station = MTRClient.findStation(blockPos);
 
-		final ObjectImmutableList<DashboardListItem> platformsForList;
+		final ObjectArraySet<Platform> platforms;
 		if (station != null) {
-			platformsForList = getPlatformsForList(new ObjectArrayList<>(station.savedRails));
+			platforms = station.savedRails;
 		} else {
-			ObjectArrayList<Platform> nearbyPlatforms = new ObjectArrayList<>();
-			MTRClient.findClosePlatform(blockPos.down(4), 5, nearbyPlatforms::add);
-			platformsForList = getPlatformsForList(nearbyPlatforms);
+			platforms = new ObjectArraySet<>();
+			MTRClient.findClosePlatform(blockPos.down(4), 5, platforms::add);
 		}
 
 		if (selectAllCheckbox.isChecked()) {
 			filterPlatformIds.clear();
 		}
 
-		UMinecraft.setCurrentScreenObj(new DashboardListSelectorScreen(() -> selectAllCheckbox.setChecked(filterPlatformIds.isEmpty()), new ObjectImmutableList<>(platformsForList), filterPlatformIds, false, false, thisScreen));
-	}
+		final PlatformListSelectorScreen platformListSelectorScreen = new PlatformListSelectorScreen(selectedPlatforms -> {
+			filterPlatformIds.clear();
+			selectedPlatforms.forEach(platform -> filterPlatformIds.add(platform.getId()));
+			selectAllCheckbox.setChecked(filterPlatformIds.isEmpty());
+		}, thisScreen);
 
-	public static ObjectImmutableList<DashboardListItem> getPlatformsForList(ObjectArrayList<Platform> platforms) {
-		final ObjectArrayList<DashboardListItem> platformsForList = new ObjectArrayList<>();
-		Collections.sort(platforms);
-		platforms.forEach(platform -> platformsForList.add(new DashboardListItem(platform.getId(), platform.getName() + " " + IGui.mergeStations(MinecraftClientData.getInstance().simplifiedRoutes
-			.stream()
-			.filter(simplifiedRoute -> simplifiedRoute.getPlatformIndex(platform.getId()) >= 0)
-			.map(simplifiedRoute -> Utilities.getElement(simplifiedRoute.getPlatforms(), -1).getStationName())
-			.collect(Collectors.toList())
-		), 0)));
-		return new ObjectImmutableList<>(platformsForList);
+		platformListSelectorScreen.setAvailableList(platforms);
+		platforms.forEach(platform -> {
+			if (filterPlatformIds.contains(platform.getId())) {
+				platformListSelectorScreen.selectData(platform);
+			}
+		});
+
+		UMinecraft.setCurrentScreenObj(platformListSelectorScreen);
 	}
 }

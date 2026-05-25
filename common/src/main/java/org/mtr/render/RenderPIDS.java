@@ -95,7 +95,7 @@ public class RenderPIDS<T extends BlockPIDSBase.BlockEntityBase> extends BlockEn
 
 	private void getArrivalsAndRender(T entity, BlockPos blockPos, Direction facing, LongCollection platformIds) {
 		final ObjectArrayList<ArrivalResponse> arrivalResponseList = ArrivalsCacheClient.INSTANCE.requestArrivals(platformIds);
-		MainRenderer.scheduleRender(QueuedRenderLayer.TEXT, (matrixStack, vertexConsumer, offset) -> {
+		MainRenderer.scheduleTextRender((matrixStack, offset) -> {
 			render(entity, blockPos, facing, arrivalResponseList, matrixStack, offset);
 			if (entity instanceof BlockPIDSHorizontalBase.BlockEntityHorizontalBase) {
 				render(entity, blockPos.offset(facing), facing.getOpposite(), arrivalResponseList, matrixStack, offset);
