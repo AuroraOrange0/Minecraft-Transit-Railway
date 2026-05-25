@@ -96,7 +96,7 @@ public final class LiftCustomizationScreen extends WindowBase {
 
 		GuiHelper.createSpacing(scrollComponent);
 		GuiHelper.createLabel(scrollComponent, TranslationProvider.GUI_MTR_STYLES.getString());
-		final ButtonComponent editStylesButtonComponent = (ButtonComponent) new ButtonComponent(false)
+		final ButtonComponent editStylesButtonComponent = (ButtonComponent) new ButtonComponent(true)
 			.setChildOf(scrollComponent)
 			.setY(new SiblingConstraint())
 			.setWidth(new RelativeConstraint());
@@ -104,7 +104,7 @@ public final class LiftCustomizationScreen extends WindowBase {
 		editStylesButtonComponent.setText(Text.translatable("selectWorld.edit").getString());
 		editStylesButtonComponent.onClick(() -> UMinecraft.setCurrentScreenObj(LiftStyleSelectorScreen.create(lift, this)));
 
-		final ButtonComponent rotateAnticlockwiseButton = (ButtonComponent) new ButtonComponent(false)
+		final ButtonComponent rotateAnticlockwiseButton = (ButtonComponent) new ButtonComponent(true)
 			.setChildOf(scrollComponent)
 			.setY(new SiblingConstraint())
 			.setWidth(new RelativeConstraint());
@@ -115,7 +115,7 @@ public final class LiftCustomizationScreen extends WindowBase {
 			lift.setAngle(Angle.fromAngle(liftDirection.getPositiveHorizontalDegrees()));
 		});
 
-		final ButtonComponent rotateClockwiseButton = (ButtonComponent) new ButtonComponent(false)
+		final ButtonComponent rotateClockwiseButton = (ButtonComponent) new ButtonComponent(true)
 			.setChildOf(scrollComponent)
 			.setY(new SiblingConstraint())
 			.setWidth(new RelativeConstraint());

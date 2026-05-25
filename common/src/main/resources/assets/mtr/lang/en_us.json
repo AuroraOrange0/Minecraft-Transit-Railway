@@ -396,7 +396,7 @@
 	"gui.mtr.select_floor": "Select Floor",
 	"gui.mtr.select_model": "Select Model",
 	"gui.mtr.selected": "Selected",
-	"gui.mtr.selected_vehicle": "Selected Vehicle",
+	"gui.mtr.selected_vehicle_cars": "Selected vehicle cars: (%s)",
 	"gui.mtr.separator": "/",
 	"gui.mtr.separator_cjk": "/",
 	"gui.mtr.siding": "Siding %s",

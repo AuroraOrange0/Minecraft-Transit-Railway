@@ -99,7 +99,7 @@ public final class EyeCandyScreen extends WindowBase {
 			}
 		}
 
-		final ButtonComponent buttonSelectModel = (ButtonComponent) new ButtonComponent(false)
+		final ButtonComponent buttonSelectModel = (ButtonComponent) new ButtonComponent(true)
 			.setChildOf(scrollComponent)
 			.setY(new SiblingConstraint())
 			.setWidth(new RelativeConstraint());

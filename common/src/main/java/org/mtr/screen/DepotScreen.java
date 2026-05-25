@@ -18,7 +18,6 @@ import org.mtr.core.tool.Utilities;
 import org.mtr.data.IGui;
 import org.mtr.generated.lang.TranslationProvider;
 import org.mtr.libraries.it.unimi.dsi.fastutil.longs.Long2LongAVLTreeMap;
-import org.mtr.libraries.it.unimi.dsi.fastutil.longs.LongArrayList;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArraySet;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectImmutableList;
@@ -40,14 +39,12 @@ import java.util.stream.Collectors;
 
 public final class DepotScreen extends NameColorDataScreenBase<Depot> {
 
-	private final LongArrayList tempRealTimeDepartures = new LongArrayList();
-
 	private final UIWrappedText[] successfulSegmentsLabels = new UIWrappedText[SUCCESSFUL_SEGMENTS_LABELS_COUNT];
 	private final UIWrappedText depotInstructionsLabel;
 	private final CheckboxComponent repeatIndefinitelyCheckbox;
 	private final CheckboxComponent useMinecraftTimeCheckbox;
 	private final CheckboxComponent useRealTimeCheckbox;
-	private final ScrollComponent minecraftScheduleContainer;
+	private final ScrollComponent minecraftScheduleScrollComponent;
 	private final UIContainer realTimeScheduleContainer;
 	private final NumberInputComponent[] minecraftTimeNumberInputs = new NumberInputComponent[Utilities.HOURS_PER_DAY];
 	private final TextInputComponent realTimeDepartureTextInput;
@@ -61,7 +58,6 @@ public final class DepotScreen extends NameColorDataScreenBase<Depot> {
 
 	public DepotScreen(Depot depot, @Nullable ScreenBase previousScreenLegacy) {
 		super(depot, getTabs(depot), TranslationProvider.GUI_MTR_DEPOT_NAME, name -> TranslationProvider.GUI_MTR_DEPOT.getString(Utilities.formatName(name)), TranslationProvider.GUI_MTR_DEPOT_COLOR, previousScreenLegacy);
-		GuiHelper.createSpacing(firstTabScrollComponent);
 		depotInstructionsLabel = GuiHelper.createLabel(firstTabScrollComponent, "");
 
 		final ButtonComponent editInstructionsButton = (ButtonComponent) new ButtonComponent(true)
@@ -151,14 +147,14 @@ public final class DepotScreen extends NameColorDataScreenBase<Depot> {
 			.setWidth(new RelativeConstraint())
 			.setHeight(new SubtractiveConstraint(new FillConstraint(), new PixelConstraint(GuiHelper.DEFAULT_PADDING)));
 
-		minecraftScheduleContainer = ((ScrollPanelComponent) new ScrollPanelComponent(true)
+		minecraftScheduleScrollComponent = ((ScrollPanelComponent) new ScrollPanelComponent(true)
 			.setChildOf(scheduleContainer)
 			.setWidth(new RelativeConstraint())
 			.setHeight(new RelativeConstraint())).contentContainer;
 
 		for (int i = 0; i < Utilities.HOURS_PER_DAY; i++) {
 			minecraftTimeNumberInputs[i] = (NumberInputComponent) new NumberInputComponent(0, MAX_TRAINS_PER_HOUR * 2, 1, false, null)
-				.setChildOf(minecraftScheduleContainer)
+				.setChildOf(minecraftScheduleScrollComponent)
 				.setY(new SiblingConstraint())
 				.setWidth(new RelativeConstraint());
 
@@ -202,8 +198,6 @@ public final class DepotScreen extends NameColorDataScreenBase<Depot> {
 
 		realTimeDeparturesListComponent = GuiHelper.createListComponent(slotBackgroundComponent);
 
-		tempRealTimeDepartures.clear();
-		tempRealTimeDepartures.addAll(depot.getRealTimeDepartures());
 		toggleControls();
 		updateRoutes();
 		setRealTimeDeparturesListItems();
@@ -232,10 +226,7 @@ public final class DepotScreen extends NameColorDataScreenBase<Depot> {
 		data.setRepeatInfinitely(shouldShowRepeatIndefinitelyCheckbox() && repeatIndefinitelyCheckbox.isChecked());
 		data.setUseRealTime(useRealTimeCheckbox.isChecked());
 
-		if (useRealTimeCheckbox.isChecked()) {
-			data.getRealTimeDepartures().clear();
-			data.getRealTimeDepartures().addAll(tempRealTimeDepartures);
-		} else {
+		if (!useRealTimeCheckbox.isChecked()) {
 			for (int i = 0; i < Utilities.HOURS_PER_DAY; i++) {
 				data.setFrequency(i, (int) minecraftTimeNumberInputs[i].getValue());
 			}
@@ -300,10 +291,10 @@ public final class DepotScreen extends NameColorDataScreenBase<Depot> {
 
 	private void toggleControls() {
 		if (useRealTimeCheckbox.isChecked()) {
-			minecraftScheduleContainer.hide(true);
+			minecraftScheduleScrollComponent.hide(true);
 			realTimeScheduleContainer.unhide(true);
 		} else {
-			minecraftScheduleContainer.unhide(true);
+			minecraftScheduleScrollComponent.unhide(true);
 			realTimeScheduleContainer.hide(true);
 		}
 	}
@@ -325,7 +316,7 @@ public final class DepotScreen extends NameColorDataScreenBase<Depot> {
 	private void setRealTimeDeparturesListItems() {
 		final long offset = System.currentTimeMillis() / Utilities.MILLIS_PER_DAY * Utilities.MILLIS_PER_DAY;
 
-		final ObjectArrayList<Calendar> sortedDepartures = tempRealTimeDepartures.longStream().mapToObj(departure -> {
+		final ObjectArrayList<Calendar> sortedDepartures = data.getRealTimeDepartures().longStream().mapToObj(departure -> {
 			final Calendar calendar = Calendar.getInstance();
 			calendar.setTimeInMillis(departure + offset);
 			return calendar;
@@ -385,11 +376,11 @@ public final class DepotScreen extends NameColorDataScreenBase<Depot> {
 				for (int i = 0; i < multiple; i++) {
 					final int rawDeparture = (departure + i * interval) % Utilities.MILLIS_PER_DAY;
 					if (addToList) {
-						if (!tempRealTimeDepartures.contains(rawDeparture)) {
-							tempRealTimeDepartures.add(rawDeparture);
+						if (!data.getRealTimeDepartures().contains(rawDeparture)) {
+							data.getRealTimeDepartures().add(rawDeparture);
 						}
 					} else {
-						tempRealTimeDepartures.rem(rawDeparture);
+						data.getRealTimeDepartures().rem(rawDeparture);
 					}
 				}
 				setRealTimeDeparturesListItems();

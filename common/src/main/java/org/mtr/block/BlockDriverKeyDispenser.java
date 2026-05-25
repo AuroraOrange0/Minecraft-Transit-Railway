@@ -32,6 +32,7 @@ import org.mtr.core.data.Depot;
 import org.mtr.core.operation.NearbyAreasRequest;
 import org.mtr.core.operation.NearbyAreasResponse;
 import org.mtr.core.servlet.OperationProcessor;
+import org.mtr.core.tool.Utilities;
 import org.mtr.item.ItemDepotDriverKey;
 import org.mtr.packet.PacketOpenBlockEntityScreen;
 import org.mtr.registry.BlockEntityTypes;
@@ -112,7 +113,7 @@ public class BlockDriverKeyDispenser extends BlockWaterloggable implements Block
 		private boolean dispenseAdvancedDriverKey = false;
 		private boolean dispenseGuardKey = false;
 		@Getter
-		private long timeout = Depot.MILLIS_PER_HOUR;
+		private long timeout = Utilities.MILLIS_PER_HOUR;
 
 		private static final String KEY_DISPENSE_BASIC_DRIVER_KEY = "dispense_basic_driver_key";
 		private static final String KEY_DISPENSE_ADVANCED_DRIVER_KEY = "dispense_advanced_driver_key";

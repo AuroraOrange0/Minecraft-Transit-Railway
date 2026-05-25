@@ -278,7 +278,6 @@ public final class MapWidget extends ClickableWidgetBase {
 	public void onRelease(double mouseX, double mouseY) {
 		if (popupDetails == null) {
 			if (Math.abs(lastClickedX - mouseX) < 1 && Math.abs(lastClickedY - mouseY) < 1) {
-				final MinecraftClient minecraftClient = MinecraftClient.getInstance();
 				if (!hoverStations.isEmpty()) {
 					final ScrollableListWidget<Station> scrollableListWidget = createPopup(mouseX, mouseY);
 					ScrollableListWidget.setAreas(scrollableListWidget, hoverStations, null, hasPermission ? ObjectArrayList.of(
@@ -291,7 +290,7 @@ public final class MapWidget extends ClickableWidgetBase {
 				if (!hoverPlatforms.isEmpty()) {
 					final ScrollableListWidget<Platform> scrollableListWidget = createPopup(mouseX, mouseY);
 					ScrollableListWidget.setSavedRails(scrollableListWidget, hoverPlatforms, hasPermission ? editingRoute == null ? ObjectArrayList.of(
-						new ObjectObjectImmutablePair<>(GuiHelper.EDIT_TEXTURE_ID, (indexList, platform) -> minecraftClient.setScreen(new PlatformScreen(platform, dashboardScreen)))
+						new ObjectObjectImmutablePair<>(GuiHelper.EDIT_TEXTURE_ID, (indexList, platform) -> UMinecraft.setCurrentScreenObj(new PlatformScreen(platform, dashboardScreen)))
 					) : ObjectArrayList.of(
 						new ObjectObjectImmutablePair<>(GuiHelper.SELECT_TEXTURE_ID, (indexList, platform) -> {
 							if (editingRoute != null) {
@@ -319,7 +318,7 @@ public final class MapWidget extends ClickableWidgetBase {
 				if (!hoverSidings.isEmpty()) {
 					final ScrollableListWidget<Siding> scrollableListWidget = createPopup(mouseX, mouseY);
 					ScrollableListWidget.setSavedRails(scrollableListWidget, hoverSidings, hasPermission ? ObjectArrayList.of(
-						new ObjectObjectImmutablePair<>(GuiHelper.EDIT_TEXTURE_ID, (indexList, siding) -> minecraftClient.setScreen(new SidingScreen(siding, dashboardScreen)))
+						new ObjectObjectImmutablePair<>(GuiHelper.EDIT_TEXTURE_ID, (indexList, siding) -> UMinecraft.setCurrentScreenObj(new SidingScreen(siding, dashboardScreen)))
 					) : new ObjectArrayList<>());
 					scrollableListWidget.tryTrigger();
 				}

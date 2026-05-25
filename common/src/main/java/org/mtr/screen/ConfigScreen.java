@@ -42,7 +42,7 @@ public final class ConfigScreen extends SingleTabBackgroundScreenBase {
 		createCheckbox(TranslationProvider.OPTIONS_MTR_USE_MTR_FONT.getString(), client.getUseMTRFont(), client::toggleUseMTRFont);
 		createCheckbox(TranslationProvider.OPTIONS_MTR_DISABLE_SHADOWS_FOR_SHADERS.getString(), client.getDisableShadowsForShaders(), client::toggleDisableShadowsForShaders);
 
-		final ButtonComponent supportButton = (ButtonComponent) new ButtonComponent(false)
+		final ButtonComponent supportButton = (ButtonComponent) new ButtonComponent(true)
 			.setChildOf(contentContainer)
 			.setY(new SiblingConstraint())
 			.setWidth(new RelativeConstraint());
@@ -76,7 +76,7 @@ public final class ConfigScreen extends SingleTabBackgroundScreenBase {
 	private void createLanguageOptions() {
 		GuiHelper.createLabel(contentContainer, TranslationProvider.OPTIONS_MTR_LANGUAGE_OPTIONS.getString());
 
-		final ButtonComponent languageButton = (ButtonComponent) new ButtonComponent(false)
+		final ButtonComponent languageButton = (ButtonComponent) new ButtonComponent(true)
 			.setChildOf(contentContainer)
 			.setY(new SiblingConstraint())
 			.setWidth(new PixelConstraint(LEFT_WIDTH));

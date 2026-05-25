@@ -107,7 +107,7 @@ public final class RailModifierScreen extends WindowBase {
 		previewBoxComponent1 = mainComponents1.right();
 
 		GuiHelper.createLabel(scrollComponent1, TranslationProvider.GUI_MTR_STYLES.getString());
-		final ButtonComponent editStylesButtonComponent = (ButtonComponent) new ButtonComponent(false)
+		final ButtonComponent editStylesButtonComponent = (ButtonComponent) new ButtonComponent(true)
 			.setChildOf(scrollComponent1)
 			.setY(new SiblingConstraint())
 			.setWidth(new RelativeConstraint());
@@ -115,7 +115,7 @@ public final class RailModifierScreen extends WindowBase {
 		editStylesButtonComponent.setText(Text.translatable("selectWorld.edit").getString());
 		editStylesButtonComponent.onMouseClickConsumer(clickEvent -> UMinecraft.setCurrentScreenObj(RailStyleSelectorScreen.create(rail)));
 
-		final ButtonComponent flipStylesButtonComponent = (ButtonComponent) new ButtonComponent(false)
+		final ButtonComponent flipStylesButtonComponent = (ButtonComponent) new ButtonComponent(true)
 			.setChildOf(scrollComponent1)
 			.setY(new SiblingConstraint())
 			.setWidth(new RelativeConstraint());

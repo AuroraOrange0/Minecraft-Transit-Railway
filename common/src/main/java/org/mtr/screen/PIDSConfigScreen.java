@@ -62,9 +62,9 @@ public final class PIDSConfigScreen extends WindowBase {
 		final ScrollComponent scrollComponent1 = createMainComponents(0, TranslationProvider.GUI_MTR_PIDS_OPTIONS);
 		filteredPlatformsText = GuiHelper.createLabel(scrollComponent1, "");
 
-		final ButtonComponent filterButton = (ButtonComponent) new ButtonComponent(false)
+		final ButtonComponent filterButton = (ButtonComponent) new ButtonComponent(true)
 			.setChildOf(scrollComponent1)
-			.setY(new SiblingConstraint(GuiHelper.DEFAULT_PADDING))
+			.setY(new SiblingConstraint())
 			.setWidth(new PixelConstraint(LEFT_WIDTH));
 
 		GuiHelper.createSpacing(scrollComponent1);

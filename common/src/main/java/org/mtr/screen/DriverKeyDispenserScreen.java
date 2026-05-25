@@ -9,6 +9,7 @@ import net.minecraft.util.math.BlockPos;
 import org.mtr.MTRClient;
 import org.mtr.block.BlockDriverKeyDispenser;
 import org.mtr.core.data.Depot;
+import org.mtr.core.tool.Utilities;
 import org.mtr.data.IGui;
 import org.mtr.generated.lang.TranslationProvider;
 import org.mtr.packet.PacketUpdateKeyDispenserConfig;
@@ -76,7 +77,7 @@ public final class DriverKeyDispenserScreen extends SingleTabBackgroundScreenBas
 			.setWidth(new PixelConstraint(LEFT_WIDTH));
 
 		timeoutHoursInputComponent.setSuffix(TranslationProvider.GUI_MTR_HOURS.getString(""));
-		timeoutHoursInputComponent.setValue((double) (timeout / Depot.MILLIS_PER_HOUR));
+		timeoutHoursInputComponent.setValue((double) (timeout / Utilities.MILLIS_PER_HOUR));
 
 		timeoutMinutesInputComponent = (NumberInputComponent) new NumberInputComponent(0, 59, 1, false, null)
 			.setChildOf(contentContainer)
@@ -84,7 +85,7 @@ public final class DriverKeyDispenserScreen extends SingleTabBackgroundScreenBas
 			.setWidth(new PixelConstraint(LEFT_WIDTH));
 
 		timeoutMinutesInputComponent.setSuffix(TranslationProvider.GUI_MTR_MINUTES.getString(""));
-		timeoutMinutesInputComponent.setValue((double) ((timeout % Depot.MILLIS_PER_HOUR) / 60 / Depot.MILLIS_PER_SECOND));
+		timeoutMinutesInputComponent.setValue((double) ((timeout % Utilities.MILLIS_PER_HOUR) / Utilities.MILLIS_PER_MINUTE));
 	}
 
 	@Override
@@ -94,7 +95,7 @@ public final class DriverKeyDispenserScreen extends SingleTabBackgroundScreenBas
 			dispenseBasicDriverKeyCheckbox.isChecked(),
 			dispenseAdvancedDriverKeyCheckbox.isChecked(),
 			dispenseGuardKeyCheckbox.isChecked(),
-			Math.round(timeoutHoursInputComponent.getValue() * Depot.MILLIS_PER_HOUR + timeoutMinutesInputComponent.getValue() * 60 * Depot.MILLIS_PER_SECOND)
+			Math.round(timeoutHoursInputComponent.getValue() * Utilities.MILLIS_PER_HOUR + timeoutMinutesInputComponent.getValue() * Utilities.MILLIS_PER_MINUTE)
 		).send(MinecraftClient.getInstance().world);
 		super.onScreenClose();
 	}

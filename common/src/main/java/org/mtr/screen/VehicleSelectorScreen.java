@@ -3,7 +3,6 @@ package org.mtr.screen;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.OrderedText;
@@ -32,6 +31,7 @@ import java.util.Comparator;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
+// TODO this class should be migrated to use Elementa
 public final class VehicleSelectorScreen extends ScreenBase {
 
 	private final Siding siding;
@@ -52,7 +52,7 @@ public final class VehicleSelectorScreen extends ScreenBase {
 	private static final Object2ObjectAVLTreeMap<String, String> WIKIPEDIA_ARTICLES = new Object2ObjectAVLTreeMap<>();
 	private static final String FAMILY_TAG = "family";
 
-	public VehicleSelectorScreen(Siding siding, Screen previousScreen) {
+	public VehicleSelectorScreen(Siding siding, WindowBase previousScreen) {
 		super(previousScreen);
 		this.siding = siding;
 

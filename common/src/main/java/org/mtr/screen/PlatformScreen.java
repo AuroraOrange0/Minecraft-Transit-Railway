@@ -1,90 +1,99 @@
 package org.mtr.screen;
 
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.text.MutableText;
-import net.minecraft.text.Text;
+import gg.essential.elementa.components.UIContainer;
+import gg.essential.elementa.components.UIText;
+import gg.essential.elementa.components.UIWrappedText;
+import gg.essential.elementa.constraints.PixelConstraint;
+import gg.essential.elementa.constraints.RelativeConstraint;
+import gg.essential.elementa.constraints.SiblingConstraint;
+import org.jspecify.annotations.Nullable;
 import org.mtr.client.MinecraftClientData;
 import org.mtr.core.data.Platform;
 import org.mtr.core.operation.UpdateDataRequest;
 import org.mtr.core.tool.Utilities;
 import org.mtr.generated.lang.TranslationProvider;
-import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectImmutableList;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectObjectImmutablePair;
 import org.mtr.packet.PacketUpdateData;
 import org.mtr.registry.RegistryClient;
 import org.mtr.tool.GuiHelper;
-import org.mtr.widget.BetterSliderWidget;
-import org.mtr.widget.BetterTextFieldWidget;
+import org.mtr.tool.ReleasedDynamicTextureRegistry;
+import org.mtr.widget.NumberInputComponent;
 
-public final class PlatformScreen extends ScrollableScreenBase {
+import java.awt.*;
 
-	private final Platform platform;
+public final class PlatformScreen extends NameColorDataScreenBase<Platform> {
 
-	private final BetterTextFieldWidget platformNumberTextField;
-	private final BetterSliderWidget dwellTimeSlider;
+	@Nullable
+	private final NumberInputComponent dwellTimeMinutesNumberInput;
+	@Nullable
+	private final NumberInputComponent dwellTimeSecondsNumberInput;
 
-	private static final int DWELL_TIME_SLIDER_SCALE = 500; // 500 ms interval
-	private static final int MAX_DWELL_TIME = 10 * Utilities.MILLIS_PER_MINUTE; // 10 minutes
+	private static final int MAX_DWELL_TIME_MINUTES = 10; // 10 minutes
+	private static final int LEFT_WIDTH = 96;
 
-	public PlatformScreen(Platform platform, Screen previousScreen) {
-		super(previousScreen);
-		this.platform = platform;
-
-		platformNumberTextField = new BetterTextFieldWidget(16, TextCase.DEFAULT, null, TranslationProvider.GUI_MTR_PLATFORM_NUMBER.getString(), FULL_WIDGET_WIDTH, null);
-		dwellTimeSlider = new BetterSliderWidget(MAX_DWELL_TIME / DWELL_TIME_SLIDER_SCALE - 1, PlatformScreen::timeoutFormatter, TranslationProvider.GUI_MTR_DWELL_TIME.getString(), FULL_WIDGET_WIDTH, null);
-	}
-
-	@Override
-	protected void init() {
-		super.init();
-		final int widgetColumn1 = getWidgetColumn1();
-
-		int widgetY = 0;
-		platformNumberTextField.setPosition(widgetColumn1, widgetY);
-		platformNumberTextField.setText(platform.getName());
-
-		widgetY += GuiHelper.DEFAULT_LINE_SIZE + GuiHelper.DEFAULT_PADDING;
-		dwellTimeSlider.setPosition(widgetColumn1, widgetY);
-		dwellTimeSlider.setValue((int) (platform.getDwellTime() / DWELL_TIME_SLIDER_SCALE) - 1);
-
-		addDrawableChild(platformNumberTextField);
+	public PlatformScreen(Platform platform, ScreenBase previousScreenLegacy) {
+		super(platform, ObjectImmutableList.of(
+			new ObjectObjectImmutablePair<>(ReleasedDynamicTextureRegistry.BRUSH_TEXTURE.get(), TranslationProvider.GUI_MTR_PLATFORM.getString())
+		), TranslationProvider.GUI_MTR_PLATFORM_NUMBER, name -> (Utilities.formatName(platform.getStationName()) + "   " + TranslationProvider.GUI_MTR_PLATFORM.getString(Utilities.formatName(name))).trim(), null, previousScreenLegacy);
 
 		if (!platform.getTransportMode().continuousMovement) {
-			addDrawableChild(dwellTimeSlider);
+			GuiHelper.createLabel(firstTabScrollComponent, TranslationProvider.GUI_MTR_DWELL_TIME.getString());
+
+			dwellTimeMinutesNumberInput = (NumberInputComponent) new NumberInputComponent(0, MAX_DWELL_TIME_MINUTES, 1, false, null)
+				.setChildOf(firstTabScrollComponent)
+				.setY(new SiblingConstraint())
+				.setWidth(new PixelConstraint(LEFT_WIDTH));
+
+			dwellTimeMinutesNumberInput.setSuffix(TranslationProvider.GUI_MTR_MINUTES.getString(""));
+			final long dwellTimeMinutes = platform.getDwellTime() / Utilities.MILLIS_PER_MINUTE;
+			dwellTimeMinutesNumberInput.setValue(dwellTimeMinutes);
+
+			dwellTimeSecondsNumberInput = (NumberInputComponent) new NumberInputComponent(0, 59.5, 0.5, true, null)
+				.setChildOf(firstTabScrollComponent)
+				.setY(new SiblingConstraint())
+				.setWidth(new PixelConstraint(LEFT_WIDTH));
+
+			dwellTimeSecondsNumberInput.setSuffix(TranslationProvider.GUI_MTR_SECONDS.getString(""));
+			dwellTimeSecondsNumberInput.setValue(((double) (platform.getDwellTime() % Utilities.MILLIS_PER_MINUTE) / Utilities.MILLIS_PER_SECOND));
+		} else {
+			dwellTimeMinutesNumberInput = null;
+			dwellTimeSecondsNumberInput = null;
 		}
-	}
 
-	@Override
-	public void close() {
-		platform.setName(platformNumberTextField.getText());
-		platform.setDwellTime((long) dwellTimeSlider.getIntValue() * DWELL_TIME_SLIDER_SCALE + DWELL_TIME_SLIDER_SCALE);
+		new UIWrappedText(TranslationProvider.GUI_MTR_ROUTES_AT_PLATFORM.getMutableText(platform.routes.size()).getString(), false)
+			.setChildOf(firstTabScrollComponent)
+			.setY(new SiblingConstraint(GuiHelper.DEFAULT_PADDING))
+			.setWidth(new RelativeConstraint())
+			.setColor(new Color(GuiHelper.MINECRAFT_GUI_TITLE_TEXT_COLOR));
 
-		RegistryClient.sendPacketToServer(new PacketUpdateData(new UpdateDataRequest(MinecraftClientData.getDashboardInstance()).addPlatform(platform)));
-		super.close();
-	}
+		GuiHelper.createSpacing(firstTabScrollComponent);
 
-	@Override
-	public ObjectArrayList<MutableText> getScreenTitle() {
-		return ObjectArrayList.of(TranslationProvider.GUI_MTR_PLATFORM.getMutableText(Utilities.formatName(platformNumberTextField.getText())));
-	}
+		platform.routes.stream().sorted().forEach(route -> {
+			final UIContainer routeContainer = (UIContainer) new UIContainer()
+				.setChildOf(firstTabScrollComponent)
+				.setY(new SiblingConstraint())
+				.setWidth(new RelativeConstraint())
+				.setHeight(new PixelConstraint(GuiHelper.MINECRAFT_TEXT_LINE_HEIGHT));
 
-	@Override
-	public ObjectArrayList<MutableText> getScreenSubtitle() {
-		return ObjectArrayList.of(Text.literal(Utilities.formatName(platform.getStationName())));
-	}
+			new UIText("- ", false)
+				.setChildOf(routeContainer)
+				.setColor(new Color(route.getColor()));
 
-	@Override
-	public ObjectArrayList<MutableText> getScreenDescription() {
-		final ObjectArrayList<MutableText> lines = new ObjectArrayList<>();
-		lines.add(TranslationProvider.GUI_MTR_ROUTES_AT_PLATFORM.getMutableText(platform.routes.size()));
-		platform.routes.stream().sorted().map(route -> {
 			final String routeNumber = Utilities.formatName(route.getRouteNumber());
-			return Text.literal("- ").withColor(route.getColor()).append(Text.literal(String.format("%s%s", Utilities.formatName(route.getName()), routeNumber.isEmpty() ? "" : " " + routeNumber)).withColor(GuiHelper.WHITE_COLOR));
-		}).forEach(lines::add);
-		return lines;
+			new UIText(Utilities.formatName(route.getName()) + (routeNumber.isEmpty() ? "" : " " + routeNumber), false)
+				.setChildOf(routeContainer)
+				.setX(new SiblingConstraint())
+				.setColor(new Color(GuiHelper.MINECRAFT_GUI_TITLE_TEXT_COLOR));
+		});
 	}
 
-	private static String timeoutFormatter(int value) {
-		final int millis = value * DWELL_TIME_SLIDER_SCALE + DWELL_TIME_SLIDER_SCALE;
-		return String.format("%s %s", TranslationProvider.GUI_MTR_MINUTES.getString(millis / 60 / 1000), TranslationProvider.GUI_MTR_SECONDS.getString((millis / 1000F) % 60));
+	@Override
+	protected void onClose() {
+		if (dwellTimeMinutesNumberInput != null && dwellTimeSecondsNumberInput != null) {
+			data.setDwellTime((long) (dwellTimeMinutesNumberInput.getValue() * Utilities.MILLIS_PER_MINUTE + dwellTimeSecondsNumberInput.getValue() * Utilities.MILLIS_PER_SECOND));
+		}
+
+		RegistryClient.sendPacketToServer(new PacketUpdateData(new UpdateDataRequest(MinecraftClientData.getDashboardInstance()).addPlatform(data)));
 	}
 }

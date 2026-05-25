@@ -43,6 +43,7 @@ public final class ReleasedDynamicTextureRegistry extends DynamicReloadableRegis
 
 	public static final Holder BRUSH_TEXTURE = INSTANCE.create(Identifier.of(MTR.MOD_ID, "textures/item/brush.png"));
 	public static final Holder EXIT_TEXTURE = INSTANCE.create(Identifier.of(MTR.MOD_ID, "textures/block/sign/exit_1.png"));
+	public static final Holder DRIVER_KEY_TEXTURE = INSTANCE.create(Identifier.of(MTR.MOD_ID, "textures/item/driver_key.png"));
 
 	public static final Holder STICK_TEXTURE = INSTANCE.create(Identifier.of("textures/item/stick.png"));
 	public static final Holder CLOCK_TEXTURE = INSTANCE.create(Identifier.of("textures/item/clock_00.png"));
