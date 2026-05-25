@@ -13,8 +13,8 @@ import java.util.function.Consumer;
 
 public final class RouteListSelectorScreen extends ListSelectorScreen<Route, NameColorDataBase> {
 
-	public RouteListSelectorScreen(Consumer<ObjectArrayList<Route>> onClose, WindowBase previousScreen) {
-		super(true, false, false, onClose, previousScreen);
+	public RouteListSelectorScreen(Consumer<ObjectArrayList<Route>> onClose, boolean canSelectDuplicate, boolean canManuallySortSelectedList, WindowBase previousScreen) {
+		super(true, canSelectDuplicate, canManuallySortSelectedList, onClose, previousScreen);
 	}
 
 	@Override

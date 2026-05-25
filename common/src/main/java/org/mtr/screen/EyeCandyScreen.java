@@ -38,7 +38,7 @@ import java.util.Random;
 /**
  * Elementa screen for configuring eye-candy model and transform parameters.
  */
-public class EyeCandyScreen extends WindowBase {
+public final class EyeCandyScreen extends WindowBase {
 
 	private final BlockPos blockPos;
 	@Nullable

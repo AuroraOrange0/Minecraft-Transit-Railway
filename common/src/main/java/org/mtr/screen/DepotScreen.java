@@ -1,10 +1,14 @@
 package org.mtr.screen;
 
+import gg.essential.elementa.components.ScrollComponent;
+import gg.essential.elementa.components.UIContainer;
+import gg.essential.elementa.components.UIWrappedText;
+import gg.essential.elementa.constraints.*;
 import gg.essential.universal.UMinecraft;
-import net.minecraft.client.gui.screen.Screen;
+import gg.essential.universal.utils.ReleasedDynamicTexture;
 import net.minecraft.text.MutableText;
-import net.minecraft.text.Text;
 import net.minecraft.util.math.ColorHelper;
+import org.jspecify.annotations.Nullable;
 import org.mtr.MTR;
 import org.mtr.client.MinecraftClientData;
 import org.mtr.core.data.*;
@@ -16,6 +20,7 @@ import org.mtr.generated.lang.TranslationProvider;
 import org.mtr.libraries.it.unimi.dsi.fastutil.longs.Long2LongAVLTreeMap;
 import org.mtr.libraries.it.unimi.dsi.fastutil.longs.LongArrayList;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArraySet;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectImmutableList;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectObjectImmutablePair;
 import org.mtr.packet.PacketDepotClear;
@@ -24,289 +29,292 @@ import org.mtr.packet.PacketDepotInstantDeploy;
 import org.mtr.packet.PacketUpdateData;
 import org.mtr.registry.RegistryClient;
 import org.mtr.tool.GuiHelper;
+import org.mtr.tool.ReleasedDynamicTextureRegistry;
 import org.mtr.widget.*;
 
 import java.text.DateFormat;
 import java.util.Calendar;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.stream.Collectors;
 
-public final class DepotScreen extends ScrollableScreenBase {
+public final class DepotScreen extends NameColorDataScreenBase<Depot> {
 
-	private int tempColor;
 	private final LongArrayList tempRealTimeDepartures = new LongArrayList();
 
-	private final Depot depot;
-	private final boolean showScheduleControls;
+	private final UIWrappedText[] successfulSegmentsLabels = new UIWrappedText[SUCCESSFUL_SEGMENTS_LABELS_COUNT];
+	private final UIWrappedText depotInstructionsLabel;
+	private final CheckboxComponent repeatIndefinitelyCheckbox;
+	private final CheckboxComponent useMinecraftTimeCheckbox;
+	private final CheckboxComponent useRealTimeCheckbox;
+	private final ScrollComponent minecraftScheduleContainer;
+	private final UIContainer realTimeScheduleContainer;
+	private final NumberInputComponent[] minecraftTimeNumberInputs = new NumberInputComponent[Utilities.HOURS_PER_DAY];
+	private final TextInputComponent realTimeDepartureTextInput;
+	private final ButtonComponent addRealTimeDepartureButton;
+	private final ListComponent<RealTimeDepartureForList> realTimeDeparturesListComponent;
 
-	private final BetterTextFieldWidget nameTextField;
-	private final BetterButtonWidget openColorSelectorButton;
-
-	private final BetterButtonWidget editInstructionsButton;
-	private final BetterButtonWidget instantDeployButton;
-	private final BetterButtonWidget generateRouteButton;
-	private final BetterButtonWidget clearVehiclesButton;
-	private final BetterCheckboxWidget repeatIndefinitelyCheckbox;
-
-	private final BetterCheckboxWidget useMinecraftTimeCheckbox;
-	private final BetterCheckboxWidget useRealTimeCheckbox;
-	private final BetterTextFieldWidget realTimeDepartureTextField;
-	private final BetterButtonWidget addRealTimeDepartureButton;
-
-	private final BetterSliderWidget[] minecraftTimeSliders = new BetterSliderWidget[Utilities.HOURS_PER_DAY];
-	private final ScrollableListWidget<RealTimeDepartureForList> realTimeDeparturesListWidget = new ScrollableListWidget<>();
-	private final ColorSelectorWidget colorSelector;
-
+	private static final int SUCCESSFUL_SEGMENTS_LABELS_COUNT = 12;
 	private static final int MAX_TRAINS_PER_HOUR = 5;
 	private static final int FREQUENCY_MULTIPLIER = 4;
 	private static final Long2LongAVLTreeMap DEPOT_GENERATION_START_TIME = new Long2LongAVLTreeMap();
 
-	public DepotScreen(Depot depot, Screen previousScreen) {
-		super(previousScreen);
-		this.depot = depot;
-		showScheduleControls = !depot.getTransportMode().continuousMovement;
+	public DepotScreen(Depot depot, @Nullable ScreenBase previousScreenLegacy) {
+		super(depot, getTabs(depot), TranslationProvider.GUI_MTR_DEPOT_NAME, name -> TranslationProvider.GUI_MTR_DEPOT.getString(Utilities.formatName(name)), TranslationProvider.GUI_MTR_DEPOT_COLOR, previousScreenLegacy);
+		GuiHelper.createSpacing(firstTabScrollComponent);
+		depotInstructionsLabel = GuiHelper.createLabel(firstTabScrollComponent, "");
 
-		openColorSelectorButton = new BetterButtonWidget(GuiHelper.COLOR_TEXTURE_ID, null, 0, this::onOpenColorSelector);
-		nameTextField = new BetterTextFieldWidget(1024, TextCase.DEFAULT, null, TranslationProvider.GUI_MTR_STATION_NAME.getString(), FULL_WIDGET_WIDTH - GuiHelper.DEFAULT_PADDING - openColorSelectorButton.getWidth(), null);
+		final ButtonComponent editInstructionsButton = (ButtonComponent) new ButtonComponent(true)
+			.setChildOf(firstTabScrollComponent)
+			.setY(new SiblingConstraint())
+			.setWidth(new RelativeConstraint());
 
-		editInstructionsButton = new BetterButtonWidget(GuiHelper.EDIT_TEXTURE_ID, TranslationProvider.GUI_MTR_EDIT_INSTRUCTIONS.getString(), HALF_WIDGET_WIDTH, () -> {
-			close();
-			final ObjectArrayList<DashboardListItem> routes = new ObjectArrayList<>(MinecraftClientData.getFilteredDataSet(depot.getTransportMode(), MinecraftClientData.getDashboardInstance().routes));
-			Collections.sort(routes);
-			UMinecraft.setCurrentScreenObj(new DashboardListSelectorScreen(new ObjectImmutableList<>(routes), depot.getRouteIds(), false, true, this));
-		});
-		instantDeployButton = new BetterButtonWidget(null, TranslationProvider.GUI_MTR_INSTANT_DEPLOY.getString(), HALF_WIDGET_WIDTH, () -> {
+		editInstructionsButton.setText(TranslationProvider.GUI_MTR_EDIT_INSTRUCTIONS.getString());
+		editInstructionsButton.onClick(() -> UMinecraft.setCurrentScreenObj(createRouteListSelectorScreen()));
+
+		final UIContainer buttonsContainer = (UIContainer) new UIContainer()
+			.setChildOf(firstTabScrollComponent)
+			.setY(new SiblingConstraint())
+			.setWidth(new RelativeConstraint())
+			.setHeight(new PixelConstraint(20));
+
+		final ButtonComponent generateRouteButton = (ButtonComponent) new ButtonComponent(false)
+			.setChildOf(buttonsContainer)
+			.setWidth(new ScaleConstraint(new RelativeConstraint(), 1F / 3));
+
+		generateRouteButton.setText(TranslationProvider.GUI_MTR_REFRESH_PATH.getString());
+		generateRouteButton.onClick(this::refreshPath);
+
+		final ButtonComponent instantDeployButton = (ButtonComponent) new ButtonComponent(false)
+			.setChildOf(buttonsContainer)
+			.setX(new SiblingConstraint())
+			.setWidth(new ScaleConstraint(new RelativeConstraint(), 1F / 3));
+
+		instantDeployButton.setText(TranslationProvider.GUI_MTR_INSTANT_DEPLOY.getString());
+		instantDeployButton.onClick(() -> {
 			final DepotOperationByIds depotOperationByIds = new DepotOperationByIds();
 			depotOperationByIds.addDepotId(depot.getId());
 			RegistryClient.sendPacketToServer(new PacketDepotInstantDeploy(depotOperationByIds));
 		});
-		generateRouteButton = new BetterButtonWidget(null, TranslationProvider.GUI_MTR_REFRESH_PATH.getString(), HALF_WIDGET_WIDTH, () -> {
-			final DepotOperationByIds depotOperationByIds = new DepotOperationByIds();
-			depotOperationByIds.addDepotId(depot.getId());
-			DEPOT_GENERATION_START_TIME.put(depot.getId(), System.currentTimeMillis());
-			RegistryClient.sendPacketToServer(new PacketDepotGenerate(depotOperationByIds));
-		});
-		clearVehiclesButton = new BetterButtonWidget(null, TranslationProvider.GUI_MTR_CLEAR_VEHICLES.getString(), HALF_WIDGET_WIDTH, () -> {
+
+		final ButtonComponent clearVehiclesButton = (ButtonComponent) new ButtonComponent(false)
+			.setChildOf(buttonsContainer)
+			.setX(new SiblingConstraint())
+			.setWidth(new ScaleConstraint(new RelativeConstraint(), 1F / 3));
+
+		clearVehiclesButton.setText(TranslationProvider.GUI_MTR_CLEAR_VEHICLES.getString());
+		clearVehiclesButton.onClick(() -> {
 			final DepotOperationByIds depotOperationByIds = new DepotOperationByIds();
 			depotOperationByIds.addDepotId(depot.getId());
 			RegistryClient.sendPacketToServer(new PacketDepotClear(depotOperationByIds));
 		});
-		repeatIndefinitelyCheckbox = new BetterCheckboxWidget(TranslationProvider.GUI_MTR_REPEAT_INDEFINITELY.getString(), () -> {
-			final DepotOperationByIds depotOperationByIds = new DepotOperationByIds();
-			depotOperationByIds.addDepotId(depot.getId());
-			RegistryClient.sendPacketToServer(new PacketDepotGenerate(depotOperationByIds));
-		});
 
-		useMinecraftTimeCheckbox = new BetterCheckboxWidget(TranslationProvider.GUI_MTR_SCHEDULE_MODE_MINECRAFT_TIME.getString(), this::toggleUseMinecraftTime);
-		useRealTimeCheckbox = new BetterCheckboxWidget(TranslationProvider.GUI_MTR_SCHEDULE_MODE_REAL_TIME.getString(), this::toggleUseRealTime);
-		addRealTimeDepartureButton = new BetterButtonWidget(GuiHelper.ADD_TEXTURE_ID, TranslationProvider.GUI_MTR_ADD_DEPARTURE.getString(), 0, this::addRealTimeDeparture);
-		realTimeDepartureTextField = new BetterTextFieldWidget(25, TextCase.DEFAULT, "[^\\d:+* ]", TranslationProvider.GUI_MTR_REALTIME_DEPARTURE.getString(), FULL_WIDGET_WIDTH - GuiHelper.DEFAULT_PADDING - addRealTimeDepartureButton.getWidth(), this::textFieldDepartureCallback);
+		GuiHelper.createSpacing(firstTabScrollComponent);
+
+		repeatIndefinitelyCheckbox = (CheckboxComponent) new CheckboxComponent()
+			.setChildOf(firstTabScrollComponent)
+			.setY(new SiblingConstraint())
+			.setWidth(new RelativeConstraint());
+
+		repeatIndefinitelyCheckbox.setText(TranslationProvider.GUI_MTR_REPEAT_INDEFINITELY.getString());
+		repeatIndefinitelyCheckbox.setChecked(depot.getRepeatInfinitely());
+		repeatIndefinitelyCheckbox.onClick(this::refreshPath);
+
+		GuiHelper.createSpacing(firstTabScrollComponent);
+		for (int i = 0; i < SUCCESSFUL_SEGMENTS_LABELS_COUNT; i++) {
+			successfulSegmentsLabels[i] = GuiHelper.createLabel(firstTabScrollComponent, "");
+		}
+
+		final UIContainer scheduleTabContainer = depot.getTransportMode().continuousMovement ? new UIContainer() : backgroundComponent.containers[2];
+
+		useMinecraftTimeCheckbox = (CheckboxComponent) new CheckboxComponent()
+			.setChildOf(scheduleTabContainer)
+			.setY(new SiblingConstraint())
+			.setWidth(new RelativeConstraint());
+
+		useMinecraftTimeCheckbox.setText(TranslationProvider.GUI_MTR_SCHEDULE_MODE_MINECRAFT_TIME.getString());
+		useMinecraftTimeCheckbox.setChecked(!depot.getUseRealTime());
+		useMinecraftTimeCheckbox.onClick(this::toggleUseMinecraftTime);
+
+		useRealTimeCheckbox = (CheckboxComponent) new CheckboxComponent()
+			.setChildOf(scheduleTabContainer)
+			.setY(new SiblingConstraint())
+			.setWidth(new RelativeConstraint());
+
+		useRealTimeCheckbox.setText(TranslationProvider.GUI_MTR_SCHEDULE_MODE_REAL_TIME.getString());
+		useRealTimeCheckbox.setChecked(depot.getUseRealTime());
+		useRealTimeCheckbox.onClick(this::toggleUseRealTime);
+
+		final UIContainer scheduleContainer = (UIContainer) new UIContainer()
+			.setChildOf(scheduleTabContainer)
+			.setY(new SiblingConstraint(GuiHelper.DEFAULT_PADDING))
+			.setWidth(new RelativeConstraint())
+			.setHeight(new SubtractiveConstraint(new FillConstraint(), new PixelConstraint(GuiHelper.DEFAULT_PADDING)));
+
+		minecraftScheduleContainer = ((ScrollPanelComponent) new ScrollPanelComponent(true)
+			.setChildOf(scheduleContainer)
+			.setWidth(new RelativeConstraint())
+			.setHeight(new RelativeConstraint())).contentContainer;
 
 		for (int i = 0; i < Utilities.HOURS_PER_DAY; i++) {
-			final int currentIndex = i;
-			minecraftTimeSliders[currentIndex] = new BetterSliderWidget(MAX_TRAINS_PER_HOUR * 2, DepotScreen::getSliderString, String.format("%1$02d:00–%1$02d:59", currentIndex), HALF_WIDGET_WIDTH, value -> {
-				for (int j = 0; j < Utilities.HOURS_PER_DAY; j++) {
-					if (j != currentIndex) {
-						minecraftTimeSliders[j].setValue(value);
-					}
-				}
-			});
+			minecraftTimeNumberInputs[i] = (NumberInputComponent) new NumberInputComponent(0, MAX_TRAINS_PER_HOUR * 2, 1, false, null)
+				.setChildOf(minecraftScheduleContainer)
+				.setY(new SiblingConstraint())
+				.setWidth(new RelativeConstraint());
+
+			minecraftTimeNumberInputs[i].setPrefix(String.format("%1$02d:00–%1$02d:59   ", i));
+			minecraftTimeNumberInputs[i].setValue(depot.getFrequency(i));
 		}
-		realTimeDeparturesListWidget.setBounds(FULL_WIDGET_WIDTH, 0, FULL_WIDGET_WIDTH, Integer.MAX_VALUE);
-		colorSelector = new ColorSelectorWidget(width / 2, () -> enableControls(true), this::applyBlur);
-	}
 
-	@Override
-	protected void init() {
-		super.init();
-		final int widgetColumn1 = getWidgetColumn1();
-		final int widgetColumn2Of2 = getWidgetColumn2Of2();
+		realTimeScheduleContainer = (UIContainer) new UIContainer()
+			.setChildOf(scheduleContainer)
+			.setWidth(new RelativeConstraint())
+			.setHeight(new RelativeConstraint());
 
-		int widgetY = 0;
-		nameTextField.setPosition(widgetColumn1, widgetY);
-		nameTextField.setText(depot.getName());
-		openColorSelectorButton.setPosition(widgetColumn1 + FULL_WIDGET_WIDTH - openColorSelectorButton.getWidth(), widgetY);
-		openColorSelectorButton.setBackgroundColor(ColorHelper.fullAlpha(depot.getColor()));
-		tempColor = depot.getColor();
+		final UIContainer addRealTimeDepartureContainer = (UIContainer) new UIContainer()
+			.setChildOf(realTimeScheduleContainer)
+			.setWidth(new RelativeConstraint())
+			.setHeight(new PixelConstraint(20));
 
-		widgetY += GuiHelper.DEFAULT_LINE_SIZE + GuiHelper.DEFAULT_PADDING;
-		editInstructionsButton.setPosition(widgetColumn1, widgetY);
-		instantDeployButton.setPosition(widgetColumn2Of2, widgetY);
-		widgetY += GuiHelper.DEFAULT_LINE_SIZE + GuiHelper.DEFAULT_PADDING;
-		generateRouteButton.setPosition(widgetColumn1, widgetY);
-		clearVehiclesButton.setPosition(widgetColumn2Of2, widgetY);
-		widgetY += GuiHelper.DEFAULT_LINE_SIZE + GuiHelper.DEFAULT_PADDING;
-		repeatIndefinitelyCheckbox.setPosition(widgetColumn1, widgetY);
-		repeatIndefinitelyCheckbox.isChecked = depot.getRepeatInfinitely();
+		realTimeDepartureTextInput = (TextInputComponent) new TextInputComponent()
+			.setChildOf(addRealTimeDepartureContainer)
+			.setWidth(new ScaleConstraint(new RelativeConstraint(), 0.6F))
+			.setHeight(new PixelConstraint(20));
 
-		widgetY += GuiHelper.DEFAULT_LINE_SIZE * 2;
-		useMinecraftTimeCheckbox.setPosition(widgetColumn1, widgetY);
-		useMinecraftTimeCheckbox.isChecked = !depot.getUseRealTime();
-		useRealTimeCheckbox.setPosition(widgetColumn2Of2, widgetY);
-		useRealTimeCheckbox.isChecked = depot.getUseRealTime();
-		widgetY += GuiHelper.DEFAULT_LINE_SIZE + GuiHelper.DEFAULT_PADDING;
-		realTimeDepartureTextField.setPosition(widgetColumn1, widgetY);
-		addRealTimeDepartureButton.setPosition(widgetColumn1 + FULL_WIDGET_WIDTH - addRealTimeDepartureButton.getWidth(), widgetY);
+		realTimeDepartureTextInput.setMaxLength(25);
+		realTimeDepartureTextInput.setFilter("[^\\d:+* ]");
+		realTimeDepartureTextInput.setPlaceholderText("07:10:00 + 10 * 00:03:00");
+		realTimeDepartureTextInput.onChange(this::textFieldDepartureCallback);
 
-		realTimeDeparturesListWidget.setPosition(widgetColumn1, widgetY + GuiHelper.DEFAULT_LINE_SIZE + GuiHelper.DEFAULT_PADDING);
-		for (int i = 0; i < Utilities.HOURS_PER_DAY / 2; i++) {
-			final int index2 = i + Utilities.HOURS_PER_DAY / 2;
-			minecraftTimeSliders[i].setPosition(widgetColumn1, widgetY);
-			minecraftTimeSliders[i].setValue((int) depot.getFrequency(i));
-			minecraftTimeSliders[index2].setPosition(widgetColumn2Of2, widgetY);
-			minecraftTimeSliders[index2].setValue((int) depot.getFrequency(index2));
-			widgetY += GuiHelper.DEFAULT_LINE_SIZE + GuiHelper.DEFAULT_PADDING;
-		}
+		addRealTimeDepartureButton = (ButtonComponent) new ButtonComponent(false)
+			.setChildOf(addRealTimeDepartureContainer)
+			.setX(new SiblingConstraint(GuiHelper.DEFAULT_PADDING))
+			.setWidth(new SubtractiveConstraint(new ScaleConstraint(new RelativeConstraint(), 0.4F), new PixelConstraint(GuiHelper.DEFAULT_PADDING)));
+
+		addRealTimeDepartureButton.setText(TranslationProvider.GUI_MTR_ADD_DEPARTURE.getString());
+		addRealTimeDepartureButton.onClick(this::addRealTimeDeparture);
+
+		final SlotBackgroundComponent slotBackgroundComponent = (SlotBackgroundComponent) new SlotBackgroundComponent()
+			.setChildOf(realTimeScheduleContainer)
+			.setY(new SiblingConstraint(GuiHelper.DEFAULT_PADDING))
+			.setWidth(new RelativeConstraint())
+			.setHeight(new SubtractiveConstraint(new FillConstraint(), new PixelConstraint(GuiHelper.DEFAULT_PADDING)));
+
+		realTimeDeparturesListComponent = GuiHelper.createListComponent(slotBackgroundComponent);
+
 		tempRealTimeDepartures.clear();
 		tempRealTimeDepartures.addAll(depot.getRealTimeDepartures());
 		toggleControls();
+		updateRoutes();
 		setRealTimeDeparturesListItems();
-
-		colorSelector.setPosition(width / 4, height * 2);
-
-		addDrawableChild(nameTextField);
-		addDrawableChild(openColorSelectorButton);
-
-		addDrawableChild(editInstructionsButton);
-		addDrawableChild(instantDeployButton);
-		addDrawableChild(generateRouteButton);
-		addDrawableChild(clearVehiclesButton);
-
-		if (showScheduleControls) {
-			addDrawableChild(repeatIndefinitelyCheckbox);
-
-			addDrawableChild(useMinecraftTimeCheckbox);
-			addDrawableChild(useRealTimeCheckbox);
-			addDrawableChild(realTimeDepartureTextField);
-			addDrawableChild(addRealTimeDepartureButton);
-
-			for (final BetterSliderWidget minecraftTimeSlider : minecraftTimeSliders) {
-				addDrawableChild(minecraftTimeSlider);
-			}
-			addDrawableChild(realTimeDeparturesListWidget);
-		}
-
-		addDrawableChild(colorSelector);
 	}
 
 	@Override
-	public void tick() {
-		super.tick();
-		if (depot.routes.isEmpty()) {
-			repeatIndefinitelyCheckbox.visible = false;
-		} else {
-			final Route firstRoute = MinecraftClientData.getDashboardInstance().routeIdMap.get(depot.routes.getFirst().getId());
-			final Route lastRoute = MinecraftClientData.getDashboardInstance().routeIdMap.get(depot.routes.getLast().getId());
-			repeatIndefinitelyCheckbox.visible = firstRoute != null && lastRoute != null && !firstRoute.getRoutePlatforms().isEmpty() && !lastRoute.getRoutePlatforms().isEmpty() && firstRoute.getRoutePlatforms().getFirst().getPlatform().getId() == lastRoute.getRoutePlatforms().getLast().getPlatform().getId();
-		}
-	}
-
-	@Override
-	public void close() {
-		depot.setName(nameTextField.getText());
-		depot.setColor(tempColor);
-
-		depot.setRepeatInfinitely(repeatIndefinitelyCheckbox.visible && repeatIndefinitelyCheckbox.isChecked);
-		depot.setUseRealTime(useRealTimeCheckbox.isChecked);
-
-		if (useRealTimeCheckbox.isChecked) {
-			depot.getRealTimeDepartures().clear();
-			depot.getRealTimeDepartures().addAll(tempRealTimeDepartures);
-		} else {
-			for (int i = 0; i < Utilities.HOURS_PER_DAY; i++) {
-				depot.setFrequency(i, minecraftTimeSliders[i].getIntValue());
-			}
-		}
-
-		RegistryClient.sendPacketToServer(new PacketUpdateData(new UpdateDataRequest(MinecraftClientData.getDashboardInstance()).addDepot(depot)));
-		super.close();
-	}
-
-	@Override
-	public ObjectArrayList<MutableText> getScreenTitle() {
-		return ObjectArrayList.of(Text.literal(Utilities.formatName(nameTextField.getText())));
-	}
-
-	@Override
-	public ObjectArrayList<MutableText> getScreenSubtitle() {
-		return ObjectArrayList.of(TranslationProvider.GUI_MTR_SIDINGS_IN_DEPOT.getMutableText(depot.savedRails.size()));
-	}
-
-	@Override
-	public ObjectArrayList<MutableText> getScreenDescription() {
-		final ObjectArrayList<MutableText> description = new ObjectArrayList<>();
+	public void onTick() {
+		super.onTick();
 
 		// Temporary workaround to get the latest depot path generation status
-		final Depot newDepot = MinecraftClientData.getDashboardInstance().depotIdMap.get(depot.getId());
+		final Depot newDepot = MinecraftClientData.getDashboardInstance().depotIdMap.get(data.getId());
 		if (newDepot != null) {
 			final String[] stringSplit = getSuccessfulSegmentsText(newDepot).split("\\|");
-			for (final String stringPart : stringSplit) {
-				description.add(Text.literal(stringPart));
+			for (int i = 0; i < SUCCESSFUL_SEGMENTS_LABELS_COUNT; i++) {
+				successfulSegmentsLabels[i].setText(i >= stringSplit.length ? "" : stringSplit[i]);
 			}
 		}
 
-		return description;
+		for (int i = 0; i < Utilities.HOURS_PER_DAY; i++) {
+			minecraftTimeNumberInputs[i].setSuffix(getSliderString(minecraftTimeNumberInputs[i].getValue()));
+		}
 	}
 
-	private void onOpenColorSelector() {
-		colorSelector.setColorCallback(color -> {
-			tempColor = color;
-			openColorSelectorButton.setBackgroundColor(ColorHelper.fullAlpha(color));
-			setRealTimeDeparturesListItems();
-		}, tempColor);
-		colorSelector.setY((height - colorSelector.getHeight()) / 2);
-		enableControls(false);
+	@Override
+	protected void onClose() {
+		data.setRepeatInfinitely(shouldShowRepeatIndefinitelyCheckbox() && repeatIndefinitelyCheckbox.isChecked());
+		data.setUseRealTime(useRealTimeCheckbox.isChecked());
+
+		if (useRealTimeCheckbox.isChecked()) {
+			data.getRealTimeDepartures().clear();
+			data.getRealTimeDepartures().addAll(tempRealTimeDepartures);
+		} else {
+			for (int i = 0; i < Utilities.HOURS_PER_DAY; i++) {
+				data.setFrequency(i, (int) minecraftTimeNumberInputs[i].getValue());
+			}
+		}
+
+		RegistryClient.sendPacketToServer(new PacketUpdateData(new UpdateDataRequest(MinecraftClientData.getDashboardInstance()).addDepot(data)));
+	}
+
+	private void refreshPath() {
+		final DepotOperationByIds depotOperationByIds = new DepotOperationByIds();
+		depotOperationByIds.addDepotId(data.getId());
+		DEPOT_GENERATION_START_TIME.put(data.getId(), System.currentTimeMillis());
+		RegistryClient.sendPacketToServer(new PacketDepotGenerate(depotOperationByIds));
+	}
+
+	private void updateRoutes() {
+		depotInstructionsLabel.setText(TranslationProvider.GUI_MTR_DEPOT_INSTRUCTIONS.getString(data.getRouteIds().size()));
+		if (shouldShowRepeatIndefinitelyCheckbox()) {
+			repeatIndefinitelyCheckbox.unhide(true);
+		} else {
+			repeatIndefinitelyCheckbox.hide(true);
+		}
+	}
+
+	private boolean shouldShowRepeatIndefinitelyCheckbox() {
+		if (data.getTransportMode().continuousMovement || data.getRouteIds().isEmpty()) {
+			return false;
+		} else {
+			final Route firstRoute = MinecraftClientData.getDashboardInstance().routeIdMap.get((long) data.getRouteIds().getFirst());
+			final Route lastRoute = MinecraftClientData.getDashboardInstance().routeIdMap.get((long) data.getRouteIds().getLast());
+			return firstRoute != null && lastRoute != null && !firstRoute.getRoutePlatforms().isEmpty() && !lastRoute.getRoutePlatforms().isEmpty() && firstRoute.getRoutePlatforms().getFirst().getPlatform().getId() == lastRoute.getRoutePlatforms().getLast().getPlatform().getId();
+		}
+	}
+
+	private RouteListSelectorScreen createRouteListSelectorScreen() {
+		final RouteListSelectorScreen routeListSelectorScreen = new RouteListSelectorScreen(selectedRoutes -> {
+			data.getRouteIds().clear();
+			selectedRoutes.forEach(route -> data.getRouteIds().add(route.getId()));
+			updateRoutes();
+		}, true, true, this);
+
+		final ObjectArraySet<Route> routes = MinecraftClientData.getFilteredDataSet(data.getTransportMode(), MinecraftClientData.getDashboardInstance().routes);
+		routeListSelectorScreen.setAvailableList(routes);
+		routes.forEach(route -> {
+			if (data.getRouteIds().contains(route.getId())) {
+				routeListSelectorScreen.selectData(route);
+			}
+		});
+
+		return routeListSelectorScreen;
 	}
 
 	private void toggleUseMinecraftTime() {
-		useRealTimeCheckbox.isChecked = !useMinecraftTimeCheckbox.isChecked;
+		useRealTimeCheckbox.setChecked(!useMinecraftTimeCheckbox.isChecked());
 		toggleControls();
 	}
 
 	private void toggleUseRealTime() {
-		useMinecraftTimeCheckbox.isChecked = !useRealTimeCheckbox.isChecked;
+		useMinecraftTimeCheckbox.setChecked(!useRealTimeCheckbox.isChecked());
 		toggleControls();
 	}
 
 	private void toggleControls() {
-		for (final BetterSliderWidget minecraftTimeSlider : minecraftTimeSliders) {
-			minecraftTimeSlider.visible = useMinecraftTimeCheckbox.isChecked;
+		if (useRealTimeCheckbox.isChecked()) {
+			minecraftScheduleContainer.hide(true);
+			realTimeScheduleContainer.unhide(true);
+		} else {
+			minecraftScheduleContainer.unhide(true);
+			realTimeScheduleContainer.hide(true);
 		}
-		realTimeDepartureTextField.visible = useRealTimeCheckbox.isChecked;
-		addRealTimeDepartureButton.visible = useRealTimeCheckbox.isChecked;
-		realTimeDeparturesListWidget.visible = useRealTimeCheckbox.isChecked;
 	}
 
-	private void enableControls(boolean enabled) {
-		nameTextField.active = enabled;
-		openColorSelectorButton.active = enabled;
-
-		editInstructionsButton.active = enabled;
-		instantDeployButton.active = enabled;
-		generateRouteButton.active = enabled;
-		clearVehiclesButton.active = enabled;
-		repeatIndefinitelyCheckbox.active = enabled;
-
-		useMinecraftTimeCheckbox.active = enabled;
-		useRealTimeCheckbox.active = enabled;
-		for (final BetterSliderWidget minecraftTimeSlider : minecraftTimeSliders) {
-			minecraftTimeSlider.active = enabled;
-		}
-		realTimeDepartureTextField.active = enabled;
-		addRealTimeDepartureButton.active = enabled;
-
-		realTimeDeparturesListWidget.active = enabled;
-	}
-
-	private void textFieldDepartureCallback(String text) {
-		addRealTimeDepartureButton.active = checkRealTimeDeparture(text, false, false);
+	private void textFieldDepartureCallback() {
+		addRealTimeDepartureButton.setDisabled(!checkRealTimeDeparture(realTimeDepartureTextInput.getText(), false, false));
 	}
 
 	private void addRealTimeDeparture() {
-		if (checkRealTimeDeparture(realTimeDepartureTextField.getText(), true, false)) {
-			realTimeDepartureTextField.setText("");
+		if (checkRealTimeDeparture(realTimeDepartureTextInput.getText(), true, false)) {
+			realTimeDepartureTextInput.setText("");
 		}
 	}
 
@@ -336,7 +344,7 @@ public final class DepotScreen extends ScrollableScreenBase {
 			final int second = calendar.get(Calendar.SECOND);
 			final String departureString = String.format("%02d:%02d:%02d", hour, minute, second);
 			realTimeDeparturesForList.add(ListItem.createChild(
-				(drawing, x, y) -> drawing.setVerticesWH(x + GuiHelper.DEFAULT_PADDING, y + GuiHelper.DEFAULT_PADDING, GuiHelper.MINECRAFT_FONT_SIZE, GuiHelper.MINECRAFT_FONT_SIZE).setColor(ColorHelper.fullAlpha(tempColor)).draw(),
+				(drawing, x, y) -> drawing.setVerticesWH(x + GuiHelper.DEFAULT_PADDING, y + GuiHelper.DEFAULT_PADDING, GuiHelper.MINECRAFT_FONT_SIZE, GuiHelper.MINECRAFT_FONT_SIZE).setColor(ColorHelper.fullAlpha(data.getColor())).draw(),
 				null,
 				GuiHelper.DEFAULT_PADDING + GuiHelper.MINECRAFT_FONT_SIZE,
 				new RealTimeDepartureForList(calendar.getTimeInMillis() - offset, departureString, i),
@@ -347,7 +355,7 @@ public final class DepotScreen extends ScrollableScreenBase {
 			);
 		}
 
-		realTimeDeparturesListWidget.setData(realTimeDeparturesForList);
+		realTimeDeparturesListComponent.setData(realTimeDeparturesForList);
 	}
 
 	private boolean checkRealTimeDeparture(String text, boolean addToList, boolean removeFromList) {
@@ -428,14 +436,14 @@ public final class DepotScreen extends ScrollableScreenBase {
 		return stringBuilder.toString();
 	}
 
-	private static String getSliderString(int value) {
+	private static String getSliderString(double value) {
 		final String headwayText;
 		if (value == 0) {
 			headwayText = "";
 		} else {
-			headwayText = String.format(" (%s%s)", Utilities.round((float) FREQUENCY_MULTIPLIER * MTR.SECONDS_PER_MC_HOUR / value, 1), TranslationProvider.GUI_MTR_S.getString());
+			headwayText = String.format(" (%s%s)", Utilities.round(FREQUENCY_MULTIPLIER * MTR.SECONDS_PER_MC_HOUR / value, 1), TranslationProvider.GUI_MTR_S.getString());
 		}
-		return value / (float) FREQUENCY_MULTIPLIER + TranslationProvider.GUI_MTR_TPH.getString() + headwayText;
+		return value / FREQUENCY_MULTIPLIER + TranslationProvider.GUI_MTR_TPH.getString() + headwayText;
 	}
 
 	private static String getTimeDifferenceString(long timeDifference) {
@@ -473,6 +481,21 @@ public final class DepotScreen extends ScrollableScreenBase {
 		final Platform platform = MinecraftClientData.getDashboardInstance().platformIdMap.get(platformId);
 		final Station station = platform == null ? null : platform.area;
 		return IGui.formatStationName(station == null ? "" : station.getName());
+	}
+
+	private static ObjectImmutableList<ObjectObjectImmutablePair<ReleasedDynamicTexture, String>> getTabs(Depot depot) {
+		if (depot.getTransportMode().continuousMovement) {
+			return ObjectImmutableList.of(
+				new ObjectObjectImmutablePair<>(ReleasedDynamicTextureRegistry.BRUSH_TEXTURE.get(), TranslationProvider.GUI_MTR_STATION.getString()),
+				new ObjectObjectImmutablePair<>(ReleasedDynamicTextureRegistry.POPPY_TEXTURE.get(), TranslationProvider.GUI_MTR_STATION_COLOR.getString())
+			);
+		} else {
+			return ObjectImmutableList.of(
+				new ObjectObjectImmutablePair<>(ReleasedDynamicTextureRegistry.BRUSH_TEXTURE.get(), TranslationProvider.GUI_MTR_STATION.getString()),
+				new ObjectObjectImmutablePair<>(ReleasedDynamicTextureRegistry.POPPY_TEXTURE.get(), TranslationProvider.GUI_MTR_STATION_COLOR.getString()),
+				new ObjectObjectImmutablePair<>(ReleasedDynamicTextureRegistry.CLOCK_TEXTURE.get(), TranslationProvider.GUI_MTR_DEPARTURES.getString())
+			);
+		}
 	}
 
 	private record RealTimeDepartureForList(long departure, String departureString, int index) {

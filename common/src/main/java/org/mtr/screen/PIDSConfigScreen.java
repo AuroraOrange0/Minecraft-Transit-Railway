@@ -27,7 +27,7 @@ import java.awt.*;
 /**
  * Elementa screen for configuring PIDS custom messages and platform filters.
  */
-public class PIDSConfigScreen extends WindowBase {
+public final class PIDSConfigScreen extends WindowBase {
 
 	private final BlockPos blockPos;
 	private final LongAVLTreeSet filterPlatformIds;

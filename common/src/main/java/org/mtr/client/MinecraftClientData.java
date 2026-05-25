@@ -175,12 +175,8 @@ public final class MinecraftClientData extends ClientData {
 		return null;
 	}
 
-	public static <T extends NameColorDataBase> ObjectArraySet<DashboardListItem> getFilteredDataSet(TransportMode transportMode, ObjectArraySet<T> dataSet) {
-		return convertDataSet(dataSet.stream().filter(data -> data.isTransportMode(transportMode)).collect(Collectors.toCollection(ObjectArraySet::new)));
-	}
-
-	public static <T extends NameColorDataBase> ObjectArraySet<DashboardListItem> convertDataSet(ObjectArraySet<T> dataSet) {
-		return dataSet.stream().map(DashboardListItem::new).collect(Collectors.toCollection(ObjectArraySet::new));
+	public static <T extends NameColorDataBase> ObjectArraySet<T> getFilteredDataSet(TransportMode transportMode, ObjectArraySet<T> dataSet) {
+		return dataSet.stream().filter(data -> data.isTransportMode(transportMode)).collect(Collectors.toCollection(ObjectArraySet::new));
 	}
 
 	public static <T extends AreaBase<T, U>, U extends SavedRailBase<U, T>> Object2ObjectAVLTreeMap<Position, ObjectArrayList<U>> getFlatPositionToSavedRails(ObjectArraySet<U> savedRails, TransportMode transportMode) {
@@ -197,7 +193,7 @@ public final class MinecraftClientData extends ClientData {
 			} else {
 				final long y1 = savedRail1.getMidPosition().getY();
 				final long y2 = savedRail2.getMidPosition().getY();
-				return y1 == y2 ? savedRail1.getId() > savedRail2.getId() ? 1 : -1 : y1 > y2 ? 1 : -1;
+				return y1 == y2 ? (savedRail1.getId() > savedRail2.getId() ? 1 : -1) : (y1 > y2 ? 1 : -1);
 			}
 		}));
 		return map;
