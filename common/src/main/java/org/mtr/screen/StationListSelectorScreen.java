@@ -18,7 +18,7 @@ public final class StationListSelectorScreen extends ListSelectorScreen<Station,
 	}
 
 	@Override
-	protected void setData(ListComponent<Station> listComponent, ObjectCollection<Station> dataList, ObjectArrayList<ObjectObjectImmutablePair<Identifier, ListItem.ActionConsumer<Station>>> actions) {
+	protected void setData(ListComponent<Station> listComponent, ObjectCollection<Station> dataList, boolean isSelectedList, ObjectArrayList<ObjectObjectImmutablePair<Identifier, ListItem.ActionConsumer<Station>>> actions) {
 		ListComponent.setAreas(listComponent, dataList, null, actions);
 	}
 }

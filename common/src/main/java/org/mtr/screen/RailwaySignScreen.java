@@ -162,7 +162,7 @@ public final class RailwaySignScreen extends WindowBase {
 		final RouteListSelectorScreen routeListSelectorScreen = new RouteListSelectorScreen(selectedRoutes -> {
 			selectedIds[editingIndex].clear();
 			selectedRoutes.forEach(selectedRoute -> selectedIds[editingIndex].add(selectedRoute.getColor()));
-		}, false, false, this);
+		}, false, false, true, this);
 
 		final ObjectArrayList<Route> routes = SignResource.getRoutes(signPos);
 		routeListSelectorScreen.setAvailableList(routes);

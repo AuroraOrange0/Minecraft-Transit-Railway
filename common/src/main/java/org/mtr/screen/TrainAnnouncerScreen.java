@@ -1,53 +1,63 @@
 package org.mtr.screen;
 
+import gg.essential.elementa.constraints.PixelConstraint;
+import gg.essential.elementa.constraints.RelativeConstraint;
+import gg.essential.elementa.constraints.SiblingConstraint;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.world.ClientWorld;
 import net.minecraft.util.math.BlockPos;
 import org.mtr.block.BlockTrainAnnouncer;
 import org.mtr.generated.lang.TranslationProvider;
 import org.mtr.libraries.it.unimi.dsi.fastutil.longs.LongAVLTreeSet;
 import org.mtr.packet.PacketUpdateTrainAnnouncerConfig;
-import org.mtr.registry.RegistryClient;
+import org.mtr.tool.GuiHelper;
+import org.mtr.widget.NumberInputComponent;
 import org.mtr.widget.TextInputComponent;
 
-public class TrainAnnouncerScreen extends TrainSensorScreenBase {
+public class TrainAnnouncerScreen extends TrainSensorScreenBase<BlockTrainAnnouncer.TrainAnnouncerBlockEntity> {
 
-	private final TextInputComponent messageTextField;
-	private final TextInputComponent soundIdTextField;
-	private final TextInputComponent delayTextField;
+	private final TextInputComponent messageTextInput;
+	private final TextInputComponent soundIdTextInput;
+	private final NumberInputComponent delayNumberInput;
 
-	private static final int MAX_MESSAGE_LENGTH = 256;
-	private static final int MAX_DELAY_LENGTH = 3;
+	private static final int MAX_DELAY = 1000;
 
 	public TrainAnnouncerScreen(BlockPos pos, BlockTrainAnnouncer.TrainAnnouncerBlockEntity blockEntity) {
-		super(pos, true);
+		super(TranslationProvider.BLOCK_MTR_TRAIN_ANNOUNCER.getString(), pos, blockEntity, true);
+		GuiHelper.createSpacing(contentContainer);
+		GuiHelper.createLabel(contentContainer, TranslationProvider.GUI_MTR_ANNOUNCEMENT_MESSAGE.getString());
 
-		final ClientWorld clientWorld = MinecraftClient.getInstance().world;
-		final String initialMessage;
-		final String initialSoundId;
-		final int initialDelay;
-		if (clientWorld == null) {
-			initialMessage = "";
-			initialSoundId = "";
-			initialDelay = 0;
-		} else {
-			initialMessage = blockEntity.getMessage();
-			initialSoundId = blockEntity.getSoundId();
-			initialDelay = blockEntity.getDelay();
-		}
+		messageTextInput = (TextInputComponent) new TextInputComponent()
+			.setChildOf(contentContainer)
+			.setY(new SiblingConstraint())
+			.setWidth(new RelativeConstraint())
+			.setHeight(new PixelConstraint(20));
 
-		messageTextField = addTextField(TranslationProvider.GUI_MTR_ANNOUNCEMENT_MESSAGE.getString(), null, MAX_MESSAGE_LENGTH, initialMessage);
-		soundIdTextField = addTextField(TranslationProvider.GUI_MTR_SOUND_FILE.getString(), null, MAX_MESSAGE_LENGTH, initialSoundId);
-		delayTextField = addTextField(TranslationProvider.GUI_MTR_ANNOUNCEMENT_DELAY.getString(), "\\D", MAX_DELAY_LENGTH, String.valueOf(initialDelay));
+		messageTextInput.setText(blockEntity.getMessage());
+
+		GuiHelper.createSpacing(contentContainer);
+		GuiHelper.createLabel(contentContainer, TranslationProvider.GUI_MTR_SOUND_FILE.getString());
+
+		soundIdTextInput = (TextInputComponent) new TextInputComponent()
+			.setChildOf(contentContainer)
+			.setY(new SiblingConstraint())
+			.setWidth(new RelativeConstraint())
+			.setHeight(new PixelConstraint(20));
+
+		soundIdTextInput.setText(blockEntity.getSoundId());
+
+		GuiHelper.createSpacing(contentContainer);
+		GuiHelper.createLabel(contentContainer, TranslationProvider.GUI_MTR_ANNOUNCEMENT_DELAY.getString());
+
+		delayNumberInput = (NumberInputComponent) new NumberInputComponent(0, MAX_DELAY, 1, false, null)
+			.setChildOf(contentContainer)
+			.setY(new SiblingConstraint())
+			.setWidth(new PixelConstraint(LEFT_WIDTH));
+
+		delayNumberInput.setValue(blockEntity.getDelay());
 	}
 
 	@Override
 	protected void sendUpdate(BlockPos blockPos, LongAVLTreeSet filterRouteIds, boolean stoppedOnly, boolean movingOnly) {
-		int delay = 0;
-		try {
-			delay = Integer.parseInt(delayTextField.getText());
-		} catch (Exception ignored) {
-		}
-		RegistryClient.sendPacketToServer(new PacketUpdateTrainAnnouncerConfig(blockPos, filterRouteIds, stoppedOnly, movingOnly, messageTextField.getText(), soundIdTextField.getText(), delay));
+		new PacketUpdateTrainAnnouncerConfig(blockPos, filterRouteIds, stoppedOnly, movingOnly, messageTextInput.getText(), soundIdTextInput.getText(), (int) delayNumberInput.getValue()).send(MinecraftClient.getInstance().world);
 	}
 }

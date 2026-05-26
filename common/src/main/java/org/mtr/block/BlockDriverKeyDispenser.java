@@ -37,7 +37,6 @@ import org.mtr.item.ItemDepotDriverKey;
 import org.mtr.packet.PacketOpenBlockEntityScreen;
 import org.mtr.registry.BlockEntityTypes;
 import org.mtr.registry.Items;
-import org.mtr.registry.Registry;
 
 public class BlockDriverKeyDispenser extends BlockWaterloggable implements BlockEntityProvider {
 
@@ -49,7 +48,7 @@ public class BlockDriverKeyDispenser extends BlockWaterloggable implements Block
 
 	@Override
 	protected ActionResult onUse(BlockState state, World world, BlockPos pos, PlayerEntity player, BlockHitResult hit) {
-		return IBlock.checkHoldingBrush(world, player, () -> Registry.sendPacketToClient((ServerPlayerEntity) player, new PacketOpenBlockEntityScreen(pos)));
+		return IBlock.checkHoldingBrush(world, player, () -> PacketOpenBlockEntityScreen.sendDirectlyToServer((ServerWorld) world, (ServerPlayerEntity) player, pos));
 	}
 
 	@Override

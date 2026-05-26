@@ -12,6 +12,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.item.tooltip.TooltipType;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.server.world.ServerWorld;
 import net.minecraft.state.StateManager;
 import net.minecraft.state.property.Properties;
 import net.minecraft.text.Text;
@@ -32,7 +33,6 @@ import org.mtr.generated.lang.TranslationProvider;
 import org.mtr.libraries.it.unimi.dsi.fastutil.longs.LongAVLTreeSet;
 import org.mtr.packet.PacketOpenBlockEntityScreen;
 import org.mtr.registry.BlockEntityTypes;
-import org.mtr.registry.Registry;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -61,7 +61,7 @@ public class BlockRailwaySign extends Block implements IBlock, BlockEntityProvid
 			if (hitSide == facing || hitSide == facing.getOpposite()) {
 				final BlockPos checkPos = findEndWithDirection(world, pos, hitSide.getOpposite(), false);
 				if (checkPos != null) {
-					Registry.sendPacketToClient((ServerPlayerEntity) player, new PacketOpenBlockEntityScreen(checkPos));
+					PacketOpenBlockEntityScreen.sendDirectlyToServer((ServerWorld) world, (ServerPlayerEntity) player, checkPos);
 				}
 			}
 		});

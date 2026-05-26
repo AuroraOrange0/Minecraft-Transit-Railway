@@ -31,6 +31,7 @@ import org.mtr.tool.GuiHelper;
 import org.mtr.tool.ReleasedDynamicTextureRegistry;
 import org.mtr.widget.*;
 
+import java.awt.*;
 import java.text.DateFormat;
 import java.util.Calendar;
 import java.util.Comparator;
@@ -39,11 +40,13 @@ import java.util.stream.Collectors;
 
 public final class DepotScreen extends NameColorDataScreenBase<Depot> {
 
-	private final UIWrappedText[] successfulSegmentsLabels = new UIWrappedText[SUCCESSFUL_SEGMENTS_LABELS_COUNT];
+	private String oldSuccessfulSegmentsText = "";
+
 	private final UIWrappedText depotInstructionsLabel;
 	private final CheckboxComponent repeatIndefinitelyCheckbox;
 	private final CheckboxComponent useMinecraftTimeCheckbox;
 	private final CheckboxComponent useRealTimeCheckbox;
+	private final MultiLineTextWidget multiLineTextWidget;
 	private final ScrollComponent minecraftScheduleScrollComponent;
 	private final UIContainer realTimeScheduleContainer;
 	private final NumberInputComponent[] minecraftTimeNumberInputs = new NumberInputComponent[Utilities.HOURS_PER_DAY];
@@ -51,7 +54,6 @@ public final class DepotScreen extends NameColorDataScreenBase<Depot> {
 	private final ButtonComponent addRealTimeDepartureButton;
 	private final ListComponent<RealTimeDepartureForList> realTimeDeparturesListComponent;
 
-	private static final int SUCCESSFUL_SEGMENTS_LABELS_COUNT = 12;
 	private static final int MAX_TRAINS_PER_HOUR = 5;
 	private static final int FREQUENCY_MULTIPLIER = 4;
 	private static final Long2LongAVLTreeMap DEPOT_GENERATION_START_TIME = new Long2LongAVLTreeMap();
@@ -117,9 +119,11 @@ public final class DepotScreen extends NameColorDataScreenBase<Depot> {
 		repeatIndefinitelyCheckbox.onClick(this::refreshPath);
 
 		GuiHelper.createSpacing(firstTabScrollComponent);
-		for (int i = 0; i < SUCCESSFUL_SEGMENTS_LABELS_COUNT; i++) {
-			successfulSegmentsLabels[i] = GuiHelper.createLabel(firstTabScrollComponent, "");
-		}
+
+		multiLineTextWidget = (MultiLineTextWidget) new MultiLineTextWidget()
+			.setChildOf(firstTabScrollComponent)
+			.setY(new SiblingConstraint())
+			.setWidth(new RelativeConstraint());
 
 		final UIContainer scheduleTabContainer = depot.getTransportMode().continuousMovement ? new UIContainer() : backgroundComponent.containers[2];
 
@@ -210,9 +214,14 @@ public final class DepotScreen extends NameColorDataScreenBase<Depot> {
 		// Temporary workaround to get the latest depot path generation status
 		final Depot newDepot = MinecraftClientData.getDashboardInstance().depotIdMap.get(data.getId());
 		if (newDepot != null) {
-			final String[] stringSplit = getSuccessfulSegmentsText(newDepot).split("\\|");
-			for (int i = 0; i < SUCCESSFUL_SEGMENTS_LABELS_COUNT; i++) {
-				successfulSegmentsLabels[i].setText(i >= stringSplit.length ? "" : stringSplit[i]);
+			final String successfulSegmentsText = getSuccessfulSegmentsText(newDepot);
+			if (!successfulSegmentsText.equals(oldSuccessfulSegmentsText)) {
+				final ObjectArrayList<ObjectArrayList<ObjectObjectImmutablePair<String, @Nullable Color>>> lines = new ObjectArrayList<>();
+				for (final String line : successfulSegmentsText.split("\\|")) {
+					lines.add(ObjectArrayList.of(new ObjectObjectImmutablePair<>(line, null)));
+				}
+				multiLineTextWidget.write(lines);
+				oldSuccessfulSegmentsText = successfulSegmentsText;
 			}
 		}
 
@@ -266,16 +275,11 @@ public final class DepotScreen extends NameColorDataScreenBase<Depot> {
 			data.getRouteIds().clear();
 			selectedRoutes.forEach(route -> data.getRouteIds().add(route.getId()));
 			updateRoutes();
-		}, true, true, this);
+		}, true, true, false, this);
 
 		final ObjectArraySet<Route> routes = MinecraftClientData.getFilteredDataSet(data.getTransportMode(), MinecraftClientData.getDashboardInstance().routes);
 		routeListSelectorScreen.setAvailableList(routes);
-		routes.forEach(route -> {
-			if (data.getRouteIds().contains(route.getId())) {
-				routeListSelectorScreen.selectData(route);
-			}
-		});
-
+		data.getRouteIds().forEach(routeId -> routes.stream().filter(route -> route.getId() == routeId).findFirst().ifPresent(routeListSelectorScreen::selectData));
 		return routeListSelectorScreen;
 	}
 

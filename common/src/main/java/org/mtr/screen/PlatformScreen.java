@@ -1,7 +1,5 @@
 package org.mtr.screen;
 
-import gg.essential.elementa.components.UIContainer;
-import gg.essential.elementa.components.UIText;
 import gg.essential.elementa.components.UIWrappedText;
 import gg.essential.elementa.constraints.PixelConstraint;
 import gg.essential.elementa.constraints.RelativeConstraint;
@@ -12,12 +10,14 @@ import org.mtr.core.data.Platform;
 import org.mtr.core.operation.UpdateDataRequest;
 import org.mtr.core.tool.Utilities;
 import org.mtr.generated.lang.TranslationProvider;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectImmutableList;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectObjectImmutablePair;
 import org.mtr.packet.PacketUpdateData;
 import org.mtr.registry.RegistryClient;
 import org.mtr.tool.GuiHelper;
 import org.mtr.tool.ReleasedDynamicTextureRegistry;
+import org.mtr.widget.MultiLineTextWidget;
 import org.mtr.widget.NumberInputComponent;
 
 import java.awt.*;
@@ -69,23 +69,20 @@ public final class PlatformScreen extends NameColorDataScreenBase<Platform> {
 
 		GuiHelper.createSpacing(firstTabScrollComponent);
 
+		final MultiLineTextWidget multiLineTextWidget = (MultiLineTextWidget) new MultiLineTextWidget()
+			.setChildOf(firstTabScrollComponent)
+			.setY(new SiblingConstraint())
+			.setWidth(new RelativeConstraint());
+
+		final ObjectArrayList<ObjectArrayList<ObjectObjectImmutablePair<String, @Nullable Color>>> lines = new ObjectArrayList<>();
 		platform.routes.stream().sorted().forEach(route -> {
-			final UIContainer routeContainer = (UIContainer) new UIContainer()
-				.setChildOf(firstTabScrollComponent)
-				.setY(new SiblingConstraint())
-				.setWidth(new RelativeConstraint())
-				.setHeight(new PixelConstraint(GuiHelper.MINECRAFT_TEXT_LINE_HEIGHT));
-
-			new UIText("- ", false)
-				.setChildOf(routeContainer)
-				.setColor(new Color(route.getColor()));
-
 			final String routeNumber = Utilities.formatName(route.getRouteNumber());
-			new UIText(Utilities.formatName(route.getName()) + (routeNumber.isEmpty() ? "" : " " + routeNumber), false)
-				.setChildOf(routeContainer)
-				.setX(new SiblingConstraint())
-				.setColor(new Color(GuiHelper.MINECRAFT_GUI_TITLE_TEXT_COLOR));
+			lines.add(ObjectArrayList.of(
+				new ObjectObjectImmutablePair<>("- ", new Color(route.getColor())),
+				new ObjectObjectImmutablePair<>(Utilities.formatName(route.getName()) + (routeNumber.isEmpty() ? "" : " " + routeNumber), null)
+			));
 		});
+		multiLineTextWidget.write(lines);
 	}
 
 	@Override

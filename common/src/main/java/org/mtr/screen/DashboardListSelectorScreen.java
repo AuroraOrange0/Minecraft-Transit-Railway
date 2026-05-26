@@ -71,7 +71,7 @@ public class DashboardListSelectorScreen extends ListSelectorScreen<DashboardLis
 	}
 
 	@Override
-	protected void setData(ListComponent<DashboardListItem> listComponent, ObjectCollection<DashboardListItem> dataList, ObjectArrayList<ObjectObjectImmutablePair<Identifier, ListItem.ActionConsumer<DashboardListItem>>> actions) {
+	protected void setData(ListComponent<DashboardListItem> listComponent, ObjectCollection<DashboardListItem> dataList, boolean isSelectedList, ObjectArrayList<ObjectObjectImmutablePair<Identifier, ListItem.ActionConsumer<DashboardListItem>>> actions) {
 		final ObjectArrayList<ListItem<DashboardListItem>> listItems = new ObjectArrayList<>();
 		for (final DashboardListItem dashboardListItem : dataList) {
 			listItems.add(ListItem.createChild(

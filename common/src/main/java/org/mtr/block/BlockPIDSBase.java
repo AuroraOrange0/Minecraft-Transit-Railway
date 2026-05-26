@@ -13,6 +13,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.item.tooltip.TooltipType;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.server.world.ServerWorld;
 import net.minecraft.text.Text;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Formatting;
@@ -23,7 +24,6 @@ import org.jspecify.annotations.Nullable;
 import org.mtr.generated.lang.TranslationProvider;
 import org.mtr.libraries.it.unimi.dsi.fastutil.longs.LongAVLTreeSet;
 import org.mtr.packet.PacketOpenBlockEntityScreen;
-import org.mtr.registry.Registry;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -49,7 +49,7 @@ public abstract class BlockPIDSBase extends Block implements BlockEntityProvider
 			final BlockPos newBlockPos = getBlockPosWithData.apply(world, pos);
 			final BlockEntity entity = world.getBlockEntity(newBlockPos);
 			if (entity instanceof BlockEntityBase) {
-				Registry.sendPacketToClient((ServerPlayerEntity) player, new PacketOpenBlockEntityScreen(newBlockPos));
+				PacketOpenBlockEntityScreen.sendDirectlyToServer((ServerWorld) world, (ServerPlayerEntity) player, newBlockPos);
 			}
 		});
 	}

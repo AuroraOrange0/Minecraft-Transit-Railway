@@ -17,7 +17,7 @@ public final class StationExitListSelectorScreen extends ListSelectorScreen<Stat
 	}
 
 	@Override
-	protected void setData(ListComponent<StationExit> listComponent, ObjectCollection<StationExit> dataList, ObjectArrayList<ObjectObjectImmutablePair<Identifier, ListItem.ActionConsumer<StationExit>>> actions) {
+	protected void setData(ListComponent<StationExit> listComponent, ObjectCollection<StationExit> dataList, boolean isSelectedList, ObjectArrayList<ObjectObjectImmutablePair<Identifier, ListItem.ActionConsumer<StationExit>>> actions) {
 		ListComponent.setStationExits(listComponent, dataList, true, actions);
 	}
 }

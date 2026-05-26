@@ -31,12 +31,16 @@ public final class PacketAddBalance extends PacketHandler {
 	@Override
 	public void runServer(MinecraftServer minecraftServer, ServerPlayerEntity serverPlayerEntity) {
 		final ServerWorld serverWorld = serverPlayerEntity.getServerWorld();
-		TicketSystem.addBalance(serverWorld, serverPlayerEntity, getAddAmount(index));
-		Inventories.remove(serverPlayerEntity.getInventory(), itemStack -> itemStack.getItem().equals(Items.EMERALD), (int) Math.pow(2, index), false);
+		TicketSystem.addBalance(serverWorld, serverPlayerEntity, getAddBalanceAmount(index));
+		Inventories.remove(serverPlayerEntity.getInventory(), itemStack -> itemStack.getItem().equals(Items.EMERALD), getEmeraldAmount(index), false);
 		serverWorld.playSound(null, serverPlayerEntity.getBlockPos(), SoundEvents.ENTITY_EXPERIENCE_ORB_PICKUP, SoundCategory.BLOCKS, 1, 1);
 	}
 
-	public static int getAddAmount(int index) {
+	public static int getAddBalanceAmount(int index) {
 		return (int) Math.ceil(Math.pow(2, index) * (EMERALD_TO_DOLLAR + index));
+	}
+
+	public static int getEmeraldAmount(int index) {
+		return (int) Math.pow(2, index);
 	}
 }

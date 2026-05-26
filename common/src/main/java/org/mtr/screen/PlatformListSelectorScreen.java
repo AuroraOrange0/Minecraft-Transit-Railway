@@ -22,7 +22,7 @@ public final class PlatformListSelectorScreen extends ListSelectorScreen<Platfor
 	}
 
 	@Override
-	protected void setData(ListComponent<Platform> listComponent, ObjectCollection<Platform> dataList, ObjectArrayList<ObjectObjectImmutablePair<Identifier, ListItem.ActionConsumer<Platform>>> actions) {
+	protected void setData(ListComponent<Platform> listComponent, ObjectCollection<Platform> dataList, boolean isSelectedList, ObjectArrayList<ObjectObjectImmutablePair<Identifier, ListItem.ActionConsumer<Platform>>> actions) {
 		ListComponent.setSavedRails(listComponent, dataList, actions);
 	}
 }

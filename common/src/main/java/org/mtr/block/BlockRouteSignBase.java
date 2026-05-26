@@ -10,6 +10,7 @@ import net.minecraft.block.entity.BlockEntityType;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.server.world.ServerWorld;
 import net.minecraft.state.StateManager;
 import net.minecraft.state.property.IntProperty;
 import net.minecraft.state.property.Properties;
@@ -19,7 +20,6 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.world.World;
 import org.mtr.packet.PacketOpenBlockEntityScreen;
-import org.mtr.registry.Registry;
 
 public abstract class BlockRouteSignBase extends BlockDirectionalDoubleBlockBase implements IBlock, BlockEntityProvider {
 
@@ -40,7 +40,7 @@ public abstract class BlockRouteSignBase extends BlockDirectionalDoubleBlockBase
 			} else {
 				final BlockEntity entity = world.getBlockEntity(pos.down(isUpper ? 1 : 0));
 				if (entity instanceof BlockEntityBase) {
-					Registry.sendPacketToClient((ServerPlayerEntity) player, new PacketOpenBlockEntityScreen(entity.getPos()));
+					PacketOpenBlockEntityScreen.sendDirectlyToServer((ServerWorld) world, (ServerPlayerEntity) player, entity.getPos());
 				}
 			}
 		});

@@ -1,57 +1,50 @@
 package org.mtr.screen;
 
+import gg.essential.elementa.constraints.PixelConstraint;
 import gg.essential.elementa.constraints.RelativeConstraint;
 import gg.essential.elementa.constraints.SiblingConstraint;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.world.ClientWorld;
 import net.minecraft.util.math.BlockPos;
 import org.mtr.block.BlockTrainScheduleSensor;
 import org.mtr.generated.lang.TranslationProvider;
 import org.mtr.libraries.it.unimi.dsi.fastutil.longs.LongAVLTreeSet;
 import org.mtr.packet.PacketUpdateTrainScheduleSensorConfig;
+import org.mtr.tool.GuiHelper;
 import org.mtr.widget.CheckboxComponent;
-import org.mtr.widget.TextInputComponent;
+import org.mtr.widget.NumberInputComponent;
 
-public class TrainScheduleSensorScreen extends TrainSensorScreenBase {
+public class TrainScheduleSensorScreen extends TrainSensorScreenBase<BlockTrainScheduleSensor.TrainScheduleSensorBlockEntity> {
 
-	private final TextInputComponent secondsTextField;
+	private final NumberInputComponent secondsNumberInput;
 	private final CheckboxComponent realtimeOnlyCheckbox;
 
-	private static final int MAX_SECONDS_LENGTH = 5;
-	private static final int DEFAULT_SECONDS = 10;
+	private static final int MAX_SECONDS = 100000;
 
 	public TrainScheduleSensorScreen(BlockPos pos, BlockTrainScheduleSensor.TrainScheduleSensorBlockEntity blockEntity) {
-		super(pos, false);
+		super(TranslationProvider.BLOCK_MTR_TRAIN_SCHEDULE_SENSOR.getString(), pos, blockEntity, false);
+		GuiHelper.createSpacing(contentContainer);
+		GuiHelper.createLabel(contentContainer, TranslationProvider.GUI_MTR_TRAIN_SCHEDULE_SENSOR.getString());
 
-		final ClientWorld clientWorld = MinecraftClient.getInstance().world;
-		final int seconds;
-		final boolean realtimeOnly;
-		if (clientWorld == null) {
-			seconds = DEFAULT_SECONDS;
-			realtimeOnly = false;
-		} else {
-			seconds = blockEntity.getSeconds();
-			realtimeOnly = blockEntity.getRealtimeOnly();
-		}
+		secondsNumberInput = (NumberInputComponent) new NumberInputComponent(0, MAX_SECONDS, 1, false, null)
+			.setChildOf(contentContainer)
+			.setY(new SiblingConstraint())
+			.setWidth(new PixelConstraint(LEFT_WIDTH));
 
-		secondsTextField = addTextField(TranslationProvider.GUI_MTR_TRAIN_SCHEDULE_SENSOR.getString(), "[^\\d-]", MAX_SECONDS_LENGTH, String.valueOf(seconds));
+		secondsNumberInput.setValue(blockEntity.getSeconds());
+
+		GuiHelper.createSpacing(contentContainer);
 
 		realtimeOnlyCheckbox = (CheckboxComponent) new CheckboxComponent()
 			.setChildOf(contentContainer)
 			.setY(new SiblingConstraint())
 			.setWidth(new RelativeConstraint());
+
 		realtimeOnlyCheckbox.setText(TranslationProvider.GUI_MTR_REALTIME_ONLY.getString());
-		realtimeOnlyCheckbox.setChecked(realtimeOnly);
+		realtimeOnlyCheckbox.setChecked(blockEntity.getRealtimeOnly());
 	}
 
 	@Override
 	protected void sendUpdate(BlockPos blockPos, LongAVLTreeSet filterRouteIds, boolean stoppedOnly, boolean movingOnly) {
-		int secondsParsed = DEFAULT_SECONDS;
-		try {
-			secondsParsed = Integer.parseInt(secondsTextField.getText());
-		} catch (Exception ignored) {
-		}
-
-		new PacketUpdateTrainScheduleSensorConfig(blockPos, filterRouteIds, stoppedOnly, movingOnly, secondsParsed, realtimeOnlyCheckbox.isChecked()).send(MinecraftClient.getInstance().world);
+		new PacketUpdateTrainScheduleSensorConfig(blockPos, filterRouteIds, stoppedOnly, movingOnly, (int) secondsNumberInput.getValue(), realtimeOnlyCheckbox.isChecked()).send(MinecraftClient.getInstance().world);
 	}
 }

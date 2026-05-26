@@ -80,7 +80,7 @@ public abstract class ListSelectorScreen<T extends U, U extends Comparable<U>> e
 		}
 	}
 
-	protected abstract void setData(ListComponent<T> listComponent, ObjectCollection<T> dataList, ObjectArrayList<ObjectObjectImmutablePair<Identifier, ListItem.ActionConsumer<T>>> actions);
+	protected abstract void setData(ListComponent<T> listComponent, ObjectCollection<T> dataList, boolean isSelectedList, ObjectArrayList<ObjectObjectImmutablePair<Identifier, ListItem.ActionConsumer<T>>> actions);
 
 	private ListComponent<T> createMainComponents() {
 		final UIContainer container = (UIContainer) new UIContainer()
@@ -109,7 +109,7 @@ public abstract class ListSelectorScreen<T extends U, U extends Comparable<U>> e
 
 	private void updateAvailableData() {
 		Collections.sort(availableData);
-		setData(availableListComponent, availableData, ObjectArrayList.of(new ObjectObjectImmutablePair<>(GuiHelper.ADD_TEXTURE_ID, (indexList, data) -> selectData(data))));
+		setData(availableListComponent, availableData, false, ObjectArrayList.of(new ObjectObjectImmutablePair<>(GuiHelper.ADD_TEXTURE_ID, (indexList, data) -> selectData(data))));
 	}
 
 	private void updateSelectedData() {
@@ -128,9 +128,9 @@ public abstract class ListSelectorScreen<T extends U, U extends Comparable<U>> e
 			onSelectionChanged();
 		});
 
-		setData(selectedListComponent, selectedData, canManuallySortSelectedList ? ObjectArrayList.of(
-			ListComponent.createUpButton(selectedData, null),
-			ListComponent.createDownButton(selectedData, null),
+		setData(selectedListComponent, selectedData, true, canManuallySortSelectedList ? ObjectArrayList.of(
+			ListComponent.createUpButton(selectedData, this::updateSelectedData),
+			ListComponent.createDownButton(selectedData, this::updateSelectedData),
 			deleteAction
 		) : ObjectArrayList.of(deleteAction));
 	}
