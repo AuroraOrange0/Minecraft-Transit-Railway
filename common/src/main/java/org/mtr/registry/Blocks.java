@@ -309,7 +309,25 @@ public final class Blocks {
 	private static ObjectHolder<Block> registerBlockWithBlockItem(String registryName, Function<AbstractBlock.Settings, Block> blockFactory, boolean blockPiston, BiFunction<Block, Item.Settings, BlockItem> blockItemFactory, String itemGroupRegistryName) {
 		REGISTERED_IDENTIFIERS.add(registryName);
 		final ObjectHolder<Block> objectHolder = Registry.registerBlock(registryName, settings -> blockFactory.apply(createDefaultBlockSettings(settings, blockPiston)));
-		Registry.registerItem(registryName, settings -> blockItemFactory.apply(objectHolder.get(), settings), itemGroupRegistryName);
+		Registry.registerItem(registryName, settings -> {
+			final Block block = objectHolder.get();
+			return blockItemFactory.apply(block, settings.translationKey(formatBlockItemTranslationKey(block, registryName)));
+		}, itemGroupRegistryName);
 		return objectHolder;
+	}
+
+	/**
+	 * Overriding translation keys is a bit hacky
+	 */
+	private static String formatBlockItemTranslationKey(Block block, String registryName) {
+		if (block instanceof BlockEyeCandy) {
+			return "block.mtrsteamloco." + registryName;
+		} else if (block instanceof BlockStationColor || block instanceof BlockStationColorSlab || block instanceof BlockStationColorGlass || block instanceof BlockStationColorGlassSlab) {
+			return "block.minecraft." + registryName.replaceFirst("station_color_", "");
+		} else if (block instanceof BlockRailwaySign) {
+			return "block.mtr.railway_sign";
+		} else {
+			return "block.mtr." + registryName;
+		}
 	}
 }

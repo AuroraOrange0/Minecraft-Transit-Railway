@@ -22,7 +22,7 @@ public final class Items {
 		ADVANCED_DRIVER_KEY = Registry.registerItem("advanced_driver_key", itemSettings -> new ItemDepotDriverKey(itemSettings.maxCount(1), true, true, false, 0xFFB6B6), null);
 		GUARD_KEY = Registry.registerItem("guard_key", itemSettings -> new ItemDepotDriverKey(itemSettings.maxCount(1), false, true, false, 0xB6FFB6), null);
 		CREATIVE_DRIVER_KEY = Registry.registerItem("creative_driver_key", itemSettings -> new ItemCreativeDriverKey(itemSettings.maxCount(1)), ItemGroups.CORE);
-		BOAT_NODE = Registry.registerItem("boat_node", itemSettings -> new PlaceableOnWaterItem(Blocks.BOAT_NODE.get(), itemSettings), ItemGroups.CORE);
+		BOAT_NODE = Registry.registerItem("boat_node", itemSettings -> new PlaceableOnWaterItem(Blocks.BOAT_NODE.get(), itemSettings.translationKey("block.mtr.boat_node")), ItemGroups.CORE);
 
 		// Doors
 		APG_DOOR = Registry.registerItem("apg_door", itemSettings -> new ItemPSDAPGBase(ItemPSDAPGBase.EnumPSDAPGItem.PSD_APG_DOOR, ItemPSDAPGBase.EnumPSDAPGType.APG, itemSettings), ItemGroups.RAILWAY_FACILITIES);
