@@ -5,6 +5,7 @@ import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.world.chunk.Chunk;
 import org.mtr.neoforge.MainEventBus;
+import org.mtr.neoforge.ModEventBus;
 
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -52,10 +53,10 @@ public final class EventRegistryImpl {
 	}
 
 	public static void registerChunkLoad(BiConsumer<ServerWorld, Chunk> consumer) {
-		MainEventBus.chunkLoadConsumer = consumer;
+		ModEventBus.chunkLoadConsumer = consumer;
 	}
 
 	public static void registerChunkUnload(BiConsumer<ServerWorld, Chunk> consumer) {
-		MainEventBus.chunkUnloadConsumer = consumer;
+		ModEventBus.chunkUnloadConsumer = consumer;
 	}
 }

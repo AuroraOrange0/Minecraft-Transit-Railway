@@ -16,6 +16,7 @@ import net.minecraft.client.world.ClientWorld;
 import net.minecraft.text.Text;
 import net.minecraft.util.math.BlockPos;
 import org.jspecify.annotations.Nullable;
+import org.mtr.client.CustomResourceLoader;
 import org.mtr.client.MinecraftClientData;
 import org.mtr.core.data.Rail;
 import org.mtr.core.operation.UpdateDataRequest;
@@ -31,6 +32,7 @@ import org.mtr.packet.PacketUpdateLastRailStyles;
 import org.mtr.registry.RegistryClient;
 import org.mtr.registry.UConverters;
 import org.mtr.render.MainRenderer;
+import org.mtr.resource.RailResource;
 import org.mtr.tool.BlockRendererHelper;
 import org.mtr.tool.GuiHelper;
 import org.mtr.tool.ReleasedDynamicTextureRegistry;
@@ -113,7 +115,7 @@ public final class RailModifierScreen extends WindowBase {
 			.setWidth(new RelativeConstraint());
 
 		editStylesButtonComponent.setText(Text.translatable("selectWorld.edit").getString());
-		editStylesButtonComponent.onMouseClickConsumer(clickEvent -> UMinecraft.setCurrentScreenObj(RailStyleSelectorScreen.create(rail)));
+		editStylesButtonComponent.onMouseClickConsumer(clickEvent -> UMinecraft.setCurrentScreenObj(createRailStyleSelectorScreen()));
 
 		final ButtonComponent flipStylesButtonComponent = (ButtonComponent) new ButtonComponent(true)
 			.setChildOf(scrollComponent1)
@@ -131,11 +133,7 @@ public final class RailModifierScreen extends WindowBase {
 					return style;
 				}
 			}).collect(Collectors.toCollection(ObjectArrayList::new));
-			RegistryClient.sendPacketToServer(new PacketUpdateData(new UpdateDataRequest(MinecraftClientData.getInstance()).addRail(Rail.copy(rail, styles))));
-			final ClientPlayerEntity clientPlayerEntity = MinecraftClient.getInstance().player;
-			if (clientPlayerEntity != null) {
-				RegistryClient.sendPacketToServer(new PacketUpdateLastRailStyles(clientPlayerEntity.getUuid(), rail.getTransportMode(), styles));
-			}
+			updateRailStyles(styles);
 			MinecraftClient.getInstance().setScreen(null);
 		});
 
@@ -440,6 +438,28 @@ public final class RailModifierScreen extends WindowBase {
 			elementsToShow.add(tiltAngleDegreesMiddle.left());
 		} else {
 			elementsToHide.add(tiltAngleDegreesMiddle.left());
+		}
+	}
+
+	private RailStyleSelectorScreen createRailStyleSelectorScreen() {
+		final ObjectImmutableList<RailResource> allRailsResources = CustomResourceLoader.getRails();
+		final RailStyleSelectorScreen railStyleSelectorScreen = new RailStyleSelectorScreen(railStyles -> updateRailStyles(railStyles.stream().map(RailResource::getId).collect(Collectors.toCollection(ObjectArrayList::new))));
+		railStyleSelectorScreen.setAvailableList(allRailsResources);
+
+		allRailsResources.forEach(railResource -> {
+			if (rail.getStyles().contains(railResource.getId())) {
+				railStyleSelectorScreen.selectData(railResource);
+			}
+		});
+
+		return railStyleSelectorScreen;
+	}
+
+	private void updateRailStyles(ObjectArrayList<String> styles) {
+		RegistryClient.sendPacketToServer(new PacketUpdateData(new UpdateDataRequest(MinecraftClientData.getInstance()).addRail(Rail.copy(rail, styles))));
+		final ClientPlayerEntity clientPlayerEntity = MinecraftClient.getInstance().player;
+		if (clientPlayerEntity != null) {
+			RegistryClient.sendPacketToServer(new PacketUpdateLastRailStyles(clientPlayerEntity.getUuid(), rail.getTransportMode(), styles));
 		}
 	}
 

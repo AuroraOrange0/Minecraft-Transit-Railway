@@ -22,7 +22,7 @@ import java.util.function.Supplier;
  * (see the {@code modelSupplier} field) defers the underlying mesh build until the first
  * render request.</p>
  */
-public final class ObjectResource extends ObjectResourceSchema implements StoredModelResourceBase {
+public final class ObjectResource extends ObjectResourceSchema implements StoredModelResourceBase, Comparable<ObjectResource> {
 
 	public final boolean shouldPreload;
 	private final Supplier<@Nullable Object2ObjectOpenHashMap<RenderStage, ObjectArrayList<NewOptimizedModel>>> modelSupplier;
@@ -68,5 +68,10 @@ public final class ObjectResource extends ObjectResourceSchema implements Stored
 
 	private static float clampNumber(double value) {
 		return value <= 0 ? 1 : (float) value;
+	}
+
+	@Override
+	public int compareTo(ObjectResource objectResource) {
+		return objectResource.getName().compareTo(getName());
 	}
 }

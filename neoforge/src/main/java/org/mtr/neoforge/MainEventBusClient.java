@@ -4,7 +4,6 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.render.RenderTickCounter;
 import net.minecraft.client.world.ClientWorld;
-import net.minecraft.world.chunk.Chunk;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -12,7 +11,6 @@ import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
 import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.client.event.RenderGuiEvent;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
-import net.neoforged.neoforge.event.level.ChunkEvent;
 import net.neoforged.neoforge.event.tick.LevelTickEvent;
 import org.mtr.MTR;
 import org.mtr.MTRClient;
@@ -29,8 +27,6 @@ public final class MainEventBusClient {
 	public static Runnable clientDisconnectRunnable = null;
 	public static Consumer<ClientWorld> startWorldTickRunnable = null;
 	public static Consumer<ClientWorld> endWorldTickRunnable = null;
-	public static BiConsumer<ClientWorld, Chunk> chunkLoadConsumer = null;
-	public static BiConsumer<ClientWorld, Chunk> chunkUnloadConsumer = null;
 	public static MTRClient.WorldRenderCallback worldRenderCallback = null;
 	public static BiConsumer<DrawContext, RenderTickCounter> hudLayerRenderCallback = null;
 
@@ -73,20 +69,6 @@ public final class MainEventBusClient {
 	public static void clientDisconnect(ClientPlayerNetworkEvent.LoggingOut event) {
 		if (clientDisconnectRunnable != null) {
 			clientDisconnectRunnable.run();
-		}
-	}
-
-	@SubscribeEvent
-	public static void chunkLoad(ChunkEvent.Load event) {
-		if (chunkLoadConsumer != null && event.getLevel() instanceof ClientWorld clientWorld) {
-			chunkLoadConsumer.accept(clientWorld, event.getChunk());
-		}
-	}
-
-	@SubscribeEvent
-	public static void chunkUnload(ChunkEvent.Unload event) {
-		if (chunkUnloadConsumer != null && event.getLevel() instanceof ClientWorld clientWorld) {
-			chunkUnloadConsumer.accept(clientWorld, event.getChunk());
 		}
 	}
 

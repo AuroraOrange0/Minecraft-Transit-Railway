@@ -30,6 +30,8 @@ import org.mtr.tool.GuiHelper;
 
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.function.Function;
+import java.util.function.ToIntFunction;
 
 public final class ListComponent<T> extends UIComponent {
 
@@ -181,6 +183,21 @@ public final class ListComponent<T> extends UIComponent {
 		}
 	}
 
+	public static <T> void setGeneric(ListComponent<T> listComponent, ObjectCollection<T> genericDataList, Function<T, String> getName, ToIntFunction<T> getColor, ObjectArrayList<ObjectObjectImmutablePair<Identifier, ListItem.ActionConsumer<T>>> actions) {
+		final ObjectArrayList<ListItem<T>> dataList = new ObjectArrayList<>();
+
+		genericDataList.forEach(genericData -> dataList.add(ListItem.createChild(
+			(drawing, x, y) -> drawing.setVerticesWH(x + GuiHelper.DEFAULT_PADDING, y + GuiHelper.DEFAULT_PADDING, GuiHelper.MINECRAFT_FONT_SIZE, GuiHelper.MINECRAFT_FONT_SIZE).setColor(ColorHelper.fullAlpha(getColor.applyAsInt(genericData))).draw(),
+			null,
+			GuiHelper.DEFAULT_PADDING + GuiHelper.MINECRAFT_FONT_SIZE,
+			genericData,
+			Utilities.formatName(getName.apply(genericData)),
+			actions
+		)));
+
+		listComponent.setData(dataList);
+	}
+
 	public static <T extends AreaBase<T, U>, U extends SavedRailBase<U, T>> void setAreas(ListComponent<T> listComponent, ObjectCollection<T> areas, @Nullable TransportMode transportMode, ObjectArrayList<ObjectObjectImmutablePair<Identifier, ListItem.ActionConsumer<T>>> actions) {
 		final ObjectArrayList<T> sortedAreas = new ObjectArrayList<>();
 		areas.forEach(route -> {
@@ -189,18 +206,7 @@ public final class ListComponent<T> extends UIComponent {
 			}
 		});
 		Collections.sort(sortedAreas);
-		final ObjectArrayList<ListItem<T>> dataList = new ObjectArrayList<>();
-
-		sortedAreas.forEach(area -> dataList.add(ListItem.createChild(
-			(drawing, x, y) -> drawing.setVerticesWH(x + GuiHelper.DEFAULT_PADDING, y + GuiHelper.DEFAULT_PADDING, GuiHelper.MINECRAFT_FONT_SIZE, GuiHelper.MINECRAFT_FONT_SIZE).setColor(ColorHelper.fullAlpha(area.getColor())).draw(),
-			null,
-			GuiHelper.DEFAULT_PADDING + GuiHelper.MINECRAFT_FONT_SIZE,
-			area,
-			Utilities.formatName(area.getName()),
-			actions
-		)));
-
-		listComponent.setData(dataList);
+		setGeneric(listComponent, sortedAreas, NameColorDataBase::getName, NameColorDataBase::getColor, actions);
 	}
 
 	public static <T extends AreaBase<T, U>, U extends SavedRailBase<U, T>> void setSavedRails(ListComponent<U> listComponent, ObjectCollection<U> savedRails, ObjectArrayList<ObjectObjectImmutablePair<Identifier, ListItem.ActionConsumer<U>>> actions) {

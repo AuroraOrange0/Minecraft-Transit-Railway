@@ -1,56 +1,23 @@
 package org.mtr.screen;
 
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.network.ClientPlayerEntity;
-import org.jspecify.annotations.Nullable;
-import org.mtr.client.CustomResourceLoader;
-import org.mtr.client.MinecraftClientData;
-import org.mtr.core.data.Lift;
-import org.mtr.core.operation.UpdateDataRequest;
-import org.mtr.libraries.it.unimi.dsi.fastutil.longs.LongArrayList;
+import net.minecraft.util.Identifier;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectImmutableList;
-import org.mtr.packet.PacketUpdateData;
-import org.mtr.registry.RegistryClient;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectCollection;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectObjectImmutablePair;
 import org.mtr.resource.LiftResource;
+import org.mtr.widget.ListComponent;
+import org.mtr.widget.ListItem;
 
-import java.util.Objects;
+import java.util.function.Consumer;
 
-public final class LiftStyleSelectorScreen extends DashboardListSelectorScreen {
+public final class LiftStyleSelectorScreen extends ListSelectorScreen<LiftResource, LiftResource> {
 
-	private final Lift lift;
-	private final ObjectImmutableList<LiftResource> allLifts = CustomResourceLoader.getLifts();
-
-	private LiftStyleSelectorScreen(Lift lift, ObjectImmutableList<DashboardListItem> lifts, LongArrayList selectedLiftIndices, @Nullable WindowBase previousScreen) {
-		super(lifts, selectedLiftIndices, true, false, previousScreen);
-		this.lift = lift;
+	public LiftStyleSelectorScreen(Consumer<ObjectArrayList<LiftResource>> onClose, WindowBase previousScreen) {
+		super(false, false, false, onClose, previousScreen);
 	}
 
 	@Override
-	public void onScreenClose() {
-		super.onScreenClose();
-		final ClientPlayerEntity clientPlayerEntity = MinecraftClient.getInstance().player;
-
-		selectedIds.forEach(index -> lift.setStyle(allLifts.get((int) index).getId()));
-
-		if (clientPlayerEntity != null) {
-			RegistryClient.sendPacketToServer(new PacketUpdateData(new UpdateDataRequest(MinecraftClientData.getInstance()).addLift(lift)));
-		}
-	}
-
-	public static LiftStyleSelectorScreen create(Lift lift, @Nullable WindowBase previousScreen) {
-		final ObjectImmutableList<LiftResource> allLifts = CustomResourceLoader.getLifts();
-		final ObjectArrayList<DashboardListItem> liftsForList = new ObjectArrayList<>();
-		final LongArrayList selectedIds = new LongArrayList();
-
-		for (int i = 0; i < allLifts.size(); i++) {
-			final LiftResource liftResource = allLifts.get(i);
-			liftsForList.add(new DashboardListItem(i, liftResource.getName(), liftResource.getColor() | ARGB_BLACK));
-			if (Objects.equals(liftResource.getId(), lift.getStyle())) {
-				selectedIds.add(i);
-			}
-		}
-
-		return new LiftStyleSelectorScreen(lift, new ObjectImmutableList<>(liftsForList), selectedIds, previousScreen);
+	protected void setData(ListComponent<LiftResource> listComponent, ObjectCollection<LiftResource> dataList, boolean isSelectedList, ObjectArrayList<ObjectObjectImmutablePair<Identifier, ListItem.ActionConsumer<LiftResource>>> actions) {
+		ListComponent.setGeneric(listComponent, dataList, LiftResource::getName, LiftResource::getColor, actions);
 	}
 }

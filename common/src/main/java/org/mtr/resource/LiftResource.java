@@ -5,7 +5,7 @@ import net.minecraft.util.Identifier;
 import org.mtr.core.serializer.ReaderBase;
 import org.mtr.generated.resource.LiftResourceSchema;
 
-public final class LiftResource extends LiftResourceSchema {
+public final class LiftResource extends LiftResourceSchema implements Comparable<LiftResource> {
 
 	public LiftResource(ReaderBase readerBase) {
 		super(readerBase);
@@ -26,5 +26,10 @@ public final class LiftResource extends LiftResourceSchema {
 
 	public Identifier getTexture() {
 		return CustomResourceTools.formatIdentifierWithDefault(textureResource, "png");
+	}
+
+	@Override
+	public int compareTo(LiftResource liftResource) {
+		return liftResource.getName().compareTo(getName());
 	}
 }

@@ -12,7 +12,7 @@ import org.mtr.model.NewOptimizedModel;
 
 import java.util.function.Supplier;
 
-public final class RailResource extends RailResourceSchema implements StoredModelResourceBase {
+public final class RailResource extends RailResourceSchema implements StoredModelResourceBase, Comparable<RailResource> {
 
 	public final boolean shouldPreload;
 	private final ModelLoaderBase modelLoaderBase;
@@ -64,5 +64,10 @@ public final class RailResource extends RailResourceSchema implements StoredMode
 
 	public static String getIdWithoutDirection(String id) {
 		return id.endsWith("_1") || id.endsWith("_2") ? id.substring(0, id.length() - 2) : id;
+	}
+
+	@Override
+	public int compareTo(RailResource railResource) {
+		return railResource.getName().compareTo(getName());
 	}
 }

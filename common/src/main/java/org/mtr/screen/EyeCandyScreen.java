@@ -12,7 +12,6 @@ import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.state.property.Properties;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.ColorHelper;
 import net.minecraft.util.math.Direction;
 import org.jspecify.annotations.Nullable;
 import org.mtr.block.BlockEyeCandy;
@@ -20,8 +19,6 @@ import org.mtr.block.IBlock;
 import org.mtr.client.CustomResourceLoader;
 import org.mtr.core.tool.Utilities;
 import org.mtr.generated.lang.TranslationProvider;
-import org.mtr.libraries.it.unimi.dsi.fastutil.longs.LongArrayList;
-import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectImmutableList;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectObjectImmutablePair;
 import org.mtr.packet.PacketUpdateEyeCandyConfig;
@@ -40,12 +37,13 @@ import java.util.Random;
  */
 public final class EyeCandyScreen extends WindowBase {
 
+	@Nullable
+	private String selectedModelId;
+
 	private final BlockPos blockPos;
 	@Nullable
 	private final ClientWorld clientWorld;
 	private final BlockEyeCandy.EyeCandyBlockEntity blockEntity;
-	private final ObjectImmutableList<ObjectResource> loadedObjects = CustomResourceLoader.getObjects();
-	private final LongArrayList selectedModelIndices = new LongArrayList();
 
 	private final NumberInputComponent translateXInputComponent;
 	private final NumberInputComponent translateYInputComponent;
@@ -64,6 +62,7 @@ public final class EyeCandyScreen extends WindowBase {
 		this.blockPos = blockPos;
 		this.clientWorld = MinecraftClient.getInstance().world;
 		this.blockEntity = blockEntity;
+		this.selectedModelId = blockEntity.getModelId();
 
 		final BackgroundComponent backgroundComponent = new BackgroundComponent(getWindow(), ObjectImmutableList.of(
 			new ObjectObjectImmutablePair<>(ReleasedDynamicTextureRegistry.BRUSH_TEXTURE.get(), TranslationProvider.BLOCK_MTRSTEAMLOCO_EYE_CANDY.getString())
@@ -90,22 +89,13 @@ public final class EyeCandyScreen extends WindowBase {
 			.setWidth(new SubtractiveConstraint(new FillConstraint(), new PixelConstraint(GuiHelper.DEFAULT_PADDING)))
 			.setHeight(new RelativeConstraint());
 
-		final ObjectArrayList<DashboardListItem> objectsForList = new ObjectArrayList<>();
-		for (int i = 0; i < loadedObjects.size(); i++) {
-			final ObjectResource objectResource = loadedObjects.get(i);
-			objectsForList.add(new DashboardListItem(i, objectResource.getName(), ColorHelper.fullAlpha(objectResource.getColor())));
-			if (objectResource.getId().equals(blockEntity.getModelId())) {
-				selectedModelIndices.add(i);
-			}
-		}
-
 		final ButtonComponent buttonSelectModel = (ButtonComponent) new ButtonComponent(true)
 			.setChildOf(scrollComponent)
 			.setY(new SiblingConstraint())
 			.setWidth(new RelativeConstraint());
 
 		buttonSelectModel.setText(TranslationProvider.GUI_MTR_SELECT_MODEL.getString());
-		buttonSelectModel.onClick(() -> UMinecraft.setCurrentScreenObj(new DashboardListSelectorScreen(new ObjectImmutableList<>(objectsForList), selectedModelIndices, true, false, this)));
+		buttonSelectModel.onClick(() -> UMinecraft.setCurrentScreenObj(createEyeCandySelectorScreen()));
 
 		GuiHelper.createSpacing(scrollComponent);
 		GuiHelper.createLabel(scrollComponent, TranslationProvider.GUI_MTR_MODEL_TRANSLATION.getString());
@@ -132,7 +122,7 @@ public final class EyeCandyScreen extends WindowBase {
 	public void onScreenClose() {
 		new PacketUpdateEyeCandyConfig(
 			blockPos,
-			selectedModelIndices.isEmpty() ? null : Utilities.getElement(loadedObjects, (int) selectedModelIndices.getLong(0)).getId(),
+			selectedModelId,
 			(float) translateXInputComponent.getValue(),
 			(float) translateYInputComponent.getValue(),
 			(float) translateZInputComponent.getValue(),
@@ -175,6 +165,20 @@ public final class EyeCandyScreen extends WindowBase {
 				// TODO render model preview
 			})));
 		}
+	}
+
+	private EyeCandySelectorScreen createEyeCandySelectorScreen() {
+		final ObjectImmutableList<ObjectResource> allObjectResources = CustomResourceLoader.getObjects();
+		final EyeCandySelectorScreen eyeCandySelectorScreen = new EyeCandySelectorScreen(objectResource -> selectedModelId = objectResource.isEmpty() ? "" : objectResource.getFirst().getId(), this);
+		eyeCandySelectorScreen.setAvailableList(allObjectResources);
+
+		allObjectResources.forEach(objectResource -> {
+			if (objectResource.getId().equals(selectedModelId)) {
+				eyeCandySelectorScreen.selectData(objectResource);
+			}
+		});
+
+		return eyeCandySelectorScreen;
 	}
 
 	private static NumberInputComponent createNumberInput(UIContainer container, String axis, double value, int bound) {

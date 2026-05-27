@@ -1,6 +1,7 @@
 package org.mtr.screen;
 
 import gg.essential.elementa.components.UIContainer;
+import gg.essential.elementa.components.UIText;
 import gg.essential.elementa.constraints.*;
 import net.minecraft.util.Identifier;
 import org.jspecify.annotations.Nullable;
@@ -12,6 +13,7 @@ import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectObjectImmutablePair
 import org.mtr.tool.GuiHelper;
 import org.mtr.widget.*;
 
+import java.awt.*;
 import java.util.Collections;
 import java.util.function.Consumer;
 
@@ -25,8 +27,8 @@ public abstract class ListSelectorScreen<T extends U, U extends Comparable<U>> e
 	private final Consumer<ObjectArrayList<T>> onClose;
 
 	private final BackgroundComponent backgroundComponent = new BackgroundComponent(getWindow(), ObjectImmutableList.of());
-	private final ListComponent<T> availableListComponent = createMainComponents();
-	private final ListComponent<T> selectedListComponent = createMainComponents();
+	private final ListComponent<T> availableListComponent = createMainComponents(TranslationProvider.GUI_MTR_AVAILABLE);
+	private final ListComponent<T> selectedListComponent = createMainComponents(TranslationProvider.GUI_MTR_SELECTED);
 
 	public ListSelectorScreen(boolean canSelectMultiple, boolean canSelectDuplicate, boolean canManuallySortSelectedList, Consumer<ObjectArrayList<T>> onClose, @Nullable WindowBase previousScreen) {
 		super(previousScreen);
@@ -82,15 +84,20 @@ public abstract class ListSelectorScreen<T extends U, U extends Comparable<U>> e
 
 	protected abstract void setData(ListComponent<T> listComponent, ObjectCollection<T> dataList, boolean isSelectedList, ObjectArrayList<ObjectObjectImmutablePair<Identifier, ListItem.ActionConsumer<T>>> actions);
 
-	private ListComponent<T> createMainComponents() {
+	private ListComponent<T> createMainComponents(TranslationProvider.TranslationHolder title) {
 		final UIContainer container = (UIContainer) new UIContainer()
 			.setChildOf(backgroundComponent)
 			.setX(new SiblingConstraint(GuiHelper.DEFAULT_PADDING))
 			.setWidth(new ScaleConstraint(new SubtractiveConstraint(new RelativeConstraint(), new PixelConstraint(GuiHelper.DEFAULT_PADDING)), 0.5F))
 			.setHeight(new RelativeConstraint());
 
+		new UIText(title.getString(), false)
+			.setChildOf(container)
+			.setColor(new Color(GuiHelper.MINECRAFT_GUI_TITLE_TEXT_COLOR));
+
 		final TextInputComponent textInputComponent = (TextInputComponent) new TextInputComponent()
 			.setChildOf(container)
+			.setY(new SiblingConstraint(GuiHelper.DEFAULT_PADDING))
 			.setWidth(new RelativeConstraint())
 			.setHeight(new PixelConstraint(20));
 
@@ -100,7 +107,7 @@ public abstract class ListSelectorScreen<T extends U, U extends Comparable<U>> e
 			.setChildOf(container)
 			.setY(new SiblingConstraint(GuiHelper.DEFAULT_PADDING))
 			.setWidth(new RelativeConstraint())
-			.setHeight(new SubtractiveConstraint(new FillConstraint(), new PixelConstraint(GuiHelper.DEFAULT_PADDING)));
+			.setHeight(new SubtractiveConstraint(new FillConstraint(), new PixelConstraint(GuiHelper.DEFAULT_PADDING * 2)));
 
 		final ListComponent<T> listComponent = GuiHelper.createListComponent(slotBackgroundComponent);
 		textInputComponent.onChange(() -> listComponent.setFilter(textInputComponent.getText()));

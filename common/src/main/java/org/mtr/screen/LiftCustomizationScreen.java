@@ -8,6 +8,7 @@ import gg.essential.universal.UMinecraft;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.text.Text;
 import net.minecraft.util.math.Direction;
+import org.mtr.client.CustomResourceLoader;
 import org.mtr.client.MinecraftClientData;
 import org.mtr.core.data.Lift;
 import org.mtr.core.operation.UpdateDataRequest;
@@ -18,6 +19,7 @@ import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectImmutableList;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectObjectImmutablePair;
 import org.mtr.packet.PacketUpdateData;
 import org.mtr.registry.RegistryClient;
+import org.mtr.resource.LiftResource;
 import org.mtr.tool.GuiHelper;
 import org.mtr.tool.ReleasedDynamicTextureRegistry;
 import org.mtr.widget.*;
@@ -102,7 +104,7 @@ public final class LiftCustomizationScreen extends WindowBase {
 			.setWidth(new RelativeConstraint());
 
 		editStylesButtonComponent.setText(Text.translatable("selectWorld.edit").getString());
-		editStylesButtonComponent.onClick(() -> UMinecraft.setCurrentScreenObj(LiftStyleSelectorScreen.create(lift, this)));
+		editStylesButtonComponent.onClick(() -> UMinecraft.setCurrentScreenObj(createLiftStyleSelectorScreen()));
 
 		final ButtonComponent rotateAnticlockwiseButton = (ButtonComponent) new ButtonComponent(true)
 			.setChildOf(scrollComponent)
@@ -145,6 +147,20 @@ public final class LiftCustomizationScreen extends WindowBase {
 
 	private void onDrawPreview(MatrixStack matrixStack) {
 		// TODO lift preview
+	}
+
+	private LiftStyleSelectorScreen createLiftStyleSelectorScreen() {
+		final ObjectImmutableList<LiftResource> allLiftResources = CustomResourceLoader.getLifts();
+		final LiftStyleSelectorScreen liftStyleSelectorScreen = new LiftStyleSelectorScreen(liftStyles -> lift.setStyle(liftStyles.isEmpty() ? allLiftResources.getFirst().getId() : liftStyles.getFirst().getId()), this);
+		liftStyleSelectorScreen.setAvailableList(allLiftResources);
+
+		allLiftResources.forEach(liftResource -> {
+			if (liftResource.getId().equals(lift.getStyle())) {
+				liftStyleSelectorScreen.selectData(liftResource);
+			}
+		});
+
+		return liftStyleSelectorScreen;
 	}
 
 	private static NumberInputComponent createNumberInput(UIContainer container, String axis, double value, int min, int max) {
