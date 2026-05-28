@@ -1,8 +1,5 @@
 package org.mtr.block;
 
-import it.unimi.dsi.fastutil.longs.LongAVLTreeSet;
-import it.unimi.dsi.fastutil.longs.LongArrayList;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import lombok.Getter;
 import net.minecraft.block.AbstractBlock;
 import net.minecraft.block.BlockState;
@@ -12,14 +9,16 @@ import net.minecraft.block.entity.BlockEntityType;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
+import org.jspecify.annotations.Nullable;
 import org.mtr.MTRClient;
 import org.mtr.core.operation.ArrivalResponse;
 import org.mtr.data.ArrivalsCacheClient;
+import org.mtr.libraries.it.unimi.dsi.fastutil.longs.LongAVLTreeSet;
+import org.mtr.libraries.it.unimi.dsi.fastutil.longs.LongArrayList;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.mtr.packet.PacketTurnOnBlockEntity;
 import org.mtr.registry.BlockEntityTypes;
 import org.mtr.registry.RegistryClient;
-
-import javax.annotation.Nonnull;
 
 public class BlockTrainScheduleSensor extends BlockTrainPoweredSensorBase {
 
@@ -27,12 +26,12 @@ public class BlockTrainScheduleSensor extends BlockTrainPoweredSensorBase {
 		super(settings);
 	}
 
-	@Nonnull
 	@Override
 	public BlockEntity createBlockEntity(BlockPos blockPos, BlockState blockState) {
 		return new TrainScheduleSensorBlockEntity(blockPos, blockState);
 	}
 
+	@Nullable
 	@Override
 	public <T extends BlockEntity> BlockEntityTicker<T> getTicker(World world, BlockState state, BlockEntityType<T> type) {
 		return type == BlockEntityTypes.TRAIN_SCHEDULE_SENSOR.get() && world.isClient ? (world1, pos, state1, blockEntity) -> MTRClient.findClosePlatform(pos.up(), 5, platform -> {

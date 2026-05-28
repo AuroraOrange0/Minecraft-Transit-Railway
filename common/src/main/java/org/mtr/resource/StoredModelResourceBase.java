@@ -1,22 +1,39 @@
 package org.mtr.resource;
 
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.minecraft.util.Identifier;
 import org.apache.commons.lang3.StringUtils;
+import org.jspecify.annotations.Nullable;
 import org.mtr.MTR;
 import org.mtr.core.serializer.JsonReader;
 import org.mtr.core.tool.Utilities;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.mtr.model.BlockbenchModelLoader;
 import org.mtr.model.NewOptimizedModel;
 import org.mtr.model.ObjModelLoader;
 import org.mtr.render.MainRenderer;
 import org.mtr.render.StoredMatrixTransformations;
 
-import javax.annotation.Nullable;
-
+/**
+ * Mixin for {@code Resource} types that hold a single decorative model — currently
+ * {@link ObjectResource} and {@link RailResource}.
+ *
+ * <p>Provides:</p>
+ * <ul>
+ *   <li>{@link #load(String, String, boolean, double, ResourceProvider)} — the same
+ *       OBJ / Blockbench dispatch as
+ *       {@link VehicleModel#getModelLoaderBase(String, String, ResourceProvider, boolean)}.
+ *       The duplication is tracked in {@code docs/MIGRATIONS.md} §6.</li>
+ *   <li>{@link #render(StoredMatrixTransformations, int)} — default render hook that
+ *       forwards into {@link MainRenderer#renderModel(Object2ObjectOpenHashMap,
+ *       StoredMatrixTransformations, int)} using the cached optimised model.</li>
+ *   <li>{@link #preload()} — currently a {@code // TODO} no-op; see
+ *       {@code docs/MIGRATIONS.md} §7.</li>
+ * </ul>
+ */
 public interface StoredModelResourceBase {
 
+	@Nullable
 	default Object2ObjectOpenHashMap<RenderStage, ObjectArrayList<NewOptimizedModel>> load(String modelResource, String textureResource, boolean flipTextureV, double modelYOffset, ResourceProvider resourceProvider) {
 		final boolean isBlockbench = modelResource.endsWith(".bbmodel");
 		final boolean isObj = modelResource.endsWith(".obj");
@@ -25,15 +42,16 @@ public interface StoredModelResourceBase {
 
 		if (isBlockbench) {
 			final BlockbenchModelLoader blockbenchModelLoader = new BlockbenchModelLoader(defaultTexture);
-			blockbenchModelLoader.loadModel(new BlockbenchModel(new JsonReader(Utilities.parseJson(resourceProvider.get(CustomResourceTools.formatIdentifierWithDefault(modelResource, "bbmodel"))))));
+			// Defer JSON parse to the worker — see docs/PERFORMANCE.md §1.2.
+			blockbenchModelLoader.loadModel(() -> new BlockbenchModel(new JsonReader(Utilities.parseJson(resourceProvider.get(CustomResourceTools.formatIdentifierWithDefault(modelResource, "bbmodel"))))));
 			models = blockbenchModelLoader.get();
 		} else if (isObj) {
 			final ObjModelLoader objModelLoader = new ObjModelLoader(defaultTexture);
 			objModelLoader.loadModel(
-					resourceProvider.get(CustomResourceTools.formatIdentifierWithDefault(modelResource, "obj")),
-					mtlString -> resourceProvider.get(CustomResourceTools.getResourceFromSamePath(modelResource, mtlString, "mtl")),
-					textureString -> StringUtils.isEmpty(textureString) ? Identifier.of(MTR.MOD_ID, "textures/block/white.png") : StringUtils.equals(textureString, "default.png") ? defaultTexture : CustomResourceTools.getResourceFromSamePath(modelResource, textureString, "png"),
-					true, flipTextureV
+				resourceProvider.get(CustomResourceTools.formatIdentifierWithDefault(modelResource, "obj")),
+				mtlString -> resourceProvider.get(CustomResourceTools.getResourceFromSamePath(modelResource, mtlString, "mtl")),
+				textureString -> StringUtils.isEmpty(textureString) ? Identifier.of(MTR.MOD_ID, "textures/block/white.png") : (StringUtils.equals(textureString, "default.png") ? defaultTexture : CustomResourceTools.getResourceFromSamePath(modelResource, textureString, "png")),
+				true, flipTextureV
 			);
 			// TODO transform object if needed
 			models = objModelLoader.get();

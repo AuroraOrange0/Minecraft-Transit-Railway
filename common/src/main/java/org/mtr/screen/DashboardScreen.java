@@ -1,10 +1,6 @@
 package org.mtr.screen;
 
 import gg.essential.universal.UMinecraft;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import it.unimi.dsi.fastutil.objects.ObjectArraySet;
-import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
-import it.unimi.dsi.fastutil.objects.ObjectObjectImmutablePair;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.render.RenderLayer;
@@ -13,6 +9,7 @@ import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.Util;
 import net.minecraft.util.math.ColorHelper;
+import org.jspecify.annotations.Nullable;
 import org.mtr.MTRClient;
 import org.mtr.client.MinecraftClientData;
 import org.mtr.core.data.*;
@@ -21,6 +18,10 @@ import org.mtr.core.operation.UpdateDataRequest;
 import org.mtr.core.tool.Utilities;
 import org.mtr.data.IGui;
 import org.mtr.generated.lang.TranslationProvider;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArraySet;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectImmutableList;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectObjectImmutablePair;
 import org.mtr.packet.PacketDeleteData;
 import org.mtr.packet.PacketUpdateData;
 import org.mtr.registry.RegistryClient;
@@ -28,7 +29,6 @@ import org.mtr.tool.Drawing;
 import org.mtr.tool.GuiHelper;
 import org.mtr.widget.*;
 
-import javax.annotation.Nullable;
 import java.util.Random;
 import java.util.stream.Collectors;
 
@@ -84,7 +84,7 @@ public final class DashboardScreen extends ScreenBase {
 
 	private final BetterButtonWidget transportSystemMapButton = new BetterButtonWidget(GuiHelper.MAP_TEXTURE_ID, null, GuiHelper.DEFAULT_LINE_SIZE, () -> Util.getOperatingSystem().open(String.format("http://localhost:%s", MTRClient.getServerPort())));
 	private final BetterButtonWidget resourcePackCreatorButton = new BetterButtonWidget(GuiHelper.EDITOR_TEXTURE_ID, null, GuiHelper.DEFAULT_LINE_SIZE, () -> Util.getOperatingSystem().open(String.format("http://localhost:%s/creator/", MTRClient.getServerPort())));
-	private final BetterButtonWidget optionsButton = new BetterButtonWidget(GuiHelper.SETTINGS_TEXTURE_ID, null, GuiHelper.DEFAULT_LINE_SIZE, () -> MinecraftClient.getInstance().setScreen(new ConfigScreen(this)));
+	private final BetterButtonWidget optionsButton = new BetterButtonWidget(GuiHelper.SETTINGS_TEXTURE_ID, null, GuiHelper.DEFAULT_LINE_SIZE, () -> UMinecraft.setCurrentScreenObj(new ConfigScreen(this)));
 	private final BetterButtonWidget zoomInButton;
 	private final BetterButtonWidget zoomOutButton;
 
@@ -345,10 +345,10 @@ public final class DashboardScreen extends ScreenBase {
 					ScrollableListWidget.setRoutes(routesListWidget, MinecraftClientData.getDashboardInstance().routes, transportMode, actions);
 				} else {
 					ScrollableListWidget.setRoutePlatforms(routePlatformsListWidget, editingRoute.getRoutePlatforms(), hasPermission ? ObjectArrayList.of(
-							new ObjectObjectImmutablePair<>(GuiHelper.EDIT_TEXTURE_ID, (indexList, routePlatformData) -> startEditingRouteDestination(indexList.getFirst())),
-							ScrollableListWidget.createUpButton(editingRoute.getRoutePlatforms(), null),
-							ScrollableListWidget.createDownButton(editingRoute.getRoutePlatforms(), null),
-							new ObjectObjectImmutablePair<>(GuiHelper.DELETE_TEXTURE_ID, (indexList, routePlatformData) -> Utilities.removeElement(editingRoute.getRoutePlatforms(), indexList.getFirst()))
+						new ObjectObjectImmutablePair<>(GuiHelper.EDIT_TEXTURE_ID, (indexList, routePlatformData) -> startEditingRouteDestination(indexList.getFirst())),
+						ScrollableListWidget.createUpButton(editingRoute.getRoutePlatforms(), null),
+						ScrollableListWidget.createDownButton(editingRoute.getRoutePlatforms(), null),
+						new ObjectObjectImmutablePair<>(GuiHelper.DELETE_TEXTURE_ID, (indexList, routePlatformData) -> Utilities.removeElement(editingRoute.getRoutePlatforms(), indexList.getFirst()))
 					) : new ObjectArrayList<>());
 				}
 			}
@@ -356,7 +356,7 @@ public final class DashboardScreen extends ScreenBase {
 				final ObjectArrayList<ObjectObjectImmutablePair<Identifier, ListItem.ActionConsumer<Depot>>> actions = ObjectArrayList.of(new ObjectObjectImmutablePair<>(GuiHelper.FIND_TEXTURE_ID, (indexList, depot) -> mapWidget.find(depot)));
 				if (hasPermission) {
 					actions.add(new ObjectObjectImmutablePair<>(GuiHelper.SELECT_TEXTURE_ID, (indexList, depot) -> startEditingArea(depot)));
-					actions.add(new ObjectObjectImmutablePair<>(GuiHelper.EDIT_TEXTURE_ID, (indexList, depot) -> MinecraftClient.getInstance().setScreen(new DepotScreen(depot, this))));
+					actions.add(new ObjectObjectImmutablePair<>(GuiHelper.EDIT_TEXTURE_ID, (indexList, depot) -> UMinecraft.setCurrentScreenObj(new DepotScreen(depot, this))));
 					actions.add(new ObjectObjectImmutablePair<>(GuiHelper.DELETE_TEXTURE_ID, (indexList, depot) -> onDeleteData(depot, new DeleteDataRequest().addDepotId(depot.getId()))));
 				}
 				ScrollableListWidget.setAreas(depotsListWidget, MinecraftClientData.getDashboardInstance().depots, transportMode, actions);

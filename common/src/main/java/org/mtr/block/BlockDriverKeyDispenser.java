@@ -1,5 +1,6 @@
 package org.mtr.block;
 
+import lombok.Getter;
 import net.minecraft.block.AbstractBlock;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockEntityProvider;
@@ -25,19 +26,17 @@ import net.minecraft.util.math.random.Random;
 import net.minecraft.world.World;
 import net.minecraft.world.block.WireOrientation;
 import net.minecraft.world.tick.OrderedTick;
+import org.jspecify.annotations.Nullable;
 import org.mtr.MTR;
 import org.mtr.core.data.Depot;
 import org.mtr.core.operation.NearbyAreasRequest;
 import org.mtr.core.operation.NearbyAreasResponse;
 import org.mtr.core.servlet.OperationProcessor;
+import org.mtr.core.tool.Utilities;
 import org.mtr.item.ItemDepotDriverKey;
 import org.mtr.packet.PacketOpenBlockEntityScreen;
 import org.mtr.registry.BlockEntityTypes;
 import org.mtr.registry.Items;
-import org.mtr.registry.Registry;
-
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 
 public class BlockDriverKeyDispenser extends BlockWaterloggable implements BlockEntityProvider {
 
@@ -49,16 +48,9 @@ public class BlockDriverKeyDispenser extends BlockWaterloggable implements Block
 
 	@Override
 	protected ActionResult onUse(BlockState state, World world, BlockPos pos, PlayerEntity player, BlockHitResult hit) {
-		return IBlock.checkHoldingBrush(world, player, () -> {
-			final BlockEntity entity = world.getBlockEntity(pos);
-			if (entity instanceof DriverKeyDispenserBlockEntity) {
-				entity.markDirty();
-				Registry.sendPacketToClient((ServerPlayerEntity) player, new PacketOpenBlockEntityScreen(pos));
-			}
-		});
+		return IBlock.checkHoldingBrush(world, player, () -> PacketOpenBlockEntityScreen.sendDirectlyToServer((ServerWorld) world, (ServerPlayerEntity) player, pos));
 	}
 
-	@Nonnull
 	@Override
 	public BlockState getPlacementState(ItemPlacementContext itemPlacementContext) {
 		return super.getPlacementState(itemPlacementContext).with(Properties.HORIZONTAL_FACING, itemPlacementContext.getHorizontalPlayerFacing());
@@ -90,7 +82,6 @@ public class BlockDriverKeyDispenser extends BlockWaterloggable implements Block
 		builder.add(Properties.HORIZONTAL_FACING, TRIGGERED);
 	}
 
-	@Nonnull
 	@Override
 	public BlockEntity createBlockEntity(BlockPos blockPos, BlockState blockState) {
 		return new DriverKeyDispenserBlockEntity(blockPos, blockState);
@@ -120,7 +111,8 @@ public class BlockDriverKeyDispenser extends BlockWaterloggable implements Block
 		private boolean dispenseBasicDriverKey = false;
 		private boolean dispenseAdvancedDriverKey = false;
 		private boolean dispenseGuardKey = false;
-		private long timeout = Depot.MILLIS_PER_HOUR;
+		@Getter
+		private long timeout = Utilities.MILLIS_PER_HOUR;
 
 		private static final String KEY_DISPENSE_BASIC_DRIVER_KEY = "dispense_basic_driver_key";
 		private static final String KEY_DISPENSE_ADVANCED_DRIVER_KEY = "dispense_advanced_driver_key";
@@ -165,10 +157,6 @@ public class BlockDriverKeyDispenser extends BlockWaterloggable implements Block
 
 		public boolean getDispenseGuardKey() {
 			return dispenseGuardKey;
-		}
-
-		public long getTimeout() {
-			return timeout;
 		}
 
 		private void dispense(Direction direction) {

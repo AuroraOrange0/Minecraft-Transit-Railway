@@ -6,6 +6,7 @@ import net.minecraft.item.tooltip.TooltipType;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 import org.mtr.core.data.Depot;
+import org.mtr.core.tool.Utilities;
 import org.mtr.generated.lang.TranslationProvider;
 import org.mtr.registry.DataComponentTypes;
 
@@ -21,7 +22,7 @@ public final class ItemDepotDriverKey extends ItemDriverKey {
 	@Override
 	public void appendTooltip(ItemStack stack, TooltipContext context, List<Text> tooltip, TooltipType type) {
 		if (isUsable(stack)) {
-			final long timeout = (getExpiryTime(stack) - System.currentTimeMillis()) / Depot.MILLIS_PER_SECOND;
+			final long timeout = (getExpiryTime(stack) - System.currentTimeMillis()) / Utilities.MILLIS_PER_SECOND;
 			final long hours = timeout / 3600;
 			final long minutes = (timeout % 3600) / 60;
 			final long seconds = timeout % 60;

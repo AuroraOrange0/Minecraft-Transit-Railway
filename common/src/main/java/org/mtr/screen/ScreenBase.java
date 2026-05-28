@@ -1,27 +1,36 @@
 package org.mtr.screen;
 
+import gg.essential.universal.UMinecraft;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.Drawable;
 import net.minecraft.client.gui.Element;
 import net.minecraft.client.gui.Selectable;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.text.Text;
+import org.jspecify.annotations.Nullable;
 import org.mtr.widget.ClickableWidgetBase;
-
-import javax.annotation.Nullable;
 
 public abstract class ScreenBase extends Screen {
 
 	@Nullable
-	private final Screen previousScreen;
+	private final WindowBase previousScreen;
+	@Nullable
+	private final Screen previousScreenLegacy;
 
-	public ScreenBase(@Nullable Screen previousScreen) {
+	public ScreenBase(@Nullable WindowBase previousScreen) {
 		super(Text.empty());
 		this.previousScreen = previousScreen;
+		this.previousScreenLegacy = null;
+	}
+
+	public ScreenBase(@Nullable Screen previousScreenLegacy) {
+		super(Text.empty());
+		this.previousScreen = null;
+		this.previousScreenLegacy = previousScreenLegacy;
 	}
 
 	public ScreenBase() {
-		this(null);
+		this((Screen) null);
 	}
 
 	@Override
@@ -43,7 +52,11 @@ public abstract class ScreenBase extends Screen {
 	@Override
 	public void close() {
 		super.close();
-		MinecraftClient.getInstance().setScreen(previousScreen);
+		if (previousScreen != null) {
+			UMinecraft.setCurrentScreenObj(previousScreen);
+		} else {
+			MinecraftClient.getInstance().setScreen(previousScreenLegacy);
+		}
 	}
 
 	@Override

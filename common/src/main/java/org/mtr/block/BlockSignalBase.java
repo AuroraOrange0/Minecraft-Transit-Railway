@@ -1,18 +1,15 @@
 package org.mtr.block;
 
-import it.unimi.dsi.fastutil.ints.IntAVLTreeSet;
-import it.unimi.dsi.fastutil.ints.IntArrayList;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.minecraft.block.AbstractBlock;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockEntityProvider;
 import net.minecraft.block.BlockState;
-import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.block.entity.BlockEntityType;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemPlacementContext;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.server.world.ServerWorld;
 import net.minecraft.state.StateManager;
 import net.minecraft.state.property.EnumProperty;
 import net.minecraft.state.property.IntProperty;
@@ -26,13 +23,14 @@ import net.minecraft.world.BlockView;
 import net.minecraft.world.World;
 import org.mtr.core.operation.BlockRails;
 import org.mtr.core.tool.Angle;
+import org.mtr.libraries.it.unimi.dsi.fastutil.ints.IntAVLTreeSet;
+import org.mtr.libraries.it.unimi.dsi.fastutil.ints.IntArrayList;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.mtr.packet.PacketBlockRails;
 import org.mtr.packet.PacketOpenBlockEntityScreen;
 import org.mtr.packet.PacketTurnOnBlockEntity;
-import org.mtr.registry.Registry;
 import org.mtr.registry.RegistryClient;
 
-import javax.annotation.Nonnull;
 import java.util.ArrayList;
 
 public abstract class BlockSignalBase extends Block implements BlockEntityProvider {
@@ -49,16 +47,9 @@ public abstract class BlockSignalBase extends Block implements BlockEntityProvid
 		super(blockSettings);
 	}
 
-	@Nonnull
 	@Override
 	protected ActionResult onUse(BlockState state, World world, BlockPos pos, PlayerEntity player, BlockHitResult hit) {
-		return IBlock.checkHoldingBrush(world, player, () -> {
-			final BlockEntity entity = world.getBlockEntity(pos);
-			if (entity instanceof BlockEntityBase) {
-				entity.markDirty();
-				Registry.sendPacketToClient((ServerPlayerEntity) player, new PacketOpenBlockEntityScreen(pos));
-			}
-		});
+		return IBlock.checkHoldingBrush(world, player, () -> PacketOpenBlockEntityScreen.sendDirectlyToServer((ServerWorld) world, (ServerPlayerEntity) player, pos));
 	}
 
 	@Override
@@ -218,7 +209,6 @@ public abstract class BlockSignalBase extends Block implements BlockEntityProvid
 			this.booleanValue = booleanValue;
 		}
 
-		@Nonnull
 		@Override
 		public String asString() {
 			return String.valueOf(booleanValue);

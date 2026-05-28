@@ -1,34 +1,49 @@
 package org.mtr.screen;
 
 import gg.essential.elementa.components.UIContainer;
+import gg.essential.elementa.components.UIText;
 import gg.essential.elementa.constraints.*;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import it.unimi.dsi.fastutil.objects.ObjectCollection;
-import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
-import it.unimi.dsi.fastutil.objects.ObjectObjectImmutablePair;
 import net.minecraft.util.Identifier;
+import org.jspecify.annotations.Nullable;
 import org.mtr.generated.lang.TranslationProvider;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectCollection;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectImmutableList;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectObjectImmutablePair;
 import org.mtr.tool.GuiHelper;
 import org.mtr.widget.*;
 
+import java.awt.*;
 import java.util.Collections;
 import java.util.function.Consumer;
 
 public abstract class ListSelectorScreen<T extends U, U extends Comparable<U>> extends WindowBase {
 
 	private final ObjectArrayList<T> availableData = new ObjectArrayList<>();
-	private final ObjectArrayList<T> selectedData = new ObjectArrayList<>();
+	protected final ObjectArrayList<T> selectedData = new ObjectArrayList<>();
 	private final boolean canSelectMultiple;
 	private final boolean canSelectDuplicate;
 	private final boolean canManuallySortSelectedList;
 	private final Consumer<ObjectArrayList<T>> onClose;
 
 	private final BackgroundComponent backgroundComponent = new BackgroundComponent(getWindow(), ObjectImmutableList.of());
-	private final ListComponent<T> availableListComponent = createMainComponents();
-	private final ListComponent<T> selectedListComponent = createMainComponents();
+	private final ListComponent<T> availableListComponent = createMainComponents(TranslationProvider.GUI_MTR_AVAILABLE);
+	private final ListComponent<T> selectedListComponent = createMainComponents(TranslationProvider.GUI_MTR_SELECTED);
 
-	public ListSelectorScreen(boolean canSelectMultiple, boolean canSelectDuplicate, boolean canManuallySortSelectedList, Consumer<ObjectArrayList<T>> onClose, WindowBase previousScreen) {
+	public ListSelectorScreen(boolean canSelectMultiple, boolean canSelectDuplicate, boolean canManuallySortSelectedList, Consumer<ObjectArrayList<T>> onClose, @Nullable WindowBase previousScreen) {
 		super(previousScreen);
+		this.canSelectMultiple = canSelectMultiple;
+		this.canSelectDuplicate = canSelectDuplicate;
+		this.canManuallySortSelectedList = canManuallySortSelectedList;
+		this.onClose = onClose;
+	}
+
+	/**
+	 * Legacy constructor for opening list selectors from old {@link ScreenBase} screens.
+	 */
+	@Deprecated
+	public ListSelectorScreen(boolean canSelectMultiple, boolean canSelectDuplicate, boolean canManuallySortSelectedList, Consumer<ObjectArrayList<T>> onClose, @Nullable ScreenBase previousScreenLegacy) {
+		super(previousScreenLegacy);
 		this.canSelectMultiple = canSelectMultiple;
 		this.canSelectDuplicate = canSelectDuplicate;
 		this.canManuallySortSelectedList = canManuallySortSelectedList;
@@ -39,6 +54,9 @@ public abstract class ListSelectorScreen<T extends U, U extends Comparable<U>> e
 	public void onScreenClose() {
 		super.onScreenClose();
 		onClose.accept(selectedData);
+	}
+
+	protected void onSelectionChanged() {
 	}
 
 	public void setAvailableList(ObjectCollection<T> availableList) {
@@ -60,30 +78,36 @@ public abstract class ListSelectorScreen<T extends U, U extends Comparable<U>> e
 
 			updateAvailableData();
 			updateSelectedData();
+			onSelectionChanged();
 		}
 	}
 
-	protected abstract void setData(ListComponent<T> listComponent, ObjectCollection<T> dataList, ObjectArrayList<ObjectObjectImmutablePair<Identifier, ListItem.ActionConsumer<T>>> actions);
+	protected abstract void setData(ListComponent<T> listComponent, ObjectCollection<T> dataList, boolean isSelectedList, ObjectArrayList<ObjectObjectImmutablePair<Identifier, ListItem.ActionConsumer<T>>> actions);
 
-	private ListComponent<T> createMainComponents() {
+	private ListComponent<T> createMainComponents(TranslationProvider.TranslationHolder title) {
 		final UIContainer container = (UIContainer) new UIContainer()
-				.setChildOf(backgroundComponent)
-				.setX(new SiblingConstraint(GuiHelper.DEFAULT_PADDING))
-				.setWidth(new ScaleConstraint(new SubtractiveConstraint(new RelativeConstraint(), new PixelConstraint(GuiHelper.DEFAULT_PADDING)), 0.5F))
-				.setHeight(new RelativeConstraint());
+			.setChildOf(backgroundComponent)
+			.setX(new SiblingConstraint(GuiHelper.DEFAULT_PADDING))
+			.setWidth(new ScaleConstraint(new SubtractiveConstraint(new RelativeConstraint(), new PixelConstraint(GuiHelper.DEFAULT_PADDING)), 0.5F))
+			.setHeight(new RelativeConstraint());
+
+		new UIText(title.getString(), false)
+			.setChildOf(container)
+			.setColor(new Color(GuiHelper.MINECRAFT_GUI_TITLE_TEXT_COLOR));
 
 		final TextInputComponent textInputComponent = (TextInputComponent) new TextInputComponent()
-				.setChildOf(container)
-				.setWidth(new RelativeConstraint())
-				.setHeight(new PixelConstraint(20));
+			.setChildOf(container)
+			.setY(new SiblingConstraint(GuiHelper.DEFAULT_PADDING))
+			.setWidth(new RelativeConstraint())
+			.setHeight(new PixelConstraint(20));
 
 		textInputComponent.setPlaceholderText(TranslationProvider.GUI_MTR_SEARCH.getString());
 
 		final SlotBackgroundComponent slotBackgroundComponent = (SlotBackgroundComponent) new SlotBackgroundComponent()
-				.setChildOf(container)
-				.setY(new SiblingConstraint(GuiHelper.DEFAULT_PADDING))
-				.setWidth(new RelativeConstraint())
-				.setHeight(new SubtractiveConstraint(new FillConstraint(), new PixelConstraint(GuiHelper.DEFAULT_PADDING)));
+			.setChildOf(container)
+			.setY(new SiblingConstraint(GuiHelper.DEFAULT_PADDING))
+			.setWidth(new RelativeConstraint())
+			.setHeight(new SubtractiveConstraint(new FillConstraint(), new PixelConstraint(GuiHelper.DEFAULT_PADDING * 2)));
 
 		final ListComponent<T> listComponent = GuiHelper.createListComponent(slotBackgroundComponent);
 		textInputComponent.onChange(() -> listComponent.setFilter(textInputComponent.getText()));
@@ -92,7 +116,7 @@ public abstract class ListSelectorScreen<T extends U, U extends Comparable<U>> e
 
 	private void updateAvailableData() {
 		Collections.sort(availableData);
-		setData(availableListComponent, availableData, ObjectArrayList.of(new ObjectObjectImmutablePair<>(GuiHelper.ADD_TEXTURE_ID, (indexList, data) -> selectData(data))));
+		setData(availableListComponent, availableData, false, ObjectArrayList.of(new ObjectObjectImmutablePair<>(GuiHelper.ADD_TEXTURE_ID, (indexList, data) -> selectData(data))));
 	}
 
 	private void updateSelectedData() {
@@ -108,12 +132,13 @@ public abstract class ListSelectorScreen<T extends U, U extends Comparable<U>> e
 
 			updateAvailableData();
 			updateSelectedData();
+			onSelectionChanged();
 		});
 
-		setData(selectedListComponent, selectedData, canManuallySortSelectedList ? ObjectArrayList.of(
-				ListComponent.createUpButton(selectedData, null),
-				ListComponent.createDownButton(selectedData, null),
-				deleteAction
+		setData(selectedListComponent, selectedData, true, canManuallySortSelectedList ? ObjectArrayList.of(
+			ListComponent.createUpButton(selectedData, this::updateSelectedData),
+			ListComponent.createDownButton(selectedData, this::updateSelectedData),
+			deleteAction
 		) : ObjectArrayList.of(deleteAction));
 	}
 }

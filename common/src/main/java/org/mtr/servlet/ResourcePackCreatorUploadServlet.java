@@ -1,23 +1,26 @@
 package org.mtr.servlet;
 
-import com.google.gson.JsonObject;
-import it.unimi.dsi.fastutil.objects.Object2ObjectAVLTreeMap;
-import it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
-import it.unimi.dsi.fastutil.objects.Object2ObjectMap;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import gg.essential.universal.UMinecraft;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.Util;
+
 import org.apache.commons.io.IOUtils;
+import org.jspecify.annotations.Nullable;
 import org.mtr.MTR;
 import org.mtr.client.CustomResourceLoader;
 import org.mtr.core.serializer.JsonReader;
 import org.mtr.core.tool.Utilities;
 import org.mtr.legacy.resource.CustomResourcesConverter;
-import org.mtr.libraries.javax.servlet.AsyncContext;
-import org.mtr.libraries.javax.servlet.http.HttpServletRequest;
-import org.mtr.libraries.javax.servlet.http.HttpServletResponse;
-import org.mtr.libraries.javax.servlet.http.Part;
+import org.mtr.libraries.com.google.gson.JsonObject;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.Object2ObjectAVLTreeMap;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.Object2ObjectArrayMap;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.Object2ObjectMap;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import org.mtr.libraries.jakarta.servlet.AsyncContext;
+import org.mtr.libraries.jakarta.servlet.http.HttpServletRequest;
+import org.mtr.libraries.jakarta.servlet.http.HttpServletResponse;
+import org.mtr.libraries.jakarta.servlet.http.Part;
 import org.mtr.resource.*;
 import org.mtr.screen.ReloadCustomResourcesScreen;
 
@@ -44,7 +47,7 @@ public final class ResourcePackCreatorUploadServlet extends AbstractResourcePack
 			case "/reset":
 				reset();
 				final MinecraftClient minecraftClient = MinecraftClient.getInstance();
-				minecraftClient.execute(() -> minecraftClient.setScreen(new ReloadCustomResourcesScreen(() -> {
+				minecraftClient.execute(() -> UMinecraft.setCurrentScreenObj(new ReloadCustomResourcesScreen(() -> {
 					CustomResourceLoader.reload();
 					returnStandardResponse(httpServletResponse, asyncContext, null);
 				})));
@@ -78,6 +81,7 @@ public final class ResourcePackCreatorUploadServlet extends AbstractResourcePack
 		}
 	}
 
+	@Nullable
 	static String getModel(String name) {
 		return MODELS.get(name);
 	}
@@ -144,7 +148,7 @@ public final class ResourcePackCreatorUploadServlet extends AbstractResourcePack
 
 				final JsonObject newCustomResourcesObject = customResourcesObject;
 				final MinecraftClient minecraftClient = MinecraftClient.getInstance();
-				minecraftClient.execute(() -> minecraftClient.setScreen(new ReloadCustomResourcesScreen(() -> {
+				minecraftClient.execute(() -> UMinecraft.setCurrentScreenObj(new ReloadCustomResourcesScreen(() -> {
 					final ObjectArrayList<VehicleResourceWrapper> vehicles = new ObjectArrayList<>();
 					CustomResourcesConverter.convert(newCustomResourcesObject, identifier -> jsonCache.getOrDefault(identifier.toString(), ResourceManagerHelper.readResource(identifier))).iterateVehicles(vehicleResource -> vehicles.add(vehicleResource.toVehicleResourceWrapper()));
 					resourceWrapper = new ResourceWrapper(vehicles, new ObjectArrayList<>(), new ObjectArrayList<>(), CustomResourceLoader.getMinecraftModelResources(), CustomResourceLoader.getTextureResources());
@@ -201,8 +205,8 @@ public final class ResourcePackCreatorUploadServlet extends AbstractResourcePack
 				MTR.LOGGER.info("Exporting Resource Pack at {}", filePath);
 
 				try (
-						final FileOutputStream fileOutputStream = new FileOutputStream(filePath);
-						final ZipOutputStream zipOutputStream = new ZipOutputStream(fileOutputStream)
+					final FileOutputStream fileOutputStream = new FileOutputStream(filePath);
+					final ZipOutputStream zipOutputStream = new ZipOutputStream(fileOutputStream)
 				) {
 					writeToZipOutputStream(modelPropertiesMap, zipOutputStream, modelProperties -> IOUtils.write(Utilities.getJsonObjectFromData(modelProperties).toString(), zipOutputStream, StandardCharsets.UTF_8));
 					writeToZipOutputStream(positionDefinitionsMap, zipOutputStream, positionDefinitions -> IOUtils.write(Utilities.getJsonObjectFromData(positionDefinitions).toString(), zipOutputStream, StandardCharsets.UTF_8));

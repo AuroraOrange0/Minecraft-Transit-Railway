@@ -1,23 +1,24 @@
 package org.mtr.client;
 
-import it.unimi.dsi.fastutil.objects.Object2LongArrayMap;
-import it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.texture.NativeImage;
 import net.minecraft.client.texture.NativeImageBackedTexture;
 import net.minecraft.util.Identifier;
+import org.jspecify.annotations.Nullable;
 import org.mtr.MTR;
 import org.mtr.config.Config;
 import org.mtr.config.LanguageDisplay;
 import org.mtr.core.servlet.MessageQueue;
+import org.mtr.core.tool.Utilities;
 import org.mtr.data.IGui;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.Object2LongArrayMap;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.Object2ObjectLinkedOpenHashMap;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import org.mtr.render.MainRenderer;
 import org.mtr.render.MoreRenderLayers;
 import org.mtr.resource.ResourceManagerHelper;
 
-import javax.annotation.Nullable;
 import java.awt.*;
 import java.awt.font.FontRenderContext;
 import java.awt.font.TextAttribute;
@@ -28,9 +29,37 @@ import java.text.AttributedString;
 import java.util.Arrays;
 import java.util.function.Supplier;
 
+/**
+ * Runtime texture generation and caching system.
+ *
+ * <p>Most "text on a sign" textures (station names, PIDS rows, exit letters, direction
+ * arrows, …) are not shipped in the resource pack — they are drawn at runtime by
+ * {@link RouteMapGenerator} from live simulation data, then uploaded to GL as
+ * {@link NativeImageBackedTexture}s. This class owns that pipeline.</p>
+ *
+ * <p>Caller flow:</p>
+ * <ol>
+ *   <li>A renderer calls one of the {@code getXxx(...)} accessors per frame.</li>
+ *   <li>If the texture is already cached and fresh, its {@link DynamicResource} is
+ *       returned immediately with a refreshed expiry. The {@code identifier} field can be
+ *       bound straight away.</li>
+ *   <li>If not, a generation task is posted to
+ *       {@link org.mtr.render.WorkerThread#scheduleDynamicTextures(Runnable)} and a
+ *       placeholder ({@link DefaultRenderingColor}) is returned for this frame. The
+ *       texture lands in the cache within a few frames.</li>
+ * </ol>
+ *
+ * <p>{@link #tick()} runs once per render frame and evicts entries whose expiry has
+ * passed; entries are then queued for GL texture deletion after a {@value #COOLDOWN_TIME}
+ * ms grace period to outlast any draws still referring to them.</p>
+ *
+ * <p>Performance hotspots are documented in {@code docs/PERFORMANCE.md} §2.</p>
+ */
 public class DynamicTextureCache implements IGui {
 
+	@Nullable
 	private Font font;
+	@Nullable
 	private Font fontCjk;
 
 	private final Object2ObjectLinkedOpenHashMap<String, DynamicResource> dynamicResources = new Object2ObjectLinkedOpenHashMap<>();
@@ -65,6 +94,13 @@ public class DynamicTextureCache implements IGui {
 		generatingResources.clear();
 	}
 
+	/**
+	 * Once-per-render-frame eviction pass. Removes entries whose expiry has passed (their
+	 * GL textures are queued for deletion after a {@value #COOLDOWN_TIME} ms grace period)
+	 * and finalises the deletion of any cooled-off textures from the previous tick.
+	 *
+	 * <p>See {@code docs/PERFORMANCE.md} §2.6 — currently O(cache size) per frame.</p>
+	 */
 	public void tick() {
 		final ObjectArrayList<String> keysToRemove = new ObjectArrayList<>();
 		final long currentTimeMillis = System.currentTimeMillis();
@@ -139,8 +175,25 @@ public class DynamicTextureCache implements IGui {
 		return getTextPixels(text, dimensions, Integer.MAX_VALUE, (int) (Math.max(fontSizeCjk, fontSize) * LINE_HEIGHT_MULTIPLIER), fontSizeCjk, fontSize, 0, null);
 	}
 
-	public byte[] getTextPixels(String text, int[] dimensions, int maxWidth, int maxHeight, int fontSizeCjk, int fontSize, int padding, @Nullable IGui.HorizontalAlignment horizontalAlignment) {
-		if (maxWidth <= 0) {
+	/**
+	 * Rasterise {@code text} into a packed grayscale pixel byte array, honouring the
+	 * current language-display setting, bundled-font glyph coverage, and AWT system-font
+	 * fallback when neither bundled font can render a character.
+	 *
+	 * @param text                raw text, with {@code |} treated as a part separator
+	 * @param dimensions          out-parameter: {@code [width, height]} of the rendered pixels
+	 * @param maxWidth            cap on the rendered width before clipping; {@link Integer#MAX_VALUE} for unbounded
+	 * @param maxHeight           cap on the rendered height
+	 * @param fontSizeCjk         font size to use when the text part contains CJK glyphs
+	 * @param fontSize            font size to use otherwise
+	 * @param padding             pixels of padding around each row (multi-row only)
+	 * @param horizontalAlignment {@code null} to lay out as a single horizontal row;
+	 *                            non-null to wrap parts vertically with the given alignment
+	 * @return tightly-packed {@code BYTE_GRAY} pixels suitable for compositing into a
+	 * {@link NativeImage}; empty if the fonts have not yet loaded
+	 */
+	public byte[] getTextPixels(String text, int[] dimensions, int maxWidth, int maxHeight, int fontSizeCjk, int fontSize, int padding, IGui.@Nullable HorizontalAlignment horizontalAlignment) {
+		if (maxWidth <= 0 || font == null || fontCjk == null) {
 			dimensions[0] = 0;
 			dimensions[1] = 0;
 			return new byte[0];
@@ -198,7 +251,7 @@ public class DynamicTextureCache implements IGui {
 				width += textWidths[index];
 				height = Math.max(height, (int) (fontSizes[index] * LINE_HEIGHT_MULTIPLIER));
 			} else {
-				width = Math.max(width, Math.min(maxWidth, textWidths[index]));
+				width = Utilities.clampSafe(textWidths[index], width, maxWidth);
 				height += (int) (fontSizes[index] * LINE_HEIGHT_MULTIPLIER);
 			}
 		}
@@ -233,7 +286,7 @@ public class DynamicTextureCache implements IGui {
 		return pixels;
 	}
 
-	private DynamicResource getResource(String key, Supplier<NativeImage> supplier, DefaultRenderingColor defaultRenderingColor) {
+	private DynamicResource getResource(String key, Supplier<@Nullable NativeImage> supplier, DefaultRenderingColor defaultRenderingColor) {
 		resourceRegistryQueue.process(Runnable::run);
 		final DynamicResource dynamicResource = dynamicResources.get(key);
 
@@ -252,17 +305,17 @@ public class DynamicTextureCache implements IGui {
 					try {
 						font = Font.createFont(Font.TRUETYPE_FONT, inputStream);
 					} catch (Exception e) {
-						MTR.LOGGER.error("", e);
+						MTR.LOGGER.error("Failed to load the Noto Sans Semibold font for dynamic text rendering", e);
 					}
 				});
 			}
 
 			while (fontCjk == null) {
-				ResourceManagerHelper.readResource(Identifier.of(MTR.MOD_ID, "font/noto-serif-cjk-tc-semibold.ttf"), inputStream -> {
+				ResourceManagerHelper.readResource(Identifier.of(MTR.MOD_ID, "font/noto-serif-tc-semibold.ttf"), inputStream -> {
 					try {
 						fontCjk = Font.createFont(Font.TRUETYPE_FONT, inputStream);
 					} catch (Exception e) {
-						MTR.LOGGER.error("", e);
+						MTR.LOGGER.error("Failed to load the Noto Serif TC Semibold font for dynamic text rendering", e);
 					}
 				});
 			}
@@ -313,6 +366,14 @@ public class DynamicTextureCache implements IGui {
 		}
 	}
 
+	/**
+	 * Generated-texture handle returned by every {@code getXxx(...)} accessor.
+	 *
+	 * <p>Holds the GL {@link Identifier} to bind plus the rendered pixel dimensions.
+	 * Instances are short-lived: a fresh one is allocated each time a texture is
+	 * regenerated, and {@link #remove()} cancels any in-flight scheduled renders and
+	 * evicts cached render-layer entries.</p>
+	 */
 	public static class DynamicResource {
 
 		private long expiryTime;

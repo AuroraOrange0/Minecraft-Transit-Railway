@@ -3,17 +3,17 @@ package org.mtr.widget;
 import gg.essential.elementa.UIComponent;
 import gg.essential.elementa.constraints.PixelConstraint;
 import gg.essential.universal.UMatrixStack;
-import it.unimi.dsi.fastutil.longs.LongAVLTreeSet;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import kotlin.Pair;
 import lombok.Setter;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.util.math.BlockPos;
+import org.jspecify.annotations.Nullable;
+import org.mtr.libraries.it.unimi.dsi.fastutil.longs.LongAVLTreeSet;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.mtr.registry.UConverters;
 import org.mtr.resource.SignResource;
 import org.mtr.tool.ReleasedDynamicTextureRegistry;
 
-import javax.annotation.Nullable;
 import java.util.Arrays;
 import java.util.Locale;
 
@@ -72,10 +72,10 @@ public final class SignButtonsComponent extends UIComponent {
 			}
 
 			ImageComponentBase.drawTexture(mouseOver ? ReleasedDynamicTextureRegistry.BUTTON_HIGHLIGHTED_TEXTURE.get() : ReleasedDynamicTextureRegistry.BUTTON_TEXTURE.get(), vertexConsumer -> StitchedImageComponent.drawImage(
-					matrixStack, vertexConsumer,
-					x, y, columnWidth, rowHeight,
-					200, 20, 4,
-					false
+				matrixStack, vertexConsumer,
+				x, y, columnWidth, rowHeight,
+				200, 20, 4,
+				false
 			));
 
 			final SignResource[] currentSignResources = new SignResource[signWidthUnits];

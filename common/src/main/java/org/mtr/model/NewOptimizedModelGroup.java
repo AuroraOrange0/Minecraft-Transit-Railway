@@ -1,19 +1,19 @@
 package org.mtr.model;
 
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.minecraft.client.render.VertexFormat;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.Box;
+import org.jspecify.annotations.Nullable;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.mtr.resource.RenderStage;
 
-import javax.annotation.Nullable;
 import java.util.function.Consumer;
 
 public final class NewOptimizedModelGroup {
 
 	public final ObjectArrayList<Box> boxes = new ObjectArrayList<>();
-	private final Object2ObjectOpenHashMap<RenderStage, Object2ObjectOpenHashMap<Identifier, ObjectArrayList<StoredVertexData>>> storedVertexConsumersForRenderStageAndTexture = new Object2ObjectOpenHashMap<>();
+	private final Object2ObjectOpenHashMap<@Nullable RenderStage, Object2ObjectOpenHashMap<Identifier, ObjectArrayList<StoredVertexData>>> storedVertexConsumersForRenderStageAndTexture = new Object2ObjectOpenHashMap<>();
 
 	public void add(@Nullable RenderStage renderStage, Identifier texture, Consumer<ObjectArrayList<StoredVertexData>> consumer, @Nullable ObjectArrayList<Box> boxes) {
 		final ObjectArrayList<StoredVertexData> storedVertexDataList = new ObjectArrayList<>();
@@ -41,8 +41,8 @@ public final class NewOptimizedModelGroup {
 		storedVertexConsumersForRenderStageAndTexture.forEach((renderStage, storedVertexConsumerForTexture) -> {
 			if (renderStage != null) {
 				storedVertexConsumerForTexture.forEach((texture, storedVertexDataList) -> newOptimizedModels
-						.computeIfAbsent(renderStage, key -> new ObjectArrayList<>())
-						.add(new NewOptimizedModel(texture, drawMode, storedVertexDataList.isEmpty() ? null : vertexConsumer -> StoredVertexData.apply(storedVertexDataList, vertexConsumer)))
+					.computeIfAbsent(renderStage, key -> new ObjectArrayList<>())
+					.add(new NewOptimizedModel(texture, drawMode, storedVertexDataList.isEmpty() ? null : vertexConsumer -> StoredVertexData.apply(storedVertexDataList, vertexConsumer)))
 				);
 			}
 		});
@@ -53,11 +53,11 @@ public final class NewOptimizedModelGroup {
 		newOptimizedModelGroup.storedVertexConsumersForRenderStageAndTexture.forEach((renderStage, storedVertexConsumerForTexture) -> {
 			final RenderStage newRenderStage = renderStage == null ? defaultRenderStage : renderStage;
 			storedVertexConsumerForTexture.forEach((texture, storedVertexDataList) -> storedVertexDataList
-					.forEach(storedVertexData -> storedVertexConsumersForRenderStageAndTexture
-							.computeIfAbsent(newRenderStage, key -> new Object2ObjectOpenHashMap<>())
-							.computeIfAbsent(texture, key -> new ObjectArrayList<>())
-							.add(storedVertexData.modify(translateX, translateY, translateZ, flip))
-					)
+				.forEach(storedVertexData -> storedVertexConsumersForRenderStageAndTexture
+					.computeIfAbsent(newRenderStage, key -> new Object2ObjectOpenHashMap<>())
+					.computeIfAbsent(texture, key -> new ObjectArrayList<>())
+					.add(storedVertexData.modify(translateX, translateY, translateZ, flip))
+				)
 			);
 		});
 	}

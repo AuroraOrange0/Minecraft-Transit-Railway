@@ -1,6 +1,5 @@
 package org.mtr.block;
 
-import it.unimi.dsi.fastutil.objects.ObjectObjectImmutablePair;
 import net.minecraft.block.*;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
@@ -25,11 +24,11 @@ import org.mtr.core.data.Rail;
 import org.mtr.core.data.TransportMode;
 import org.mtr.core.tool.Angle;
 import org.mtr.generated.lang.TranslationProvider;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectObjectImmutablePair;
 import org.mtr.packet.ClientPacketHelper;
 import org.mtr.packet.PacketDeleteData;
 import org.mtr.registry.Items;
 
-import javax.annotation.Nonnull;
 import java.util.List;
 
 public class BlockNode extends BlockWaterloggable implements Waterloggable {
@@ -49,7 +48,6 @@ public class BlockNode extends BlockWaterloggable implements Waterloggable {
 		this.transportMode = transportMode;
 	}
 
-	@Nonnull
 	@Override
 	protected ActionResult onUse(BlockState state, World world, BlockPos pos, PlayerEntity player, BlockHitResult hit) {
 		if (world.isClient() && player.isHolding(Items.BRUSH.get())) {
@@ -65,15 +63,14 @@ public class BlockNode extends BlockWaterloggable implements Waterloggable {
 		}
 	}
 
-	@Nonnull
 	@Override
 	public BlockState getPlacementState(ItemPlacementContext itemPlacementContext) {
 		final int quadrant = Angle.getQuadrant(itemPlacementContext.getPlayerYaw(), true);
 		return super.getPlacementState(itemPlacementContext)
-				.with(FACING, quadrant % 8 >= 4)
-				.with(IS_45, quadrant % 4 >= 2)
-				.with(IS_22_5, quadrant % 2 == 1)
-				.with(IS_CONNECTED, false);
+			.with(FACING, quadrant % 8 >= 4)
+			.with(IS_45, quadrant % 4 >= 2)
+			.with(IS_22_5, quadrant % 2 == 1)
+			.with(IS_CONNECTED, false);
 	}
 
 	@Override
@@ -84,13 +81,11 @@ public class BlockNode extends BlockWaterloggable implements Waterloggable {
 		return super.onBreak(world, pos, state, player);
 	}
 
-	@Nonnull
 	@Override
 	public final VoxelShape getOutlineShape(BlockState blockState, BlockView world, BlockPos pos, ShapeContext context) {
 		return Block.createCuboidShape(SHAPE_PADDING, getShapeY1(), SHAPE_PADDING, 16 - SHAPE_PADDING, getShapeY2(blockState), 16 - SHAPE_PADDING);
 	}
 
-	@Nonnull
 	@Override
 	public VoxelShape getCollisionShape(BlockState state, BlockView world, BlockPos pos, ShapeContext context) {
 		return VoxelShapes.empty();
@@ -135,15 +130,14 @@ public class BlockNode extends BlockWaterloggable implements Waterloggable {
 			this.isStation = isStation;
 		}
 
-		@Nonnull
 		@Override
 		public BlockState getPlacementState(ItemPlacementContext itemPlacementContext) {
 			final int quadrant = Angle.getQuadrant(itemPlacementContext.getPlayerYaw(), false);
 			return super.getPlacementState(itemPlacementContext)
-					.with(FACING, quadrant % 4 >= 2)
-					.with(IS_45, quadrant % 2 == 1)
-					.with(IS_22_5, false)
-					.with(IS_CONNECTED, false);
+				.with(FACING, quadrant % 4 >= 2)
+				.with(IS_45, quadrant % 2 == 1)
+				.with(IS_22_5, false)
+				.with(IS_CONNECTED, false);
 		}
 
 		@Override

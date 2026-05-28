@@ -1,10 +1,11 @@
 package org.mtr.data;
 
-import it.unimi.dsi.fastutil.longs.LongAVLTreeSet;
+import lombok.Getter;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.registry.RegistryWrapper;
 import net.minecraft.world.PersistentState;
 import org.mtr.MTR;
+import org.mtr.libraries.it.unimi.dsi.fastutil.longs.LongAVLTreeSet;
 
 /**
  * This class is for storing extra world data that is not stored in Transport Simulation Core.
@@ -12,6 +13,7 @@ import org.mtr.MTR;
  */
 public final class PersistentStateData extends PersistentState {
 
+	@Getter
 	private final String uniqueWorldId;
 	private final LongAVLTreeSet routeIdsWithDisabledAnnouncements = new LongAVLTreeSet();
 
@@ -42,10 +44,6 @@ public final class PersistentStateData extends PersistentState {
 		nbt.putString(KEY_UNIQUE_WORLD_ID, uniqueWorldId);
 		nbt.putLongArray(KEY_ROUTE_IDS_WITH_DISABLED_ANNOUNCEMENTS, routeIdsWithDisabledAnnouncements.toLongArray());
 		return nbt;
-	}
-
-	public String getUniqueWorldId() {
-		return uniqueWorldId;
 	}
 
 	public boolean getRouteIdHasDisabledAnnouncements(long routeId) {

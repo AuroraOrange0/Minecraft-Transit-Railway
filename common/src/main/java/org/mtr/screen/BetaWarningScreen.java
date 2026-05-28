@@ -45,14 +45,14 @@ public class BetaWarningScreen extends ScreenBase implements IGui, Utilities {
 		context.getMatrices().push();
 		context.getMatrices().translate(width / 2F, SQUARE_SIZE, 0);
 		context.getMatrices().scale(2, 2, 1);
-		context.drawCenteredTextWithShadow(textRenderer, "Minecraft Transit Railway 4.0.0", 0, 0, ARGB_WHITE);
+		context.drawCenteredTextWithShadow(textRenderer, "Minecraft Transit Railway 4.1.0", 0, 0, ARGB_WHITE);
 		context.getMatrices().pop();
 
 		int i = SQUARE_SIZE * 2;
 		context.drawCenteredTextWithShadow(textRenderer, "Please back up your worlds before continuing!", width / 2, i += TEXT_HEIGHT, System.currentTimeMillis() % 1000 < 500 ? 0xFFFF00 : 0xFF9900);
-		i = wrapAndRender(context, "- We are very close to the official release of 4.0.0. Please report any bugs you find!", i + SQUARE_SIZE);
-		i = wrapAndRender(context, "- If you find any issues with the Resource Pack Creator, please let me know.", i);
-		i = wrapAndRender(context, "- Manual driving still has NOT been implemented yet!", i);
+		i = wrapAndRender(context, "- This is a very early release for Minecraft 1.21.x versions. Please report any bugs you find.", i + SQUARE_SIZE);
+		i = wrapAndRender(context, "- Lift / Elevator rendering has NOT been implemented yet.", i);
+		i = wrapAndRender(context, "- Some model previews in GUI screens have NOT been implemented yet.", i);
 		context.drawCenteredTextWithShadow(textRenderer, "Thank you and enjoy :)", width / 2, i, ARGB_WHITE);
 
 		context.getMatrices().push();
@@ -63,7 +63,7 @@ public class BetaWarningScreen extends ScreenBase implements IGui, Utilities {
 
 		context.drawGuiTexture(RenderLayer::getGuiTextured, Identifier.of("mtr/patreon"), width / 2 - BUTTON_WIDTH / 2 - SQUARE_SIZE, height - SQUARE_SIZE * 3 - TEXT_PADDING, SQUARE_SIZE, SQUARE_SIZE);
 		final int youTubeIconPadding = Math.round(SQUARE_SIZE * (90F / 64 - 1) / 2);
-		context.drawGuiTexture(RenderLayer::getGuiTextured, Identifier.of("mtr/youtube"), width / 2 + BUTTON_WIDTH / 2 - youTubeIconPadding, height - SQUARE_SIZE * 3 - TEXT_PADDING, SQUARE_SIZE, SQUARE_SIZE);
+		context.drawGuiTexture(RenderLayer::getGuiTextured, Identifier.of("mtr/youtube"), width / 2 + BUTTON_WIDTH / 2 - youTubeIconPadding, height - SQUARE_SIZE * 3 - TEXT_PADDING, SQUARE_SIZE * 90 / 64, SQUARE_SIZE);
 	}
 
 	@Override

@@ -1,78 +1,92 @@
 package org.mtr.screen;
 
+import gg.essential.elementa.components.ScrollComponent;
+import gg.essential.elementa.components.UIWrappedText;
+import gg.essential.elementa.constraints.*;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.Items;
-import net.minecraft.text.MutableText;
-import org.mtr.client.IDrawing;
-import org.mtr.data.IGui;
 import org.mtr.generated.lang.TranslationProvider;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectImmutableList;
 import org.mtr.packet.PacketAddBalance;
 import org.mtr.registry.RegistryClient;
+import org.mtr.tool.GuiHelper;
+import org.mtr.widget.BackgroundComponent;
+import org.mtr.widget.ButtonComponent;
+import org.mtr.widget.ScrollPanelComponent;
 
-public class TicketMachineScreen extends ScreenBase implements IGui {
+import java.awt.*;
 
-	private final ButtonWidget[] buttons = new ButtonWidget[BUTTON_COUNT];
-	private final MutableText balanceText;
+/**
+ * Adds ticket machine balance with a vertically stacked list of preset emerald values.
+ */
+public final class TicketMachineScreen extends WindowBase {
+
+	private int balance;
+
+	private final UIWrappedText balanceText;
+	private final UIWrappedText emeraldsText;
+	private final ButtonComponent[] buttons = new ButtonComponent[BUTTON_COUNT];
 
 	private static final int BUTTON_COUNT = 10;
-	private static final int BUTTON_WIDTH = 80;
 
 	public TicketMachineScreen(int balance) {
-		super();
+		this.balance = balance;
+		final BackgroundComponent backgroundComponent = new BackgroundComponent(getWindow(), ObjectImmutableList.of());
+
+		balanceText = (UIWrappedText) new UIWrappedText("", false)
+			.setChildOf(backgroundComponent)
+			.setWidth(new RelativeConstraint())
+			.setColor(new Color(GuiHelper.MINECRAFT_GUI_TITLE_TEXT_COLOR));
+
+		emeraldsText = (UIWrappedText) new UIWrappedText("", false)
+			.setChildOf(backgroundComponent)
+			.setY(new SiblingConstraint(GuiHelper.DEFAULT_PADDING))
+			.setWidth(new RelativeConstraint())
+			.setColor(new Color(GuiHelper.MINECRAFT_GUI_TITLE_TEXT_COLOR));
+
+		final ScrollComponent scrollComponent = ((ScrollPanelComponent) new ScrollPanelComponent(true)
+			.setChildOf(backgroundComponent)
+			.setY(new SiblingConstraint(GuiHelper.DEFAULT_PADDING))
+			.setWidth(new RelativeConstraint())
+			.setHeight(new SubtractiveConstraint(new FillConstraint(), new PixelConstraint(GuiHelper.DEFAULT_PADDING * 2)))).contentContainer;
 
 		for (int i = 0; i < BUTTON_COUNT; i++) {
+			buttons[i] = (ButtonComponent) new ButtonComponent(false)
+				.setChildOf(scrollComponent)
+				.setY(new SiblingConstraint())
+				.setWidth(new RelativeConstraint());
+
+			final int addBalanceAmount = PacketAddBalance.getAddBalanceAmount(i);
+			buttons[i].setText(TranslationProvider.GUI_MTR_ADD_BALANCE_FOR_EMERALDS.getString(addBalanceAmount, PacketAddBalance.getEmeraldAmount(i)));
 			final int index = i;
-			buttons[i] = ButtonWidget.builder(TranslationProvider.GUI_MTR_ADD_VALUE.getMutableText(), button -> {
+			buttons[i].onClick(() -> {
 				RegistryClient.sendPacketToServer(new PacketAddBalance(index));
-				MinecraftClient.getInstance().setScreen(null);
-			}).build();
+				this.balance += addBalanceAmount;
+				updateButtons();
+			});
 		}
 
-		balanceText = TranslationProvider.GUI_MTR_BALANCE.getMutableText(balance);
+		updateButtons();
 	}
 
 	@Override
-	protected void init() {
-		super.init();
-
-		for (int i = 0; i < BUTTON_COUNT; i++) {
-			IDrawing.setPositionAndWidth(buttons[i], width - BUTTON_WIDTH, SQUARE_SIZE * (i + 1), BUTTON_WIDTH - TEXT_FIELD_PADDING);
-		}
-
-		for (final ButtonWidget button : buttons) {
-			addDrawableChild(button);
-		}
-	}
-
-	@Override
-	public void tick() {
-		final int emeraldCount = getEmeraldCount();
-		for (int i = 0; i < BUTTON_COUNT; i++) {
-			buttons[i].active = emeraldCount >= Math.pow(2, i);
-		}
-	}
-
-	@Override
-	public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-		renderBackground(context, mouseX, mouseY, delta);
-		final MutableText emeraldsText = TranslationProvider.GUI_MTR_EMERALDS.getMutableText(getEmeraldCount());
-		context.drawText(textRenderer, balanceText, TEXT_PADDING, TEXT_PADDING, ARGB_WHITE, false);
-		context.drawText(textRenderer, emeraldsText, width - TEXT_PADDING - textRenderer.getWidth(emeraldsText), TEXT_PADDING, ARGB_WHITE, false);
-
-		for (int i = 0; i < BUTTON_COUNT; i++) {
-			context.drawText(textRenderer, TranslationProvider.GUI_MTR_ADD_BALANCE_FOR_EMERALDS.getMutableText(PacketAddBalance.getAddAmount(i), (int) Math.pow(2, i)), TEXT_PADDING, (i + 1) * SQUARE_SIZE + TEXT_PADDING, ARGB_WHITE, false);
-		}
-
-		super.render(context, mouseX, mouseY, delta);
+	public void onTick() {
+		super.onTick();
+		balanceText.setText(TranslationProvider.GUI_MTR_BALANCE.getString(balance));
+		emeraldsText.setText(TranslationProvider.GUI_MTR_EMERALDS.getString(getEmeraldCount()));
 	}
 
 	private int getEmeraldCount() {
 		final ClientPlayerEntity clientPlayerEntity = MinecraftClient.getInstance().player;
 		final PlayerInventory playerInventory = clientPlayerEntity == null ? null : clientPlayerEntity.getInventory();
 		return playerInventory == null ? 0 : playerInventory.count(Items.EMERALD);
+	}
+
+	private void updateButtons() {
+		for (int i = 0; i < BUTTON_COUNT; i++) {
+			buttons[i].setDisabled(getEmeraldCount() < PacketAddBalance.getEmeraldAmount(i));
+		}
 	}
 }

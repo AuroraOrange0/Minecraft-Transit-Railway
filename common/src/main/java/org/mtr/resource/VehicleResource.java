@@ -1,13 +1,9 @@
 package org.mtr.resource;
 
-import it.unimi.dsi.fastutil.ints.Int2ObjectAVLTreeMap;
-import it.unimi.dsi.fastutil.objects.Object2ObjectAVLTreeMap;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import it.unimi.dsi.fastutil.objects.ObjectArraySet;
-import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
 import net.minecraft.util.math.Box;
+import org.jspecify.annotations.Nullable;
 import org.mtr.MTR;
 import org.mtr.config.Config;
 import org.mtr.core.data.TransportMode;
@@ -15,6 +11,11 @@ import org.mtr.core.serializer.ReaderBase;
 import org.mtr.core.tool.Utilities;
 import org.mtr.data.VehicleExtension;
 import org.mtr.generated.resource.VehicleResourceSchema;
+import org.mtr.libraries.it.unimi.dsi.fastutil.ints.Int2ObjectAVLTreeMap;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.Object2ObjectAVLTreeMap;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArraySet;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectImmutableList;
 import org.mtr.model.BuiltVehicleModelHolder;
 import org.mtr.render.StoredMatrixTransformations;
 import org.mtr.sound.BveVehicleSound;
@@ -22,11 +23,31 @@ import org.mtr.sound.BveVehicleSoundConfig;
 import org.mtr.sound.LegacyVehicleSound;
 import org.mtr.sound.VehicleSoundBase;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+/**
+ * The mod-side representation of one custom vehicle definition.
+ *
+ * <p>Each instance ties together everything the renderer needs for a vehicle id:</p>
+ * <ul>
+ *   <li>The body model definitions ({@link #models}) plus per-bogie models
+ *       ({@link #bogie1Models}, {@link #bogie2Models}).</li>
+ *   <li>Optional position-dependent expansion via the legacy
+ *       {@link LegacyVehicleSupplier#apply(int, int) carNumber / totalCars} hook (see
+ *       {@code docs/MIGRATIONS.md} §9).</li>
+ *   <li>The sound system, lazily built by {@link #createVehicleSoundBase} — either
+ *       {@link org.mtr.sound.BveVehicleSound} or {@link org.mtr.sound.LegacyVehicleSound}
+ *       depending on whether {@code bveSoundBaseResource} is set.</li>
+ *   <li>Cached, fully-built {@link VehicleResourceCache} instances indexed by
+ *       {@code (carNumber, totalCars)} so a vehicle composed of mixed cab/trailer cars
+ *       doesn't rebuild meshes on every render call.</li>
+ * </ul>
+ *
+ * <p>Constructed by {@link org.mtr.client.CustomResourceLoader} during resource reload.
+ * Construction is cheap; the heavy mesh build is deferred to
+ * {@link #getCachedVehicleResource(int, int)}.</p>
+ */
 public final class VehicleResource extends VehicleResourceSchema {
 
 	public final Supplier<VehicleSoundBase> createVehicleSoundBase;
@@ -49,62 +70,62 @@ public final class VehicleResource extends VehicleResourceSchema {
 	}
 
 	VehicleResource(
-			String id,
-			String name,
-			String color,
-			TransportMode transportMode,
-			double length,
-			double width,
-			double bogie1Position,
-			double bogie2Position,
-			double couplingPadding1,
-			double couplingPadding2,
-			String description,
-			String wikipediaArticle,
-			ObjectArrayList<String> tags,
-			ObjectArrayList<VehicleModel> models,
-			ObjectArrayList<VehicleModel> bogie1Models,
-			ObjectArrayList<VehicleModel> bogie2Models,
-			boolean hasGangway1,
-			boolean hasGangway2,
-			boolean hasBarrier1,
-			boolean hasBarrier2,
-			double legacyRiderOffset,
-			String bveSoundBaseResource,
-			String legacySpeedSoundBaseResource,
-			long legacySpeedSoundCount,
-			boolean legacyUseAccelerationSoundsWhenCoasting,
-			boolean legacyConstantPlaybackSpeed,
-			String legacyDoorSoundBaseResource,
-			double legacyDoorCloseSoundTime,
-			ResourceProvider resourceProvider
+		String id,
+		String name,
+		String color,
+		TransportMode transportMode,
+		double length,
+		double width,
+		double bogie1Position,
+		double bogie2Position,
+		double couplingPadding1,
+		double couplingPadding2,
+		String description,
+		String wikipediaArticle,
+		ObjectArrayList<String> tags,
+		ObjectArrayList<VehicleModel> models,
+		ObjectArrayList<VehicleModel> bogie1Models,
+		ObjectArrayList<VehicleModel> bogie2Models,
+		boolean hasGangway1,
+		boolean hasGangway2,
+		boolean hasBarrier1,
+		boolean hasBarrier2,
+		double legacyRiderOffset,
+		String bveSoundBaseResource,
+		String legacySpeedSoundBaseResource,
+		long legacySpeedSoundCount,
+		boolean legacyUseAccelerationSoundsWhenCoasting,
+		boolean legacyConstantPlaybackSpeed,
+		String legacyDoorSoundBaseResource,
+		double legacyDoorCloseSoundTime,
+		ResourceProvider resourceProvider
 	) {
 		super(
-				id,
-				name,
-				color,
-				transportMode,
-				length,
-				width,
-				bogie1Position,
-				bogie2Position,
-				couplingPadding1,
-				couplingPadding2,
-				description,
-				wikipediaArticle,
-				hasGangway1,
-				hasGangway2,
-				hasBarrier1,
-				hasBarrier2,
-				legacyRiderOffset,
-				bveSoundBaseResource,
-				legacySpeedSoundBaseResource,
-				legacySpeedSoundCount,
-				legacyUseAccelerationSoundsWhenCoasting,
-				legacyConstantPlaybackSpeed,
-				legacyDoorSoundBaseResource,
-				legacyDoorCloseSoundTime,
-				resourceProvider
+			id,
+			name,
+			color,
+			transportMode,
+			length,
+			width,
+			bogie1Position,
+			bogie2Position,
+			couplingPadding1,
+			couplingPadding2,
+			description,
+			wikipediaArticle,
+			hasGangway1,
+			hasGangway2,
+			hasBarrier1,
+			hasBarrier2,
+			legacyRiderOffset,
+			bveSoundBaseResource,
+			legacySpeedSoundBaseResource,
+			legacySpeedSoundCount,
+			legacyUseAccelerationSoundsWhenCoasting,
+			legacyConstantPlaybackSpeed,
+			legacyDoorSoundBaseResource,
+			legacyDoorCloseSoundTime,
+			resourceProvider
 		);
 		this.tags.addAll(tags);
 		this.models.addAll(models);
@@ -115,24 +136,33 @@ public final class VehicleResource extends VehicleResourceSchema {
 		shouldPreload = Config.getClient().matchesPreloadResourcePattern(id);
 	}
 
-	@Nonnull
 	@Override
 	protected ResourceProvider modelsResourceProviderParameter() {
 		return resourceProvider;
 	}
 
-	@Nonnull
 	@Override
 	protected ResourceProvider bogie1ModelsResourceProviderParameter() {
 		return resourceProvider;
 	}
 
-	@Nonnull
 	@Override
 	protected ResourceProvider bogie2ModelsResourceProviderParameter() {
 		return resourceProvider;
 	}
 
+	/**
+	 * Look up (or build, on first call) the fully-resolved mesh / floor / doorway data for
+	 * a vehicle car in a particular consist position.
+	 *
+	 * <p>Results are memoised per {@code (carNumber, totalCars)} pair. If no legacy
+	 * supplier is attached, both inputs are coerced to {@code 0} — the new schema lets a
+	 * vehicle express position-dependence directly in its model list, so the legacy
+	 * dispatch is unused.</p>
+	 *
+	 * @return the cached / freshly-built resource, or {@code null} if any underlying model
+	 * is still parsing on the worker thread (the caller should retry next frame).
+	 */
 	@Nullable
 	public VehicleResourceCache getCachedVehicleResource(int carNumber, int totalCars) {
 		final int newCarNumber = extraModelsSupplier == null ? 0 : carNumber;
@@ -152,6 +182,17 @@ public final class VehicleResource extends VehicleResourceSchema {
 		}
 	}
 
+	/**
+	 * Schedule a bogie render against the given transform stack. The bogie meshes are
+	 * loaded via the {@code carNumber=0 totalCars=1} cache slot; bogies are not allowed to
+	 * vary by consist position.
+	 *
+	 * @param bogieIndex                  {@code 0} for the front bogie, {@code 1} for the rear
+	 * @param storedMatrixTransformations the per-instance transform
+	 * @param vehicle                     the vehicle being drawn (for door state etc.)
+	 * @param isWithinHalfRenderDistance  used by part filtering to cull interior detail
+	 * @param light                       packed lightmap value
+	 */
 	public void queueBogie(int bogieIndex, StoredMatrixTransformations storedMatrixTransformations, VehicleExtension vehicle, boolean isWithinHalfRenderDistance, int light) {
 		final VehicleResourceCache vehicleResourceCache = getCachedVehicleResource(0, 1);
 		if (vehicleResourceCache != null && Utilities.isBetween(bogieIndex, 0, 1)) {
@@ -212,34 +253,34 @@ public final class VehicleResource extends VehicleResourceSchema {
 		final int totalCars = id.endsWith("cab_3") ? 1 : 3;
 		getCachedVehicleResource(carNumber, totalCars);
 		return new VehicleResourceWrapper(
-				id,
-				name,
-				color,
-				transportMode,
-				length,
-				width,
-				bogie1Position,
-				bogie2Position,
-				couplingPadding1,
-				couplingPadding2,
-				description,
-				wikipediaArticle,
-				tags,
-				getAllModels(carNumber, totalCars).stream().map(VehicleModel::toVehicleModelWrapper).collect(Collectors.toCollection(ObjectArrayList::new)),
-				bogie1Models.stream().map(VehicleModel::toVehicleModelWrapper).collect(Collectors.toCollection(ObjectArrayList::new)),
-				bogie2Models.stream().map(VehicleModel::toVehicleModelWrapper).collect(Collectors.toCollection(ObjectArrayList::new)),
-				hasGangway1,
-				hasGangway2,
-				hasBarrier1,
-				hasBarrier2,
-				legacyRiderOffset,
-				bveSoundBaseResource,
-				legacySpeedSoundBaseResource,
-				legacySpeedSoundCount,
-				legacyUseAccelerationSoundsWhenCoasting,
-				legacyConstantPlaybackSpeed,
-				legacyDoorSoundBaseResource,
-				legacyDoorCloseSoundTime
+			id,
+			name,
+			color,
+			transportMode,
+			length,
+			width,
+			bogie1Position,
+			bogie2Position,
+			couplingPadding1,
+			couplingPadding2,
+			description,
+			wikipediaArticle,
+			tags,
+			getAllModels(carNumber, totalCars).stream().map(VehicleModel::toVehicleModelWrapper).collect(Collectors.toCollection(ObjectArrayList::new)),
+			bogie1Models.stream().map(VehicleModel::toVehicleModelWrapper).collect(Collectors.toCollection(ObjectArrayList::new)),
+			bogie2Models.stream().map(VehicleModel::toVehicleModelWrapper).collect(Collectors.toCollection(ObjectArrayList::new)),
+			hasGangway1,
+			hasGangway2,
+			hasBarrier1,
+			hasBarrier2,
+			legacyRiderOffset,
+			bveSoundBaseResource,
+			legacySpeedSoundBaseResource,
+			legacySpeedSoundCount,
+			legacyUseAccelerationSoundsWhenCoasting,
+			legacyConstantPlaybackSpeed,
+			legacyDoorSoundBaseResource,
+			legacyDoorCloseSoundTime
 		);
 	}
 
@@ -361,12 +402,12 @@ public final class VehicleResource extends VehicleResourceSchema {
 	private Supplier<VehicleSoundBase> createVehicleSoundBaseInitializer() {
 		if (bveSoundBaseResource.isEmpty()) {
 			final LegacyVehicleSound legacyVehicleSound = new LegacyVehicleSound(
-					legacySpeedSoundBaseResource,
-					(int) legacySpeedSoundCount,
-					legacyUseAccelerationSoundsWhenCoasting,
-					legacyConstantPlaybackSpeed,
-					legacyDoorSoundBaseResource,
-					legacyDoorCloseSoundTime
+				legacySpeedSoundBaseResource,
+				(int) legacySpeedSoundCount,
+				legacyUseAccelerationSoundsWhenCoasting,
+				legacyConstantPlaybackSpeed,
+				legacyDoorSoundBaseResource,
+				legacyDoorCloseSoundTime
 			);
 			return () -> legacyVehicleSound;
 		} else {
@@ -375,6 +416,13 @@ public final class VehicleResource extends VehicleResourceSchema {
 		}
 	}
 
+	/**
+	 * Functional interface used by the legacy MTR 3.x format to inject extra car models
+	 * dependent on consist position. New-schema vehicles return {@code null} for this
+	 * supplier and express position-dependence directly through their {@code models} list.
+	 *
+	 * <p>See {@code docs/MIGRATIONS.md} §9.</p>
+	 */
 	@FunctionalInterface
 	public interface LegacyVehicleSupplier<T> {
 		T apply(int carNumber, int totalCars);

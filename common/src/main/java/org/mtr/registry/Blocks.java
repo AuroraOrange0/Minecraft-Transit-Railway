@@ -1,7 +1,5 @@
 package org.mtr.registry;
 
-import com.google.gson.JsonParser;
-import it.unimi.dsi.fastutil.objects.ObjectAVLTreeSet;
 import net.minecraft.block.AbstractBlock;
 import net.minecraft.block.Block;
 import net.minecraft.block.SlabBlock;
@@ -15,6 +13,8 @@ import org.mtr.MTR;
 import org.mtr.block.*;
 import org.mtr.core.data.TransportMode;
 import org.mtr.item.ItemBlockEnchanted;
+import org.mtr.libraries.com.google.gson.JsonParser;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectAVLTreeSet;
 
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -23,10 +23,9 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
-
 public final class Blocks {
 
-	private static ObjectAVLTreeSet<String> REGISTERED_IDENTIFIERS = new ObjectAVLTreeSet<>();
+	private static final ObjectAVLTreeSet<String> REGISTERED_IDENTIFIERS = new ObjectAVLTreeSet<>();
 
 	// Nodes
 	public static final ObjectHolder<Block> RAIL_NODE = registerBlockWithBlockItem("rail", settings -> new BlockNode(settings, TransportMode.TRAIN), true, ItemGroups.CORE);
@@ -259,8 +258,8 @@ public final class Blocks {
 				// Validate all registered blocks are in pickaxe.json
 				final ObjectAVLTreeSet<String> expectedIdentifiers = new ObjectAVLTreeSet<>();
 				JsonParser.parseString(FileUtils.readFileToString(
-						MinecraftClient.getInstance().runDirectory.toPath().resolve("../src/main/resources/data/minecraft/tags/block/mineable/pickaxe.json").toFile(),
-						StandardCharsets.UTF_8
+					MinecraftClient.getInstance().runDirectory.toPath().resolve("../src/main/resources/data/minecraft/tags/block/mineable/pickaxe.json").toFile(),
+					StandardCharsets.UTF_8
 				)).getAsJsonObject().getAsJsonArray("values").forEach(identifier -> expectedIdentifiers.add(identifier.getAsString()));
 				REGISTERED_IDENTIFIERS.forEach(identifier -> {
 					if (!expectedIdentifiers.contains(identifier)) {
@@ -310,7 +309,25 @@ public final class Blocks {
 	private static ObjectHolder<Block> registerBlockWithBlockItem(String registryName, Function<AbstractBlock.Settings, Block> blockFactory, boolean blockPiston, BiFunction<Block, Item.Settings, BlockItem> blockItemFactory, String itemGroupRegistryName) {
 		REGISTERED_IDENTIFIERS.add(registryName);
 		final ObjectHolder<Block> objectHolder = Registry.registerBlock(registryName, settings -> blockFactory.apply(createDefaultBlockSettings(settings, blockPiston)));
-		Registry.registerItem(registryName, settings -> blockItemFactory.apply(objectHolder.get(), settings), itemGroupRegistryName);
+		Registry.registerItem(registryName, settings -> {
+			final Block block = objectHolder.get();
+			return blockItemFactory.apply(block, settings.translationKey(formatBlockItemTranslationKey(block, registryName)));
+		}, itemGroupRegistryName);
 		return objectHolder;
+	}
+
+	/**
+	 * Overriding translation keys is a bit hacky
+	 */
+	private static String formatBlockItemTranslationKey(Block block, String registryName) {
+		if (block instanceof BlockEyeCandy) {
+			return "block.mtrsteamloco." + registryName;
+		} else if (block instanceof BlockStationColor || block instanceof BlockStationColorSlab || block instanceof BlockStationColorGlass || block instanceof BlockStationColorGlassSlab) {
+			return "block.minecraft." + registryName.replaceFirst("station_color_", "");
+		} else if (block instanceof BlockRailwaySign) {
+			return "block.mtr.railway_sign";
+		} else {
+			return "block.mtr." + registryName;
+		}
 	}
 }

@@ -1,13 +1,13 @@
 package org.mtr.resource;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonPrimitive;
+import org.jspecify.annotations.Nullable;
 import org.mtr.MTR;
 import org.mtr.core.tool.Utilities;
+import org.mtr.libraries.com.google.gson.JsonArray;
+import org.mtr.libraries.com.google.gson.JsonElement;
+import org.mtr.libraries.com.google.gson.JsonObject;
+import org.mtr.libraries.com.google.gson.JsonPrimitive;
 
-import javax.annotation.Nullable;
 import java.math.BigDecimal;
 import java.util.Locale;
 import java.util.function.BiConsumer;

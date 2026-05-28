@@ -1,6 +1,5 @@
 package org.mtr.block;
 
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import lombok.Getter;
 import net.minecraft.block.AbstractBlock;
 import net.minecraft.block.BlockEntityProvider;
@@ -26,12 +25,11 @@ import net.minecraft.world.BlockView;
 import net.minecraft.world.World;
 import org.mtr.MTR;
 import org.mtr.generated.lang.TranslationProvider;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.mtr.packet.PacketDeleteData;
 import org.mtr.packet.PacketOpenBlockEntityScreen;
 import org.mtr.registry.BlockEntityTypes;
-import org.mtr.registry.Registry;
 
-import javax.annotation.Nonnull;
 import java.util.List;
 
 public class BlockLiftTrackFloor extends BlockLiftTrackBase implements BlockEntityProvider {
@@ -40,19 +38,11 @@ public class BlockLiftTrackFloor extends BlockLiftTrackBase implements BlockEnti
 		super(settings);
 	}
 
-	@Nonnull
 	@Override
 	protected ActionResult onUse(BlockState state, World world, BlockPos pos, PlayerEntity player, BlockHitResult hit) {
-		return IBlock.checkHoldingBrush(world, player, () -> {
-			final BlockEntity entity = world.getBlockEntity(pos);
-			if (entity instanceof BlockEntity) {
-				entity.markDirty();
-				Registry.sendPacketToClient((ServerPlayerEntity) player, new PacketOpenBlockEntityScreen(pos));
-			}
-		});
+		return IBlock.checkHoldingBrush(world, player, () -> PacketOpenBlockEntityScreen.sendDirectlyToServer((ServerWorld) world, (ServerPlayerEntity) player, pos));
 	}
 
-	@Nonnull
 	@Override
 	public BlockEntity createBlockEntity(BlockPos blockPos, BlockState blockState) {
 		return new LiftTrackFloorBlockEntity(blockPos, blockState);
@@ -66,7 +56,6 @@ public class BlockLiftTrackFloor extends BlockLiftTrackBase implements BlockEnti
 		return super.onBreak(world, pos, state, player);
 	}
 
-	@Nonnull
 	@Override
 	public VoxelShape getOutlineShape(BlockState state, BlockView world, BlockPos pos, ShapeContext context) {
 		return IBlock.getVoxelShapeByDirection(0, 0, 0, 16, 16, 1, IBlock.getStatePropertySafe(state, Properties.HORIZONTAL_FACING));

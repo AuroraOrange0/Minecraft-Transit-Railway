@@ -1,198 +1,176 @@
 package org.mtr.screen;
 
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.client.gui.widget.CheckboxWidget;
-import net.minecraft.text.MutableText;
+import gg.essential.elementa.components.ScrollComponent;
+import gg.essential.elementa.components.UIContainer;
+import gg.essential.elementa.components.UIWrappedText;
+import gg.essential.elementa.constraints.*;
+import gg.essential.universal.UMinecraft;
+import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.text.Text;
 import net.minecraft.util.math.Direction;
-import org.mtr.client.IDrawing;
+import org.mtr.client.CustomResourceLoader;
 import org.mtr.client.MinecraftClientData;
 import org.mtr.core.data.Lift;
 import org.mtr.core.operation.UpdateDataRequest;
 import org.mtr.core.tool.Angle;
-import org.mtr.data.IGui;
+import org.mtr.core.tool.Utilities;
 import org.mtr.generated.lang.TranslationProvider;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectImmutableList;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectObjectImmutablePair;
 import org.mtr.packet.PacketUpdateData;
 import org.mtr.registry.RegistryClient;
-import org.mtr.render.RenderLifts;
+import org.mtr.resource.LiftResource;
+import org.mtr.tool.GuiHelper;
+import org.mtr.tool.ReleasedDynamicTextureRegistry;
+import org.mtr.widget.*;
 
-public class LiftCustomizationScreen extends ScreenBase implements IGui {
+import java.awt.*;
+
+/**
+ * Elementa lift customization panel for dimensions, offsets, style and orientation.
+ */
+public final class LiftCustomizationScreen extends WindowBase {
 
 	private Direction liftDirection;
-
 	private final Lift lift;
-	private final ButtonWidget buttonHeightMinus;
-	private final ButtonWidget buttonHeightAdd;
-	private final ButtonWidget buttonWidthMinus;
-	private final ButtonWidget buttonWidthAdd;
-	private final ButtonWidget buttonDepthMinus;
-	private final ButtonWidget buttonDepthAdd;
-	private final ButtonWidget buttonOffsetXMinus;
-	private final ButtonWidget buttonOffsetXAdd;
-	private final ButtonWidget buttonOffsetYMinus;
-	private final ButtonWidget buttonOffsetYAdd;
-	private final ButtonWidget buttonOffsetZMinus;
-	private final ButtonWidget buttonOffsetZAdd;
-	private final CheckboxWidget buttonIsDoubleSided;
-	private final ButtonWidget buttonLiftStyle;
-	private final ButtonWidget buttonRotateAnticlockwise;
-	private final ButtonWidget buttonRotateClockwise;
-	private final int width1;
-	private final int width2;
+
+	private final NumberInputComponent dimensionXInputComponent;
+	private final NumberInputComponent dimensionYInputComponent;
+	private final NumberInputComponent dimensionZInputComponent;
+	private final NumberInputComponent offsetXInputComponent;
+	private final NumberInputComponent offsetYInputComponent;
+	private final NumberInputComponent offsetZInputComponent;
+	private final CheckboxComponent isDoubleSidedCheckboxComponent;
 
 	private static final int MIN_DIMENSION = 2;
 	private static final int MAX_DIMENSION = 16;
 	private static final int MAX_OFFSET = 16;
+	private static final int LEFT_WIDTH = 96;
 
 	public LiftCustomizationScreen(Lift lift) {
-		super();
 		this.lift = lift;
 		liftDirection = Direction.fromHorizontalDegrees(lift.getAngle().angleDegrees);
 
-		buttonHeightMinus = ButtonWidget.builder(Text.literal("-"), button -> {
-			lift.setDimensions(Math.max(MIN_DIMENSION, lift.getHeight() - 0.5), lift.getWidth(), lift.getDepth(), lift.getOffsetX(), lift.getOffsetY(), lift.getOffsetZ());
-			updateControls(true);
-		}).build();
-		buttonHeightAdd = ButtonWidget.builder(Text.literal("+"), button -> {
-			lift.setDimensions(Math.min(MAX_DIMENSION, lift.getHeight() + 0.5), lift.getWidth(), lift.getDepth(), lift.getOffsetX(), lift.getOffsetY(), lift.getOffsetZ());
-			updateControls(true);
-		}).build();
-		buttonWidthMinus = ButtonWidget.builder(Text.literal("-"), button -> {
-			lift.setDimensions(lift.getHeight(), Math.max(MIN_DIMENSION, lift.getWidth() - 1), lift.getDepth(), lift.getOffsetX(), lift.getOffsetY(), lift.getOffsetZ());
-			updateControls(true);
-		}).build();
-		buttonWidthAdd = ButtonWidget.builder(Text.literal("+"), button -> {
-			lift.setDimensions(lift.getHeight(), Math.min(MAX_DIMENSION, lift.getWidth() + 1), lift.getDepth(), lift.getOffsetX(), lift.getOffsetY(), lift.getOffsetZ());
-			updateControls(true);
-		}).build();
-		buttonDepthMinus = ButtonWidget.builder(Text.literal("-"), button -> {
-			lift.setDimensions(lift.getHeight(), lift.getWidth(), Math.max(MIN_DIMENSION, lift.getDepth() - 1), lift.getOffsetX(), lift.getOffsetY(), lift.getOffsetZ());
-			updateControls(true);
-		}).build();
-		buttonDepthAdd = ButtonWidget.builder(Text.literal("+"), button -> {
-			lift.setDimensions(lift.getHeight(), lift.getWidth(), Math.min(MAX_DIMENSION, lift.getDepth() + 1), lift.getOffsetX(), lift.getOffsetY(), lift.getOffsetZ());
-			updateControls(true);
-		}).build();
-		buttonOffsetXMinus = ButtonWidget.builder(Text.literal("-"), button -> {
-			lift.setDimensions(lift.getHeight(), lift.getWidth(), lift.getDepth(), Math.max(-MAX_OFFSET, lift.getOffsetX() - 0.5), lift.getOffsetY(), lift.getOffsetZ());
-			updateControls(true);
-		}).build();
-		buttonOffsetXAdd = ButtonWidget.builder(Text.literal("+"), button -> {
-			lift.setDimensions(lift.getHeight(), lift.getWidth(), lift.getDepth(), Math.min(MAX_OFFSET, lift.getOffsetX() + 0.5), lift.getOffsetY(), lift.getOffsetZ());
-			updateControls(true);
-		}).build();
-		buttonOffsetYMinus = ButtonWidget.builder(Text.literal("-"), button -> {
-			lift.setDimensions(lift.getHeight(), lift.getWidth(), lift.getDepth(), lift.getOffsetX(), Math.max(-MAX_OFFSET, lift.getOffsetY() - 1), lift.getOffsetZ());
-			updateControls(true);
-		}).build();
-		buttonOffsetYAdd = ButtonWidget.builder(Text.literal("+"), button -> {
-			lift.setDimensions(lift.getHeight(), lift.getWidth(), lift.getDepth(), lift.getOffsetX(), Math.min(MAX_OFFSET, lift.getOffsetY() + 1), lift.getOffsetZ());
-			updateControls(true);
-		}).build();
-		buttonOffsetZMinus = ButtonWidget.builder(Text.literal("-"), button -> {
-			lift.setDimensions(lift.getHeight(), lift.getWidth(), lift.getDepth(), lift.getOffsetX(), lift.getOffsetY(), Math.max(-MAX_OFFSET, lift.getOffsetZ() - 0.5));
-			updateControls(true);
-		}).build();
-		buttonOffsetZAdd = ButtonWidget.builder(Text.literal("+"), button -> {
-			lift.setDimensions(lift.getHeight(), lift.getWidth(), lift.getDepth(), lift.getOffsetX(), lift.getOffsetY(), Math.min(MAX_OFFSET, lift.getOffsetZ() + 0.5));
-			updateControls(true);
-		}).build();
+		final BackgroundComponent backgroundComponent = new BackgroundComponent(getWindow(), ObjectImmutableList.of(
+			new ObjectObjectImmutablePair<>(ReleasedDynamicTextureRegistry.BRUSH_TEXTURE.get(), TranslationProvider.GUI_MTR_LIFT_CUSTOMIZATION.getString())
+		));
+		final UIContainer leftContainer = (UIContainer) new UIContainer()
+			.setChildOf(backgroundComponent.containers[0])
+			.setWidth(new CoerceAtMostConstraint(new RelativeConstraint(0.5F), new PixelConstraint(LEFT_WIDTH)))
+			.setHeight(new RelativeConstraint());
 
-		final MutableText doubleSidedText = TranslationProvider.GUI_MTR_LIFT_IS_DOUBLE_SIDED.getMutableText();
-		final MutableText rotateAnticlockwiseText = TranslationProvider.GUI_MTR_ROTATE_ANTICLOCKWISE.getMutableText();
-		final MutableText rotateClockwiseText = TranslationProvider.GUI_MTR_ROTATE_CLOCKWISE.getMutableText();
-		buttonIsDoubleSided = CheckboxWidget.builder(doubleSidedText, textRenderer).callback((checkboxWidget, checked) -> {
-			lift.setIsDoubleSided(checked);
-			updateControls(true);
-		}).build();
-		buttonLiftStyle = ButtonWidget.builder(Text.empty(), button -> MinecraftClient.getInstance().setScreen(LiftStyleSelectorScreen.create(lift, this))).build();
-		buttonRotateAnticlockwise = ButtonWidget.builder(rotateAnticlockwiseText, button -> {
+		new UIWrappedText(TranslationProvider.GUI_MTR_LIFT_CUSTOMIZATION.getString(), false)
+			.setChildOf(leftContainer)
+			.setWidth(new RelativeConstraint())
+			.setColor(new Color(GuiHelper.MINECRAFT_GUI_TITLE_TEXT_COLOR));
+
+		final ScrollComponent scrollComponent = ((ScrollPanelComponent) new ScrollPanelComponent(true)
+			.setChildOf(leftContainer)
+			.setY(new SiblingConstraint(GuiHelper.DEFAULT_PADDING))
+			.setWidth(new RelativeConstraint())
+			.setHeight(new SubtractiveConstraint(new FillConstraint(), new PixelConstraint(GuiHelper.DEFAULT_PADDING)))).contentContainer;
+
+		new PreviewBoxComponent(true, true, true, this::onDrawPreview)
+			.setChildOf(backgroundComponent.containers[0])
+			.setX(new SiblingConstraint(GuiHelper.DEFAULT_PADDING))
+			.setWidth(new SubtractiveConstraint(new FillConstraint(), new PixelConstraint(GuiHelper.DEFAULT_PADDING)))
+			.setHeight(new RelativeConstraint());
+
+		GuiHelper.createLabel(scrollComponent, TranslationProvider.GUI_MTR_DIMENSIONS.getString());
+		dimensionXInputComponent = createNumberInput(scrollComponent, "X", lift.getHeight(), MIN_DIMENSION, MAX_DIMENSION);
+		dimensionYInputComponent = createNumberInput(scrollComponent, "Y", lift.getWidth(), MIN_DIMENSION, MAX_DIMENSION);
+		dimensionZInputComponent = createNumberInput(scrollComponent, "Z", lift.getDepth(), MIN_DIMENSION, MAX_DIMENSION);
+
+		GuiHelper.createSpacing(scrollComponent);
+		GuiHelper.createLabel(scrollComponent, TranslationProvider.GUI_MTR_OFFSET.getString());
+		offsetXInputComponent = createNumberInput(scrollComponent, "X", lift.getOffsetX(), -MAX_OFFSET, MAX_OFFSET);
+		offsetYInputComponent = createNumberInput(scrollComponent, "Y", lift.getOffsetY(), -MAX_OFFSET, MAX_OFFSET);
+		offsetZInputComponent = createNumberInput(scrollComponent, "Z", lift.getOffsetZ(), -MAX_OFFSET, MAX_OFFSET);
+
+		GuiHelper.createSpacing(scrollComponent);
+		isDoubleSidedCheckboxComponent = (CheckboxComponent) new CheckboxComponent()
+			.setChildOf(scrollComponent)
+			.setY(new SiblingConstraint(GuiHelper.DEFAULT_PADDING))
+			.setWidth(new RelativeConstraint());
+
+		isDoubleSidedCheckboxComponent.setText(TranslationProvider.GUI_MTR_LIFT_IS_DOUBLE_SIDED.getString());
+		isDoubleSidedCheckboxComponent.onClick(() -> lift.setIsDoubleSided(isDoubleSidedCheckboxComponent.isChecked()));
+
+		GuiHelper.createSpacing(scrollComponent);
+		GuiHelper.createLabel(scrollComponent, TranslationProvider.GUI_MTR_STYLES.getString());
+		final ButtonComponent editStylesButtonComponent = (ButtonComponent) new ButtonComponent(true)
+			.setChildOf(scrollComponent)
+			.setY(new SiblingConstraint())
+			.setWidth(new RelativeConstraint());
+
+		editStylesButtonComponent.setText(Text.translatable("selectWorld.edit").getString());
+		editStylesButtonComponent.onClick(() -> UMinecraft.setCurrentScreenObj(createLiftStyleSelectorScreen()));
+
+		final ButtonComponent rotateAnticlockwiseButton = (ButtonComponent) new ButtonComponent(true)
+			.setChildOf(scrollComponent)
+			.setY(new SiblingConstraint())
+			.setWidth(new RelativeConstraint());
+
+		rotateAnticlockwiseButton.setText(TranslationProvider.GUI_MTR_ROTATE_ANTICLOCKWISE.getString());
+		rotateAnticlockwiseButton.onClick(() -> {
 			liftDirection = liftDirection.rotateYCounterclockwise();
 			lift.setAngle(Angle.fromAngle(liftDirection.getPositiveHorizontalDegrees()));
-			updateControls(true);
-		}).build();
-		buttonRotateClockwise = ButtonWidget.builder(rotateClockwiseText, button -> {
+		});
+
+		final ButtonComponent rotateClockwiseButton = (ButtonComponent) new ButtonComponent(true)
+			.setChildOf(scrollComponent)
+			.setY(new SiblingConstraint())
+			.setWidth(new RelativeConstraint());
+
+		rotateClockwiseButton.setText(TranslationProvider.GUI_MTR_ROTATE_CLOCKWISE.getString());
+		rotateClockwiseButton.onClick(() -> {
 			liftDirection = liftDirection.rotateYClockwise();
 			lift.setAngle(Angle.fromAngle(liftDirection.getPositiveHorizontalDegrees()));
-			updateControls(true);
-		}).build();
-
-		width1 = Math.max(Math.max(SQUARE_SIZE * 3, textRenderer.getWidth(doubleSidedText)), Math.max(textRenderer.getWidth(rotateAnticlockwiseText), textRenderer.getWidth(rotateClockwiseText))) + TEXT_PADDING * 2;
-		width2 = width1 + SQUARE_SIZE;
+		});
 	}
 
 	@Override
-	protected void init() {
-		super.init();
+	public void onScreenClose() {
+		lift.setDimensions(
+			Utilities.clampSafe(dimensionXInputComponent.getValue(), MIN_DIMENSION, MAX_DIMENSION),
+			Utilities.clampSafe(dimensionYInputComponent.getValue(), MIN_DIMENSION, MAX_DIMENSION),
+			Utilities.clampSafe(dimensionZInputComponent.getValue(), MIN_DIMENSION, MAX_DIMENSION),
+			Utilities.clampSafe(offsetXInputComponent.getValue(), -MAX_OFFSET, MAX_OFFSET),
+			Utilities.clampSafe(offsetYInputComponent.getValue(), -MAX_OFFSET, MAX_OFFSET),
+			Utilities.clampSafe(offsetZInputComponent.getValue(), -MAX_OFFSET, MAX_OFFSET)
+		);
+		lift.setIsDoubleSided(isDoubleSidedCheckboxComponent.isChecked());
 
-		IDrawing.setPositionAndWidth(buttonHeightMinus, 0, 0, SQUARE_SIZE);
-		IDrawing.setPositionAndWidth(buttonHeightAdd, width1, 0, SQUARE_SIZE);
-		IDrawing.setPositionAndWidth(buttonWidthMinus, 0, SQUARE_SIZE, SQUARE_SIZE);
-		IDrawing.setPositionAndWidth(buttonWidthAdd, width1, SQUARE_SIZE, SQUARE_SIZE);
-		IDrawing.setPositionAndWidth(buttonDepthMinus, 0, SQUARE_SIZE * 2, SQUARE_SIZE);
-		IDrawing.setPositionAndWidth(buttonDepthAdd, width1, SQUARE_SIZE * 2, SQUARE_SIZE);
-		IDrawing.setPositionAndWidth(buttonOffsetXMinus, 0, SQUARE_SIZE * 3, SQUARE_SIZE);
-		IDrawing.setPositionAndWidth(buttonOffsetXAdd, width1, SQUARE_SIZE * 3, SQUARE_SIZE);
-		IDrawing.setPositionAndWidth(buttonOffsetYMinus, 0, SQUARE_SIZE * 4, SQUARE_SIZE);
-		IDrawing.setPositionAndWidth(buttonOffsetYAdd, width1, SQUARE_SIZE * 4, SQUARE_SIZE);
-		IDrawing.setPositionAndWidth(buttonOffsetZMinus, 0, SQUARE_SIZE * 5, SQUARE_SIZE);
-		IDrawing.setPositionAndWidth(buttonOffsetZAdd, width1, SQUARE_SIZE * 5, SQUARE_SIZE);
-		IDrawing.setPositionAndWidth(buttonIsDoubleSided, 0, SQUARE_SIZE * 7, width2);
-		IDrawing.setPositionAndWidth(buttonLiftStyle, 0, SQUARE_SIZE * 8, width2);
-		IDrawing.setPositionAndWidth(buttonRotateAnticlockwise, 0, SQUARE_SIZE * 9, width2);
-		IDrawing.setPositionAndWidth(buttonRotateClockwise, 0, SQUARE_SIZE * 10, width2);
-
-		addDrawableChild(buttonHeightMinus);
-		addDrawableChild(buttonHeightAdd);
-		addDrawableChild(buttonWidthMinus);
-		addDrawableChild(buttonWidthAdd);
-		addDrawableChild(buttonDepthMinus);
-		addDrawableChild(buttonDepthAdd);
-		addDrawableChild(buttonOffsetXMinus);
-		addDrawableChild(buttonOffsetXAdd);
-		addDrawableChild(buttonOffsetYMinus);
-		addDrawableChild(buttonOffsetYAdd);
-		addDrawableChild(buttonOffsetZMinus);
-		addDrawableChild(buttonOffsetZAdd);
-		addDrawableChild(buttonIsDoubleSided);
-		addDrawableChild(buttonLiftStyle);
-		addDrawableChild(buttonRotateAnticlockwise);
-		addDrawableChild(buttonRotateClockwise);
-		updateControls(false);
+		RegistryClient.sendPacketToServer(new PacketUpdateData(new UpdateDataRequest(MinecraftClientData.getInstance()).addLift(lift)));
+		super.onScreenClose();
 	}
 
-	@Override
-	public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-		context.fill(0, 0, width2, height, ARGB_BACKGROUND);
-		super.render(context, mouseX, mouseY, delta);
-		context.drawCenteredTextWithShadow(MinecraftClient.getInstance().textRenderer, TranslationProvider.TOOLTIP_MTR_RAIL_ACTION_HEIGHT.getMutableText(lift.getHeight()), width2 / 2, TEXT_PADDING, ARGB_WHITE);
-		context.drawCenteredTextWithShadow(MinecraftClient.getInstance().textRenderer, TranslationProvider.TOOLTIP_MTR_RAIL_ACTION_WIDTH.getMutableText(lift.getWidth()), width2 / 2, SQUARE_SIZE + TEXT_PADDING, ARGB_WHITE);
-		context.drawCenteredTextWithShadow(MinecraftClient.getInstance().textRenderer, TranslationProvider.TOOLTIP_MTR_RAIL_ACTION_DEPTH.getMutableText(lift.getDepth()), width2 / 2, SQUARE_SIZE * 2 + TEXT_PADDING, ARGB_WHITE);
-		context.drawCenteredTextWithShadow(MinecraftClient.getInstance().textRenderer, TranslationProvider.GUI_MTR_OFFSET_X.getMutableText(lift.getOffsetX()), width2 / 2, SQUARE_SIZE * 3 + TEXT_PADDING, ARGB_WHITE);
-		context.drawCenteredTextWithShadow(MinecraftClient.getInstance().textRenderer, TranslationProvider.GUI_MTR_OFFSET_Y.getMutableText(lift.getOffsetY()), width2 / 2, SQUARE_SIZE * 4 + TEXT_PADDING, ARGB_WHITE);
-		context.drawCenteredTextWithShadow(MinecraftClient.getInstance().textRenderer, TranslationProvider.GUI_MTR_OFFSET_Z.getMutableText(lift.getOffsetZ()), width2 / 2, SQUARE_SIZE * 5 + TEXT_PADDING, ARGB_WHITE);
+	private void onDrawPreview(MatrixStack matrixStack) {
+		// TODO lift preview
 	}
 
-	private void updateControls(boolean sendUpdate) {
-		buttonHeightMinus.active = lift.getHeight() > MIN_DIMENSION;
-		buttonHeightAdd.active = lift.getHeight() < MAX_DIMENSION;
-		buttonWidthMinus.active = lift.getWidth() > MIN_DIMENSION;
-		buttonWidthAdd.active = lift.getWidth() < MAX_DIMENSION;
-		buttonDepthMinus.active = lift.getDepth() > MIN_DIMENSION;
-		buttonDepthAdd.active = lift.getDepth() < MAX_DIMENSION;
-		buttonOffsetXMinus.active = lift.getOffsetX() > -MAX_OFFSET;
-		buttonOffsetXAdd.active = lift.getOffsetX() < MAX_OFFSET;
-		buttonOffsetYMinus.active = lift.getOffsetY() > -MAX_OFFSET;
-		buttonOffsetYAdd.active = lift.getOffsetY() < MAX_OFFSET;
-		buttonOffsetZMinus.active = lift.getOffsetZ() > -MAX_OFFSET;
-		buttonOffsetZAdd.active = lift.getOffsetZ() < MAX_OFFSET;
-		IGui.setChecked(buttonIsDoubleSided, lift.getIsDoubleSided());
-		buttonLiftStyle.setMessage(TranslationProvider.GUI_MTR_LIFT_STYLE.getText(RenderLifts.getLiftResource(lift.getStyle()).getName()));
+	private LiftStyleSelectorScreen createLiftStyleSelectorScreen() {
+		final ObjectImmutableList<LiftResource> allLiftResources = CustomResourceLoader.getLifts();
+		final LiftStyleSelectorScreen liftStyleSelectorScreen = new LiftStyleSelectorScreen(liftStyles -> lift.setStyle(liftStyles.isEmpty() ? allLiftResources.getFirst().getId() : liftStyles.getFirst().getId()), this);
+		liftStyleSelectorScreen.setAvailableList(allLiftResources);
 
-		if (sendUpdate) {
-			RegistryClient.sendPacketToServer(new PacketUpdateData(new UpdateDataRequest(MinecraftClientData.getInstance()).addLift(lift)));
-		}
+		allLiftResources.forEach(liftResource -> {
+			if (liftResource.getId().equals(lift.getStyle())) {
+				liftStyleSelectorScreen.selectData(liftResource);
+			}
+		});
+
+		return liftStyleSelectorScreen;
+	}
+
+	private static NumberInputComponent createNumberInput(UIContainer container, String axis, double value, int min, int max) {
+		final NumberInputComponent numberInputComponent = (NumberInputComponent) new NumberInputComponent(min, max, 0.5, true, null)
+			.setChildOf(container)
+			.setY(new SiblingConstraint())
+			.setWidth(new RelativeConstraint());
+
+		numberInputComponent.setPrefix(axis + " ");
+		numberInputComponent.setValue(value);
+		return numberInputComponent;
 	}
 }

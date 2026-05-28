@@ -1,10 +1,6 @@
 package org.mtr.data;
 
-import com.google.gson.JsonObject;
-import it.unimi.dsi.fastutil.doubles.DoubleDoubleImmutablePair;
-import it.unimi.dsi.fastutil.doubles.DoubleObjectImmutablePair;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import it.unimi.dsi.fastutil.objects.ObjectObjectImmutablePair;
+import lombok.Getter;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.entity.BlockEntity;
@@ -17,6 +13,7 @@ import net.minecraft.text.Text;
 import net.minecraft.text.TextColor;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.math.BlockPos;
+import org.jspecify.annotations.Nullable;
 import org.mtr.block.BlockTrainAnnouncer;
 import org.mtr.block.BlockTrainRedstoneSensor;
 import org.mtr.block.BlockTrainSensorBase;
@@ -33,17 +30,21 @@ import org.mtr.core.serializer.JsonReader;
 import org.mtr.core.tool.Utilities;
 import org.mtr.core.tool.Vector;
 import org.mtr.generated.lang.TranslationProvider;
+import org.mtr.libraries.com.google.gson.JsonObject;
+import org.mtr.libraries.it.unimi.dsi.fastutil.doubles.DoubleDoubleImmutablePair;
+import org.mtr.libraries.it.unimi.dsi.fastutil.doubles.DoubleObjectImmutablePair;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectObjectImmutablePair;
 import org.mtr.packet.PacketCheckRouteIdHasDisabledAnnouncements;
 import org.mtr.packet.PacketTurnOnBlockEntity;
 import org.mtr.registry.RegistryClient;
 import org.mtr.render.DrivingGuiRenderer;
 import org.mtr.resource.VehicleResource;
 
-import javax.annotation.Nullable;
-
 public class VehicleExtension extends Vehicle implements Utilities {
 
 	private double oldSpeed;
+	@Getter
 	private int speedLimitKilometersPerHour;
 	@Nullable
 	private DoubleObjectImmutablePair<DoubleDoubleImmutablePair> platformStoppingDetails;
@@ -276,8 +277,8 @@ public class VehicleExtension extends Vehicle implements Utilities {
 
 				if (pathData.getDwellTime() > 0) {
 					platformStoppingDetails = new DoubleObjectImmutablePair<>(
-							pathData.getEndDistance() - railProgress,
-							new DoubleDoubleImmutablePair(pathData.getRailLength(), previousPathData != null && previousPathData.isOppositeRail(pathData) ? 0 : vehicleExtraData.getTotalVehicleLength())
+						pathData.getEndDistance() - railProgress,
+						new DoubleDoubleImmutablePair(pathData.getRailLength(), previousPathData != null && previousPathData.isOppositeRail(pathData) ? 0 : vehicleExtraData.getTotalVehicleLength())
 					);
 					break;
 				}
@@ -301,10 +302,6 @@ public class VehicleExtension extends Vehicle implements Utilities {
 
 	public void playDoorSound(VehicleResource vehicleResource, int carNumber, Vector vehiclePosition) {
 		persistentVehicleData.playDoorSound(vehicleResource, carNumber, BlockPos.ofFloored(vehiclePosition.x(), vehiclePosition.y(), vehiclePosition.z()));
-	}
-
-	public int getSpeedLimitKilometersPerHour() {
-		return speedLimitKilometersPerHour;
 	}
 
 	public double getSpeed() {

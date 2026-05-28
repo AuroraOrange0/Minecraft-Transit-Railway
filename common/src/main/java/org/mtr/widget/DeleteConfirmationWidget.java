@@ -1,20 +1,20 @@
 package org.mtr.widget;
 
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import it.unimi.dsi.fastutil.objects.ObjectIntImmutablePair;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.text.OrderedText;
 import net.minecraft.text.Text;
+import org.jspecify.annotations.Nullable;
 import org.mtr.data.IGui;
 import org.mtr.generated.lang.TranslationProvider;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectIntImmutablePair;
 import org.mtr.tool.GuiHelper;
-
-import javax.annotation.Nullable;
 
 public final class DeleteConfirmationWidget extends PopupWidgetBase {
 
+	@Nullable
 	private Runnable deleteCallback;
 	private final Runnable onDismiss;
 	private final ObjectArrayList<ObjectIntImmutablePair<OrderedText>> mainTextLines = new ObjectArrayList<>();

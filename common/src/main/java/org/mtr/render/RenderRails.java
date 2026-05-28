@@ -1,12 +1,5 @@
 package org.mtr.render;
 
-import com.logisticscraft.occlusionculling.OcclusionCullingInstance;
-import it.unimi.dsi.fastutil.doubles.DoubleDoubleImmutablePair;
-import it.unimi.dsi.fastutil.ints.IntArrayList;
-import it.unimi.dsi.fastutil.longs.LongArrayList;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import it.unimi.dsi.fastutil.objects.ObjectArraySet;
-import it.unimi.dsi.fastutil.objects.ObjectObjectImmutablePair;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.MinecraftClient;
@@ -25,6 +18,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.LightType;
+import org.jspecify.annotations.Nullable;
 import org.mtr.MTR;
 import org.mtr.MTRClient;
 import org.mtr.block.BlockNode;
@@ -45,6 +39,12 @@ import org.mtr.generated.lang.TranslationProvider;
 import org.mtr.item.ItemBrush;
 import org.mtr.item.ItemNodeModifierBase;
 import org.mtr.item.ItemRailModifier;
+import org.mtr.libraries.it.unimi.dsi.fastutil.doubles.DoubleDoubleImmutablePair;
+import org.mtr.libraries.it.unimi.dsi.fastutil.ints.IntArrayList;
+import org.mtr.libraries.it.unimi.dsi.fastutil.longs.LongArrayList;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArraySet;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectObjectImmutablePair;
 import org.mtr.packet.PacketUpdateLastRailStyles;
 import org.mtr.registry.DataComponentTypes;
 import org.mtr.registry.Items;
@@ -52,10 +52,8 @@ import org.mtr.resource.RailResource;
 import org.mtr.tool.CullingHelper;
 import org.mtr.tool.Drawing;
 
-import javax.annotation.Nullable;
 import java.util.Collections;
 import java.util.function.BooleanSupplier;
-import java.util.function.Function;
 
 public final class RenderRails implements IGui {
 
@@ -77,14 +75,26 @@ public final class RenderRails implements IGui {
 			return;
 		}
 
-		final ObjectArrayList<Function<OcclusionCullingInstance, Runnable>> cullingTasks = new ObjectArrayList<>();
-		final Vec3d cameraPosition = minecraftClient.gameRenderer.getCamera().getPos();
-		final com.logisticscraft.occlusionculling.util.Vec3d camera = new com.logisticscraft.occlusionculling.util.Vec3d(cameraPosition.x, cameraPosition.y, cameraPosition.z);
 		final boolean holdingRailRelated = isHoldingRailRelated(clientPlayerEntity);
 
-		// Finding visible rails
+		// Finding visible rails.
+		//
+		// Cull each rail as a whole against its axis-aligned bounding box rather than
+		// re-checking the camera distance at every interval step inside the rail. This
+		// gives two wins at once:
+		//   1. Either the whole rail renders or none of it does — long rails no longer
+		//      end abruptly when their far end leaves the render-distance sphere.
+		//   2. We skip the railMath walk entirely for off-screen rails, dropping the
+		//      per-segment matrix maths and StoredMatrixTransformations allocations.
+		// See docs/PERFORMANCE.md §3.10 for the analysis.
+		final double renderDistance = minecraftClient.worldRenderer.getViewDistance() * 16;
 		final ObjectArrayList<Rail> railsToRender = new ObjectArrayList<>();
-		MinecraftClientData.getInstance().railWrapperList.values().forEach(railWrapper -> railsToRender.add(railWrapper.getRail()));
+		MinecraftClientData.getInstance().railWrapperList.values().forEach(railWrapper -> {
+			final Rail rail = railWrapper.getRail();
+			if (CullingHelper.getDistanceFromCameraToBox(rail.railMath.minX, rail.railMath.minY, rail.railMath.minZ, rail.railMath.maxX, rail.railMath.maxY, rail.railMath.maxZ) <= renderDistance) {
+				railsToRender.add(rail);
+			}
+		});
 
 		// Ghost rails (when holding brush)
 		final ObjectArraySet<Rail> hoverRails = new ObjectArraySet<>();
@@ -127,8 +137,8 @@ public final class RenderRails implements IGui {
 						final BlockState blockStateStart = clientWorld.getBlockState(posStart);
 						final float angleEnd = BlockNode.getAngle(blockStateEnd);
 						final ObjectObjectImmutablePair<Angle, Angle> angles = Rail.getAngles(
-								MTR.blockPosToPosition(posStart), blockStateStart.getBlock() instanceof BlockNode ? BlockNode.getAngle(blockStateStart) : (blockStateEnd.getBlock() instanceof BlockNode.BlockContinuousMovementNode ? angleEnd : clientPlayerEntity.getYaw() + 90),
-								MTR.blockPosToPosition(posEnd), angleEnd
+							MTR.blockPosToPosition(posStart), blockStateStart.getBlock() instanceof BlockNode ? BlockNode.getAngle(blockStateStart) : (blockStateEnd.getBlock() instanceof BlockNode.BlockContinuousMovementNode ? angleEnd : clientPlayerEntity.getYaw() + 90),
+							MTR.blockPosToPosition(posEnd), angleEnd
 						);
 
 						final Rail rail = ((ItemRailModifier) item).createRail(clientPlayerEntity.getUuid(), ItemNodeModifierBase.getTransportMode(itemStack), blockStateStart, blockStateEnd, posStart, posEnd, angles.left(), angles.right());
@@ -171,15 +181,15 @@ public final class RenderRails implements IGui {
 						renderRailOneWayArrows(rail, 0.5F + SMALL_OFFSET);
 					}
 					MainRenderer.scheduleRender(QueuedRenderLayer.LINES, (matrixStack1, vertexConsumer, offset1) -> renderWithinRenderDistance(rail, (blockPos, x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4, tiltAngle) -> IDrawing.drawLineInWorld(
-							matrixStack1,
-							vertexConsumer,
-							(float) (x1 - offset1.x),
-							(float) (y1 - offset1.y + 0.5),
-							(float) (z1 - offset1.z),
-							(float) (x3 - offset1.x),
-							(float) (y3 - offset1.y + 0.5),
-							(float) (z3 - offset1.z),
-							holdingRailRelated ? RailType.getRailColor(rail) : ARGB_BLACK
+						matrixStack1,
+						vertexConsumer,
+						(float) (x1 - offset1.x),
+						(float) (y1 - offset1.y + 0.5),
+						(float) (z1 - offset1.z),
+						(float) (x3 - offset1.x),
+						(float) (y3 - offset1.y + 0.5),
+						(float) (z3 - offset1.z),
+						holdingRailRelated ? RailType.getRailColor(rail) : ARGB_BLACK
 					), 0.5, 0, 0));
 					break;
 				case AIRPLANE:
@@ -216,10 +226,10 @@ public final class RenderRails implements IGui {
 		return clientPlayerEntity.isHolding(itemStack -> {
 			final Item item = itemStack.getItem();
 			return item instanceof ItemNodeModifierBase || item instanceof ItemBrush ||
-					Block.getBlockFromItem(item) instanceof BlockSignalLightBase ||
-					Block.getBlockFromItem(item) instanceof BlockNode ||
-					Block.getBlockFromItem(item) instanceof BlockSignalSemaphoreBase ||
-					Block.getBlockFromItem(item) instanceof PlatformHelper;
+				Block.getBlockFromItem(item) instanceof BlockSignalLightBase ||
+				Block.getBlockFromItem(item) instanceof BlockNode ||
+				Block.getBlockFromItem(item) instanceof BlockSignalSemaphoreBase ||
+				Block.getBlockFromItem(item) instanceof PlatformHelper;
 		});
 	}
 
@@ -315,14 +325,20 @@ public final class RenderRails implements IGui {
 		}
 	}
 
+	/**
+	 * Walk every interval step along {@code rail} and emit the callback for each segment.
+	 *
+	 * <p>Per-segment distance culling has been removed (see docs/PERFORMANCE.md §3.10); the
+	 * caller is expected to have already filtered out rails whose bounding boxes are out
+	 * of range. As a result, once a rail is selected for rendering, every one of its
+	 * segments is emitted — eliminating the "rail ends abruptly mid-curve" artifact that
+	 * older per-segment culling produced.</p>
+	 */
 	private static void renderWithinRenderDistance(Rail rail, RenderRailWithBlockPos callback, double interval, float offsetRadius1, float offsetRadius2) {
-		final double renderDistance = MinecraftClient.getInstance().worldRenderer.getViewDistance() * 16;
-
-		rail.railMath.render((x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4, tiltAngle) -> {
-			if (CullingHelper.getDistanceFromCamera(x1, y1, z1) <= renderDistance) {
-				callback.renderRail(BlockPos.ofFloored(x1, y1 + LIGHT_REFERENCE_OFFSET, z1), x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4, tiltAngle);
-			}
-		}, interval, offsetRadius1, offsetRadius2);
+		rail.railMath.render((x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4, tiltAngle) -> callback.renderRail(
+			BlockPos.ofFloored(x1, y1 + LIGHT_REFERENCE_OFFSET, z1),
+			x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4, tiltAngle
+		), interval, offsetRadius1, offsetRadius2);
 	}
 
 	private static void renderNode(BlockState blockState, BlockPos blockPos, BooleanSupplier shouldRender, int light) {
@@ -335,7 +351,7 @@ public final class RenderRails implements IGui {
 			});
 			MainRenderer.scheduleRender(Identifier.of(MTR.MOD_ID, "textures/block/white.png"), false, QueuedRenderLayer.LIGHT, (matrixStack, vertexConsumer, offset) -> {
 				storedMatrixTransformations.transform(matrixStack, offset);
-				RenderPSDAPGDoor.MODEL_SMALL_CUBE.render(matrixStack, vertexConsumer, DEFAULT_LIGHT, OverlayTexture.DEFAULT_UV);
+				RenderPSDAPGDoor.MODEL_SMALL_CUBE.render(matrixStack, vertexConsumer, light, OverlayTexture.DEFAULT_UV);
 				matrixStack.pop();
 			});
 		}

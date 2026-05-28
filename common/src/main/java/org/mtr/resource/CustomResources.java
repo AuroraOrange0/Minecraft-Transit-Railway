@@ -1,10 +1,9 @@
 package org.mtr.resource;
 
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.mtr.core.serializer.ReaderBase;
 import org.mtr.generated.resource.CustomResourcesSchema;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
-import javax.annotation.Nonnull;
 import java.util.function.Consumer;
 
 public final class CustomResources extends CustomResourcesSchema {
@@ -29,19 +28,16 @@ public final class CustomResources extends CustomResourcesSchema {
 		updateData(readerBase);
 	}
 
-	@Nonnull
 	@Override
 	protected ResourceProvider vehiclesResourceProviderParameter() {
 		return resourceProvider;
 	}
 
-	@Nonnull
 	@Override
 	protected ResourceProvider railsResourceProviderParameter() {
 		return resourceProvider;
 	}
 
-	@Nonnull
 	@Override
 	protected ResourceProvider objectsResourceProviderParameter() {
 		return resourceProvider;

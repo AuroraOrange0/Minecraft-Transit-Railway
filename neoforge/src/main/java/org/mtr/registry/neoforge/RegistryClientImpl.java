@@ -19,10 +19,7 @@ import net.neoforged.neoforge.network.handling.DirectionalPayloadHandler;
 import org.mtr.MTR;
 import org.mtr.neoforge.ModEventBus;
 import org.mtr.neoforge.ModEventBusClient;
-import org.mtr.packet.CustomPacketS2C;
-import org.mtr.packet.PacketBufferReceiver;
-import org.mtr.packet.PacketBufferSender;
-import org.mtr.packet.PacketHandler;
+import org.mtr.packet.*;
 import org.mtr.registry.ObjectHolder;
 
 import java.util.Arrays;
@@ -65,6 +62,6 @@ public final class RegistryClientImpl {
 		final PacketBufferSender packetBufferSender = new PacketBufferSender();
 		packetBufferSender.writeString(data.getClass().getName());
 		data.write(packetBufferSender);
-		packetBufferSender.send(bytes -> PacketDistributor.sendToServer(new CustomPacketS2C(bytes)), MinecraftClient.getInstance()::execute);
+		packetBufferSender.send(bytes -> PacketDistributor.sendToServer(new CustomPacketC2S(bytes)), MinecraftClient.getInstance()::execute);
 	}
 }

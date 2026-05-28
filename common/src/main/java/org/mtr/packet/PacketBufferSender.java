@@ -2,7 +2,7 @@ package org.mtr.packet;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
 import java.util.Random;
 import java.util.function.Consumer;
@@ -93,7 +93,7 @@ public final class PacketBufferSender {
 	private static void schedule(ObjectArrayList<Runnable> queue, Consumer<Runnable> scheduler) {
 		if (!queue.isEmpty()) {
 			scheduler.accept(() -> {
-				queue.remove(0).run();
+				queue.removeFirst().run();
 				schedule(queue, scheduler);
 			});
 		}

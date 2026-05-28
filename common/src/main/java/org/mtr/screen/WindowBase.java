@@ -5,9 +5,9 @@ import gg.essential.elementa.WindowScreen;
 import gg.essential.universal.UKeyboard;
 import gg.essential.universal.UMinecraft;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.screen.Screen;
+import org.jspecify.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
-
-import javax.annotation.Nullable;
 
 public abstract class WindowBase extends WindowScreen {
 
@@ -16,7 +16,7 @@ public abstract class WindowBase extends WindowScreen {
 	@Nullable
 	private final WindowScreen previousScreen;
 	@Nullable
-	private final ScreenBase previousScreenLegacy;
+	private final Screen previousScreenLegacy;
 
 	public WindowBase(@Nullable WindowScreen previousScreen) {
 		super(ElementaVersion.V10);
@@ -25,7 +25,7 @@ public abstract class WindowBase extends WindowScreen {
 	}
 
 	@Deprecated
-	public WindowBase(@Nullable ScreenBase previousScreenLegacy) {
+	public WindowBase(@Nullable Screen previousScreenLegacy) {
 		super(ElementaVersion.V10);
 		previousScreen = null;
 		this.previousScreenLegacy = previousScreenLegacy;
@@ -36,14 +36,14 @@ public abstract class WindowBase extends WindowScreen {
 	}
 
 	@Override
-	public void onKeyPressed(int keyCode, char typedChar, @Nullable UKeyboard.Modifiers modifiers) {
+	public void onKeyPressed(int keyCode, char typedChar, UKeyboard.@Nullable Modifiers modifiers) {
 		if (keyCode != GLFW.GLFW_KEY_ESCAPE) {
 			super.onKeyPressed(keyCode, typedChar, modifiers);
 		}
 	}
 
 	@Override
-	public void onKeyReleased(int keyCode, char typedChar, @Nullable UKeyboard.Modifiers modifiers) {
+	public void onKeyReleased(int keyCode, char typedChar, UKeyboard.@Nullable Modifiers modifiers) {
 		if (keyCode == GLFW.GLFW_KEY_ESCAPE) {
 			closeScreen = true;
 		} else {

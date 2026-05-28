@@ -1,6 +1,6 @@
 package org.mtr.block;
 
-import it.unimi.dsi.fastutil.longs.LongAVLTreeSet;
+import lombok.Getter;
 import net.minecraft.block.AbstractBlock;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockEntityProvider;
@@ -13,17 +13,18 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.item.tooltip.TooltipType;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.server.world.ServerWorld;
 import net.minecraft.text.Text;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
+import org.jspecify.annotations.Nullable;
 import org.mtr.generated.lang.TranslationProvider;
-import org.mtr.packet.PacketOpenPIDSConfigScreen;
-import org.mtr.registry.Registry;
+import org.mtr.libraries.it.unimi.dsi.fastutil.longs.LongAVLTreeSet;
+import org.mtr.packet.PacketOpenBlockEntityScreen;
 
-import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.BiFunction;
@@ -42,15 +43,13 @@ public abstract class BlockPIDSBase extends Block implements BlockEntityProvider
 		this.getBlockPosWithData = getBlockPosWithData;
 	}
 
-	@Nonnull
 	@Override
 	protected ActionResult onUse(BlockState state, World world, BlockPos pos, PlayerEntity player, BlockHitResult hit) {
 		return IBlock.checkHoldingBrush(world, player, () -> {
 			final BlockPos newBlockPos = getBlockPosWithData.apply(world, pos);
 			final BlockEntity entity = world.getBlockEntity(newBlockPos);
-			if (entity instanceof BlockEntityBase blockEntityBase) {
-				entity.markDirty();
-				Registry.sendPacketToClient((ServerPlayerEntity) player, new PacketOpenPIDSConfigScreen(newBlockPos, blockEntityBase.maxArrivals));
+			if (entity instanceof BlockEntityBase) {
+				PacketOpenBlockEntityScreen.sendDirectlyToServer((ServerWorld) world, (ServerPlayerEntity) player, newBlockPos);
 			}
 		});
 	}
@@ -66,9 +65,11 @@ public abstract class BlockPIDSBase extends Block implements BlockEntityProvider
 		public final BiPredicate<World, BlockPos> canStoreData;
 		public final BiFunction<World, BlockPos, BlockPos> getBlockPosWithData;
 
-		private final String[] messages;
+		private final @Nullable String[] messages;
 		private final boolean[] hideArrivalArray;
+		@Getter
 		private final LongAVLTreeSet platformIds = new LongAVLTreeSet();
+		@Getter
 		private int displayPage;
 		private static final String KEY_MESSAGE = "message";
 		private static final String KEY_HIDE_ARRIVAL = "hide_arrival";
@@ -116,18 +117,11 @@ public abstract class BlockPIDSBase extends Block implements BlockEntityProvider
 		public void setData(String[] messages, boolean[] hideArrivalArray, LongAVLTreeSet platformIds, int displayPage) {
 			System.arraycopy(messages, 0, this.messages, 0, Math.min(messages.length, this.messages.length));
 			System.arraycopy(hideArrivalArray, 0, this.hideArrivalArray, 0, Math.min(hideArrivalArray.length, this.hideArrivalArray.length));
+			final LongAVLTreeSet platformIdsCopy = new LongAVLTreeSet(platformIds);
 			this.platformIds.clear();
-			this.platformIds.addAll(platformIds);
+			this.platformIds.addAll(platformIdsCopy);
 			this.displayPage = displayPage;
 			markDirty();
-		}
-
-		public int getDisplayPage() {
-			return displayPage;
-		}
-
-		public LongAVLTreeSet getPlatformIds() {
-			return platformIds;
 		}
 
 		public String getMessage(int index) {

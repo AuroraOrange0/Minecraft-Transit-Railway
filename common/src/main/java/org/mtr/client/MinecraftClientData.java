@@ -1,10 +1,6 @@
 package org.mtr.client;
 
-import it.unimi.dsi.fastutil.longs.Long2ObjectAVLTreeMap;
-import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.longs.LongAVLTreeSet;
-import it.unimi.dsi.fastutil.longs.LongArrayList;
-import it.unimi.dsi.fastutil.objects.*;
+import lombok.Getter;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayNetworkHandler;
 import net.minecraft.client.network.ClientPlayerEntity;
@@ -14,18 +10,28 @@ import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.GameMode;
+import org.jspecify.annotations.Nullable;
 import org.mtr.MTR;
 import org.mtr.block.BlockNode;
 import org.mtr.core.data.*;
 import org.mtr.data.PersistentVehicleData;
 import org.mtr.data.VehicleExtension;
+import org.mtr.libraries.it.unimi.dsi.fastutil.longs.Long2ObjectAVLTreeMap;
+import org.mtr.libraries.it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
+import org.mtr.libraries.it.unimi.dsi.fastutil.longs.LongAVLTreeSet;
+import org.mtr.libraries.it.unimi.dsi.fastutil.longs.LongArrayList;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.*;
 import org.mtr.screen.DashboardListItem;
 
-import javax.annotation.Nullable;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+/**
+ * Client-side cached transport network state.
+ * Mirrors backend data structures for routes, vehicles, lifts, rails, stations and signals.
+ * Provides search caching and UI model snapshots.
+ */
 public final class MinecraftClientData extends ClientData {
 
 	public final Long2ObjectOpenHashMap<SimplifiedRoute> simplifiedRouteIdMap = new Long2ObjectOpenHashMap<>();
@@ -40,7 +46,9 @@ public final class MinecraftClientData extends ClientData {
 
 	private final LongAVLTreeSet routeIdsWithDisabledAnnouncements = new LongAVLTreeSet();
 
+	@Getter
 	private static MinecraftClientData instance = new MinecraftClientData();
+	@Getter
 	private static MinecraftClientData dashboardInstance = new MinecraftClientData();
 
 	public static String DASHBOARD_SEARCH = "";
@@ -49,10 +57,6 @@ public final class MinecraftClientData extends ClientData {
 	public static String TRAINS_SEARCH = "";
 	public static String EXIT_PARENTS_SEARCH = "";
 	public static String EXIT_DESTINATIONS_SEARCH = "";
-
-	private static boolean pressingAccelerate = false;
-	private static boolean pressingBrake = false;
-	private static boolean pressingDoors = false;
 
 	@Override
 	public void sync() {
@@ -106,7 +110,7 @@ public final class MinecraftClientData extends ClientData {
 
 		if (clientWorld.getBlockState(blockPos).getBlock() instanceof BlockNode) {
 			final float playerAngle = clientPlayerEntity.getYaw() + 90;
-			final Rail[] closestRail = {null};
+			final @Nullable Rail[] closestRail = {null};
 			final double[] closestAngle = {720};
 
 			positionsToRail.getOrDefault(MTR.blockPosToPosition(blockPos), new Object2ObjectOpenHashMap<>()).forEach((endPosition, rail) -> {
@@ -136,14 +140,6 @@ public final class MinecraftClientData extends ClientData {
 		} else {
 			routeIdsWithDisabledAnnouncements.remove(routeId);
 		}
-	}
-
-	public static MinecraftClientData getInstance() {
-		return instance;
-	}
-
-	public static MinecraftClientData getDashboardInstance() {
-		return dashboardInstance;
 	}
 
 	public static void reset() {
@@ -179,12 +175,8 @@ public final class MinecraftClientData extends ClientData {
 		return null;
 	}
 
-	public static <T extends NameColorDataBase> ObjectArraySet<DashboardListItem> getFilteredDataSet(TransportMode transportMode, ObjectArraySet<T> dataSet) {
-		return convertDataSet(dataSet.stream().filter(data -> data.isTransportMode(transportMode)).collect(Collectors.toCollection(ObjectArraySet::new)));
-	}
-
-	public static <T extends NameColorDataBase> ObjectArraySet<DashboardListItem> convertDataSet(ObjectArraySet<T> dataSet) {
-		return dataSet.stream().map(DashboardListItem::new).collect(Collectors.toCollection(ObjectArraySet::new));
+	public static <T extends NameColorDataBase> ObjectArraySet<T> getFilteredDataSet(TransportMode transportMode, ObjectArraySet<T> dataSet) {
+		return dataSet.stream().filter(data -> data.isTransportMode(transportMode)).collect(Collectors.toCollection(ObjectArraySet::new));
 	}
 
 	public static <T extends AreaBase<T, U>, U extends SavedRailBase<U, T>> Object2ObjectAVLTreeMap<Position, ObjectArrayList<U>> getFlatPositionToSavedRails(ObjectArraySet<U> savedRails, TransportMode transportMode) {
@@ -201,7 +193,7 @@ public final class MinecraftClientData extends ClientData {
 			} else {
 				final long y1 = savedRail1.getMidPosition().getY();
 				final long y2 = savedRail2.getMidPosition().getY();
-				return y1 == y2 ? savedRail1.getId() > savedRail2.getId() ? 1 : -1 : y1 > y2 ? 1 : -1;
+				return y1 == y2 ? (savedRail1.getId() > savedRail2.getId() ? 1 : -1) : (y1 > y2 ? 1 : -1);
 			}
 		}));
 		return map;
@@ -221,14 +213,11 @@ public final class MinecraftClientData extends ClientData {
 	public static class LiftWrapper {
 
 		public boolean shouldRender;
+		@Getter
 		private Lift lift;
 
 		private LiftWrapper(Lift lift) {
 			this.lift = lift;
-		}
-
-		public Lift getLift() {
-			return lift;
 		}
 	}
 
@@ -238,6 +227,7 @@ public final class MinecraftClientData extends ClientData {
 		public final String hexId;
 		public final Vec3d startVector;
 		public final Vec3d endVector;
+		@Getter
 		private Rail rail;
 
 		private RailWrapper(Rail rail, String hexId) {
@@ -245,10 +235,6 @@ public final class MinecraftClientData extends ClientData {
 			this.hexId = hexId;
 			startVector = new Vec3d(rail.railMath.minX, rail.railMath.minY, rail.railMath.minZ);
 			endVector = new Vec3d(rail.railMath.maxX, rail.railMath.maxY, rail.railMath.maxZ);
-		}
-
-		public Rail getRail() {
-			return rail;
 		}
 	}
 }

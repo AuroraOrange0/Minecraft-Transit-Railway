@@ -1,6 +1,5 @@
 package org.mtr.block;
 
-import it.unimi.dsi.fastutil.longs.LongAVLTreeSet;
 import net.minecraft.block.AbstractBlock;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockEntityProvider;
@@ -10,14 +9,14 @@ import net.minecraft.block.entity.BlockEntityType;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
+import org.mtr.libraries.it.unimi.dsi.fastutil.longs.LongAVLTreeSet;
 import org.mtr.packet.PacketOpenBlockEntityScreen;
-import org.mtr.registry.Registry;
 
-import javax.annotation.Nonnull;
 import java.util.ArrayList;
 
 public abstract class BlockTrainSensorBase extends Block implements BlockEntityProvider {
@@ -26,16 +25,9 @@ public abstract class BlockTrainSensorBase extends Block implements BlockEntityP
 		super(settings);
 	}
 
-	@Nonnull
 	@Override
 	protected ActionResult onUse(BlockState state, World world, BlockPos pos, PlayerEntity player, BlockHitResult hit) {
-		return IBlock.checkHoldingBrush(world, player, () -> {
-			final BlockEntity entity = world.getBlockEntity(pos);
-			if (entity instanceof BlockEntityBase) {
-				entity.markDirty();
-				Registry.sendPacketToClient((ServerPlayerEntity) player, new PacketOpenBlockEntityScreen(pos));
-			}
-		});
+		return IBlock.checkHoldingBrush(world, player, () -> PacketOpenBlockEntityScreen.sendDirectlyToServer((ServerWorld) world, (ServerPlayerEntity) player, pos));
 	}
 
 	public static boolean matchesFilter(World world, BlockPos pos, long routeId, double speed) {
@@ -94,8 +86,9 @@ public abstract class BlockTrainSensorBase extends Block implements BlockEntityP
 		}
 
 		public void setData(LongAVLTreeSet filterRouteIds, boolean stoppedOnly, boolean movingOnly) {
+			final LongAVLTreeSet filterRouteIdsCopy = new LongAVLTreeSet(filterRouteIds);
 			this.filterRouteIds.clear();
-			this.filterRouteIds.addAll(filterRouteIds);
+			this.filterRouteIds.addAll(filterRouteIdsCopy);
 			this.stoppedOnly = stoppedOnly;
 			this.movingOnly = movingOnly;
 			markDirty();

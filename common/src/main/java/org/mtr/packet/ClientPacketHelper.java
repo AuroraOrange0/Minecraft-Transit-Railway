@@ -10,9 +10,10 @@ import net.minecraft.util.math.BlockPos;
 import org.mtr.MTR;
 import org.mtr.block.*;
 import org.mtr.client.MinecraftClientData;
-import org.mtr.core.data.Lift;
-import org.mtr.core.data.Rail;
-import org.mtr.core.data.TransportMode;
+import org.mtr.core.data.*;
+import org.mtr.libraries.it.unimi.dsi.fastutil.longs.LongAVLTreeSet;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import org.mtr.resource.SignResource;
 import org.mtr.screen.*;
 
 import java.util.function.Consumer;
@@ -25,20 +26,26 @@ public final class ClientPacketHelper {
 
 	public static void openBlockEntityScreen(BlockPos blockPos) {
 		getBlockEntity(blockPos, blockEntity -> {
-			if (blockEntity instanceof BlockTrainAnnouncer.TrainAnnouncerBlockEntity) {
-				openScreen(new TrainAnnouncerScreen(blockPos, (BlockTrainAnnouncer.TrainAnnouncerBlockEntity) blockEntity), screen -> screen instanceof TrainAnnouncerScreen);
-			} else if (blockEntity instanceof BlockTrainScheduleSensor.TrainScheduleSensorBlockEntity) {
-				openScreen(new TrainScheduleSensorScreen(blockPos, (BlockTrainScheduleSensor.TrainScheduleSensorBlockEntity) blockEntity), screen -> screen instanceof TrainScheduleSensorScreen);
-			} else if (blockEntity instanceof BlockTrainSensorBase.BlockEntityBase) {
-				openScreen(new TrainBasicSensorScreen(blockPos), screen -> screen instanceof TrainBasicSensorScreen);
-			} else if (blockEntity instanceof BlockRailwaySign.RailwaySignBlockEntity || blockEntity instanceof BlockRouteSignBase.BlockEntityBase) {
-				openScreen(new RailwaySignScreen(blockPos), screen -> screen instanceof RailwaySignScreen);
-			} else if (blockEntity instanceof BlockLiftTrackFloor.LiftTrackFloorBlockEntity) {
-				openScreen(new LiftTrackFloorScreen(blockPos, (BlockLiftTrackFloor.LiftTrackFloorBlockEntity) blockEntity), screen -> screen instanceof LiftTrackFloorScreen);
-			} else if (blockEntity instanceof BlockSignalBase.BlockEntityBase) {
-				openScreen(new SignalColorScreen(blockPos, (BlockSignalBase.BlockEntityBase) blockEntity), screen -> screen instanceof SignalColorScreen);
-			} else if (blockEntity instanceof BlockEyeCandy.EyeCandyBlockEntity) {
-				openScreen(new EyeCandyScreen(blockPos, (BlockEyeCandy.EyeCandyBlockEntity) blockEntity), screen -> screen instanceof EyeCandyScreen);
+			if (blockEntity instanceof BlockTrainAnnouncer.TrainAnnouncerBlockEntity trainAnnouncerBlockEntity) {
+				openScreen(new TrainAnnouncerScreen(blockPos, trainAnnouncerBlockEntity), screen -> screen instanceof TrainAnnouncerScreen);
+			} else if (blockEntity instanceof BlockTrainScheduleSensor.TrainScheduleSensorBlockEntity trainScheduleSensorBlockEntity) {
+				openScreen(new TrainScheduleSensorScreen(blockPos, trainScheduleSensorBlockEntity), screen -> screen instanceof TrainScheduleSensorScreen);
+			} else if (blockEntity instanceof BlockTrainSensorBase.BlockEntityBase trainSensorBaseBlockEntity) {
+				openScreen(new TrainBasicSensorScreen(blockPos, trainSensorBaseBlockEntity), screen -> screen instanceof TrainBasicSensorScreen);
+			} else if (blockEntity instanceof BlockDriverKeyDispenser.DriverKeyDispenserBlockEntity driverKeyDispenserBlockEntity) {
+				openScreen(new DriverKeyDispenserScreen(blockPos, driverKeyDispenserBlockEntity), screen -> screen instanceof DriverKeyDispenserScreen);
+			} else if (blockEntity instanceof BlockPIDSBase.BlockEntityBase pidsBaseBlockEntity) {
+				openScreen(new PIDSConfigScreen(blockPos, pidsBaseBlockEntity), screen -> screen instanceof RailwaySignScreen);
+			} else if (blockEntity instanceof BlockRailwaySign.RailwaySignBlockEntity railwaySignBlockEntity) {
+				openScreen(new RailwaySignScreen(blockPos, railwaySignBlockEntity), screen -> screen instanceof RailwaySignScreen);
+			} else if (blockEntity instanceof BlockRouteSignBase.BlockEntityBase routeSignBlockEntity) {
+				openRouteListSelectorScreen(blockPos, routeSignBlockEntity);
+			} else if (blockEntity instanceof BlockLiftTrackFloor.LiftTrackFloorBlockEntity liftTrackFloorBlockEntity) {
+				openScreen(new LiftTrackFloorScreen(blockPos, liftTrackFloorBlockEntity), screen -> screen instanceof LiftTrackFloorScreen);
+			} else if (blockEntity instanceof BlockSignalBase.BlockEntityBase signalBaseBlockEntity) {
+				openScreen(new SignalColorScreen(blockPos, signalBaseBlockEntity), screen -> screen instanceof SignalColorScreen);
+			} else if (blockEntity instanceof BlockEyeCandy.EyeCandyBlockEntity eyeCandyBlockEntity) {
+				openScreen(new EyeCandyScreen(blockPos, eyeCandyBlockEntity), screen -> screen instanceof EyeCandyScreen);
 			}
 		});
 	}
@@ -66,18 +73,10 @@ public final class ClientPacketHelper {
 	public static void openLiftCustomizationScreen(BlockPos blockPos) {
 		for (final Lift lift : MinecraftClientData.getInstance().lifts) {
 			if (lift.getFloorIndex(MTR.blockPosToPosition(blockPos)) >= 0) {
-				MinecraftClient.getInstance().setScreen(new LiftCustomizationScreen(lift));
+				UMinecraft.setCurrentScreenObj(new LiftCustomizationScreen(lift));
 				break;
 			}
 		}
-	}
-
-	public static void openPIDSConfigScreen(BlockPos blockPos, int maxArrivals) {
-		getBlockEntity(blockPos, blockEntity -> {
-			if (blockEntity instanceof BlockPIDSBase.BlockEntityBase) {
-				openScreen(new PIDSConfigScreen(blockPos, maxArrivals), screen -> screen instanceof PIDSConfigScreen);
-			}
-		});
 	}
 
 	public static void openRailShapeModifierScreen(String railId) {
@@ -114,5 +113,23 @@ public final class ClientPacketHelper {
 				consumer.accept(blockEntity);
 			}
 		}
+	}
+
+	private static void openRouteListSelectorScreen(BlockPos blockPos, BlockRouteSignBase.BlockEntityBase routeSignBlockEntity) {
+		final PlatformListSelectorScreen platformListSelectorScreen = new PlatformListSelectorScreen(selectedRoutes -> new PacketUpdateRailwaySignConfig(
+			blockPos,
+			new LongAVLTreeSet[]{new LongAVLTreeSet(selectedRoutes.stream().map(NameColorDataBase::getId).toList())},
+			new String[0]
+		).send(MinecraftClient.getInstance().world));
+
+		final ObjectArrayList<Platform> platforms = SignResource.getPlatforms(blockPos);
+		platformListSelectorScreen.setAvailableList(platforms);
+		platforms.forEach(platform -> {
+			if (routeSignBlockEntity.getPlatformId() == platform.getId()) {
+				platformListSelectorScreen.selectData(platform);
+			}
+		});
+
+		UMinecraft.setCurrentScreenObj(platformListSelectorScreen);
 	}
 }

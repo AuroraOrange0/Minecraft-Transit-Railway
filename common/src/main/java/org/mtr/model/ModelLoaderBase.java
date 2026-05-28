@@ -1,20 +1,96 @@
 package org.mtr.model;
 
-import it.unimi.dsi.fastutil.ints.IntIntImmutablePair;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import it.unimi.dsi.fastutil.objects.ObjectObjectImmutablePair;
 import net.minecraft.client.render.VertexFormat;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.Box;
+import org.jspecify.annotations.Nullable;
+import org.mtr.libraries.it.unimi.dsi.fastutil.ints.IntIntImmutablePair;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectObjectImmutablePair;
 import org.mtr.render.StoredMatrixTransformations;
 import org.mtr.resource.*;
 
-import javax.annotation.Nullable;
 import java.util.Comparator;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 
+/**
+ * Shared infrastructure for the two concrete model loaders — {@link ObjModelLoader} and
+ * {@link BlockbenchModelLoader}.
+ *
+ * <p>Each loader is a single-use vessel: subclasses parse the model bytes (off the main
+ * thread when possible), populate {@link #nameToNewOptimizedModelGroup} and
+ * {@link #nameToRawModelDisplayParts}, then call {@link #setModelLoaded()}. The first call
+ * to one of the {@code get(...)} methods after that flag flips builds the corresponding
+ * {@code builtModel} cache; subsequent calls return the cached value.</p>
+ *
+ * <p>There are <b>two</b> parallel build paths, intentionally so:</p>
+ * <ol>
+ *   <li>{@link #get(ModelProperties, PositionDefinitions)} — the <b>vehicle</b> path. It
+ *       knows about floors, doorways, door mappings, conditional parts and display
+ *       surfaces, and returns a {@link BuiltVehicleModelHolder}.</li>
+ *   <li>{@link #get()} — the <b>non-vehicle</b> path used by {@code ObjectResource},
+ *       {@code RailResource} and similar. It collapses every named group into a single
+ *       {@code EXTERIOR}-stage blob.</li>
+ * </ol>
+ *
+ * <p>Calling the wrong accessor for a loader's intended use returns valid-but-meaningless
+ * data — see {@code docs/MIGRATIONS.md} §5 for the recommended consolidation.</p>
+ *
+ * <p><b>Threading:</b> {@link #addModel(String, NewOptimizedModelGroup)} and
+ * {@link #addModelDisplayParts(String, ObjectArrayList)} may be called from any thread.
+ * The {@code get(...)} methods must run on the render thread because they upload vertex
+ * buffers via {@link NewOptimizedModelGroup#build(net.minecraft.client.render.VertexFormat.DrawMode)}.</p>
+ */
 public abstract class ModelLoaderBase {
+
+	/**
+	 * Global counter of model-parse tasks currently sitting on
+	 * {@link org.mtr.render.MainRenderer#WORKER_THREAD}. Incremented by
+	 * {@link ObjModelLoader} / {@link BlockbenchModelLoader} just before submitting the
+	 * parse, and decremented in the submitted task's {@code finally} block. Callers like
+	 * {@link org.mtr.client.CustomResourceLoader#reload()} use
+	 * {@link #awaitParsing(long)} to drain the queue before kicking off the preload pass.
+	 */
+	private static final AtomicInteger PENDING_PARSE_COUNT = new AtomicInteger();
+
+	/**
+	 * Mark a parse task as starting. Callers must invoke {@link #parseFinished()} from a
+	 * {@code finally} block.
+	 */
+	public static void parseStarted() {
+		PENDING_PARSE_COUNT.incrementAndGet();
+	}
+
+	/**
+	 * Mark a parse task as finished.
+	 */
+	public static void parseFinished() {
+		PENDING_PARSE_COUNT.decrementAndGet();
+	}
+
+	/**
+	 * Block until every outstanding model parse has finished or the timeout elapses.
+	 *
+	 * @param timeoutMillis max wait in milliseconds; {@code 0} or negative for no bound
+	 * @return {@code true} if drained within the timeout, {@code false} if it expired
+	 */
+	public static boolean awaitParsing(long timeoutMillis) {
+		final long deadline = timeoutMillis > 0 ? System.currentTimeMillis() + timeoutMillis : Long.MAX_VALUE;
+		while (PENDING_PARSE_COUNT.get() > 0) {
+			if (System.currentTimeMillis() >= deadline) {
+				return false;
+			}
+			try {
+				Thread.sleep(5);
+			} catch (InterruptedException e) {
+				Thread.currentThread().interrupt();
+				return false;
+			}
+		}
+		return true;
+	}
 
 	private boolean modelLoaded = false;
 	@Nullable
@@ -106,26 +182,26 @@ public abstract class ModelLoaderBase {
 	 * If this part is a door, find the closest doorway.
 	 */
 	private ObjectArrayList<BuiltVehicleModelHolder.BuiltDoorModelDetails> mapDoors(
-			ObjectArrayList<ModelPropertiesPart.RawDoorModelDetails> rawDoorModelDetailsList,
-			ObjectArrayList<Box> doorways
+		ObjectArrayList<ModelPropertiesPart.RawDoorModelDetails> rawDoorModelDetailsList,
+		ObjectArrayList<Box> doorways
 	) {
 		final ObjectArrayList<BuiltVehicleModelHolder.BuiltDoorModelDetails> builtDoorModelDetailsList = new ObjectArrayList<>();
 		rawDoorModelDetailsList.forEach(rawDoorModelDetails -> {
 			final Box closestDoorway = doorways.stream().min(Comparator.comparingDouble(checkDoorway -> rawDoorModelDetails.boxes().stream().map(box -> getClosestDistance(
-					box.minX,
-					box.maxX,
-					checkDoorway.minX,
-					checkDoorway.maxX
+				box.minX,
+				box.maxX,
+				checkDoorway.minX,
+				checkDoorway.maxX
 			) + getClosestDistance(
-					box.minY,
-					box.maxY,
-					checkDoorway.minY,
-					checkDoorway.maxY
+				box.minY,
+				box.maxY,
+				checkDoorway.minY,
+				checkDoorway.maxY
 			) + getClosestDistance(
-					box.minZ,
-					box.maxZ,
-					checkDoorway.minZ,
-					checkDoorway.maxZ
+				box.minZ,
+				box.maxZ,
+				checkDoorway.minZ,
+				checkDoorway.maxZ
 			)).min(Double::compareTo).orElse(Double.MAX_VALUE))).orElse(null);
 
 			final Object2ObjectOpenHashMap<PartCondition, Object2ObjectOpenHashMap<RenderStage, ObjectArrayList<NewOptimizedModel>>> builtDoorModel = new Object2ObjectOpenHashMap<>();

@@ -1,10 +1,10 @@
 package org.mtr.cache;
 
-import it.unimi.dsi.fastutil.longs.Long2ObjectAVLTreeMap;
-import it.unimi.dsi.fastutil.longs.LongArrayList;
+import org.jspecify.annotations.Nullable;
 import org.mtr.MTR;
+import org.mtr.libraries.it.unimi.dsi.fastutil.longs.Long2ObjectAVLTreeMap;
+import org.mtr.libraries.it.unimi.dsi.fastutil.longs.LongArrayList;
 
-import javax.annotation.Nullable;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -35,7 +35,7 @@ public abstract class CachedFileProvider<T extends CachedFileResource> {
 		final LongArrayList keysToRemove = new LongArrayList();
 		dataMap.forEach((key, data) -> {
 			if (data.canBeRemoved()) {
-				keysToRemove.add(key.longValue());
+				keysToRemove.add(key);
 			}
 		});
 		keysToRemove.forEach(dataMap::remove);

@@ -1,159 +1,181 @@
 package org.mtr.screen;
 
-import it.unimi.dsi.fastutil.longs.LongAVLTreeSet;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
-import it.unimi.dsi.fastutil.objects.ObjectObjectImmutablePair;
-import net.minecraft.block.entity.BlockEntity;
+import gg.essential.elementa.components.UIWrappedText;
+import gg.essential.elementa.constraints.PixelConstraint;
+import gg.essential.elementa.constraints.RelativeConstraint;
+import gg.essential.elementa.constraints.SiblingConstraint;
+import gg.essential.universal.UMinecraft;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.client.gui.widget.CheckboxWidget;
-import net.minecraft.client.world.ClientWorld;
-import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
 import net.minecraft.util.math.BlockPos;
-import org.mtr.MTR;
+import org.jspecify.annotations.Nullable;
 import org.mtr.block.BlockTrainSensorBase;
-import org.mtr.client.IDrawing;
 import org.mtr.client.MinecraftClientData;
 import org.mtr.core.data.Route;
+import org.mtr.core.tool.Utilities;
 import org.mtr.data.IGui;
 import org.mtr.generated.lang.TranslationProvider;
+import org.mtr.libraries.it.unimi.dsi.fastutil.longs.LongAVLTreeSet;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArraySet;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectObjectImmutablePair;
 import org.mtr.packet.PacketUpdateTrainSensorConfig;
-import org.mtr.registry.RegistryClient;
-import org.mtr.widget.BetterTextFieldWidget;
+import org.mtr.tool.GuiHelper;
+import org.mtr.widget.ButtonComponent;
+import org.mtr.widget.CheckboxComponent;
+import org.mtr.widget.MultiLineTextWidget;
 
+import java.awt.*;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
-public abstract class TrainSensorScreenBase extends ScreenBase implements IGui {
+/**
+ * Base Elementa screen for train sensor configuration screens.
+ */
+public abstract class TrainSensorScreenBase<T extends BlockTrainSensorBase.BlockEntityBase> extends SingleTabBackgroundScreenBase {
 
-	private boolean stoppedOnly;
-	private boolean movingOnly;
+	private String oldRouteIdsKey = "";
 
 	protected final BlockPos blockPos;
-	protected final BetterTextFieldWidget[] textFields;
-
 	private final LongAVLTreeSet filterRouteIds;
-	private final int textFieldCount;
-	private final MutableText[] textFieldLabels;
-	private final CheckboxWidget stoppedOnlyCheckbox;
-	private final CheckboxWidget movingOnlyCheckbox;
-	private final ButtonWidget filterButton;
-	private final boolean hasSpeedCheckboxes;
-	private final int yStart;
 
-	@SafeVarargs
-	public TrainSensorScreenBase(BlockPos blockPos, boolean hasSpeedCheckboxes, ObjectObjectImmutablePair<BetterTextFieldWidget, MutableText>... textFieldsAndLabels) {
-		super();
+	@Nullable
+	private final CheckboxComponent stoppedOnlyCheckbox;
+	@Nullable
+	private final CheckboxComponent movingOnlyCheckbox;
+	private final UIWrappedText filteredRoutesText;
+	private final UIWrappedText filteredRoutesConditionText;
+	private final MultiLineTextWidget multiLineTextWidget;
+
+	protected static final int LEFT_WIDTH = 96;
+
+	public TrainSensorScreenBase(String title, BlockPos blockPos, T blockEntity, boolean hasSpeedCheckboxes) {
+		super(title);
 		this.blockPos = blockPos;
-
-		textFieldCount = textFieldsAndLabels.length;
-		textFields = new BetterTextFieldWidget[textFieldCount];
-		textFieldLabels = new MutableText[textFieldCount];
-
-		for (int i = 0; i < textFieldCount; i++) {
-			textFields[i] = textFieldsAndLabels[i].left();
-			textFieldLabels[i] = textFieldsAndLabels[i].right();
-		}
-
-		final ClientWorld clientWorld = MinecraftClient.getInstance().world;
-		if (clientWorld == null) {
-			filterRouteIds = new LongAVLTreeSet();
-		} else {
-			final BlockEntity blockEntity = clientWorld.getBlockEntity(blockPos);
-			if (blockEntity instanceof BlockTrainSensorBase.BlockEntityBase blockEntityBase) {
-				filterRouteIds = blockEntityBase.getRouteIds();
-				stoppedOnly = blockEntityBase.getStoppedOnly();
-				movingOnly = blockEntityBase.getMovingOnly();
-			} else {
-				filterRouteIds = new LongAVLTreeSet();
-			}
-		}
-
-		stoppedOnlyCheckbox = CheckboxWidget.builder(TranslationProvider.GUI_MTR_STOPPED_ONLY.getText(), textRenderer).callback((checkboxWidget, checked) -> setChecked(checked, movingOnly)).build();
-		movingOnlyCheckbox = CheckboxWidget.builder(TranslationProvider.GUI_MTR_MOVING_ONLY.getText(), textRenderer).callback((checkboxWidget, checked) -> setChecked(stoppedOnly, checked)).build();
-
-		filterButton = ButtonWidget.builder(Text.translatable("selectWorld.edit"), button -> {
-			final ObjectArrayList<DashboardListItem> routes = MinecraftClientData.getInstance().simplifiedRoutes.stream().map(simplifiedRoute -> new DashboardListItem(simplifiedRoute.getId(), simplifiedRoute.getName(), simplifiedRoute.getColor())).sorted().collect(Collectors.toCollection(ObjectArrayList::new));
-			MinecraftClient.getInstance().setScreen(new DashboardListSelectorScreen(new ObjectImmutableList<>(routes), filterRouteIds, false, false, this));
-		}).build();
-
-		this.hasSpeedCheckboxes = hasSpeedCheckboxes;
-		yStart = (textFieldCount == 0 ? SQUARE_SIZE : SQUARE_SIZE * 3 + TEXT_HEIGHT + TEXT_PADDING * 2 + TEXT_FIELD_PADDING) + (hasSpeedCheckboxes ? 2 * SQUARE_SIZE : 0);
-	}
-
-	@Override
-	protected void init() {
-		super.init();
-
-		final int textFieldWidth = textFieldCount == 0 ? 0 : (width - SQUARE_SIZE * 2) / textFieldCount;
-		for (int i = 0; i < textFieldCount; i++) {
-			IDrawing.setPositionAndWidth(textFields[i], SQUARE_SIZE + TEXT_FIELD_PADDING / 2 + textFieldWidth * i, SQUARE_SIZE + TEXT_HEIGHT + TEXT_PADDING + TEXT_FIELD_PADDING / 2, textFieldWidth - TEXT_FIELD_PADDING);
-			addDrawableChild(textFields[i]);
-		}
+		filterRouteIds = blockEntity.getRouteIds();
 
 		if (hasSpeedCheckboxes) {
-			IDrawing.setPositionAndWidth(stoppedOnlyCheckbox, SQUARE_SIZE, yStart - SQUARE_SIZE * 2, PANEL_WIDTH);
-			IDrawing.setPositionAndWidth(movingOnlyCheckbox, SQUARE_SIZE, yStart - SQUARE_SIZE, PANEL_WIDTH);
-			addDrawableChild(stoppedOnlyCheckbox);
-			addDrawableChild(movingOnlyCheckbox);
-			setChecked(stoppedOnly, movingOnly);
+			stoppedOnlyCheckbox = (CheckboxComponent) new CheckboxComponent()
+				.setChildOf(contentContainer)
+				.setY(new SiblingConstraint())
+				.setWidth(new RelativeConstraint());
+
+			stoppedOnlyCheckbox.setText(TranslationProvider.GUI_MTR_STOPPED_ONLY.getString());
+			stoppedOnlyCheckbox.onClick(() -> setStoppedOnly(stoppedOnlyCheckbox.isChecked()));
+
+			movingOnlyCheckbox = (CheckboxComponent) new CheckboxComponent()
+				.setChildOf(contentContainer)
+				.setY(new SiblingConstraint())
+				.setWidth(new RelativeConstraint());
+
+			movingOnlyCheckbox.setText(TranslationProvider.GUI_MTR_MOVING_ONLY.getString());
+			movingOnlyCheckbox.onClick(() -> setMovingOnly(movingOnlyCheckbox.isChecked()));
+
+			setStoppedOnly(blockEntity.getStoppedOnly());
+			setMovingOnly(blockEntity.getMovingOnly());
+		} else {
+			stoppedOnlyCheckbox = null;
+			movingOnlyCheckbox = null;
 		}
 
-		IDrawing.setPositionAndWidth(filterButton, SQUARE_SIZE, yStart + SQUARE_SIZE * 2, PANEL_WIDTH / 2);
-		addDrawableChild(filterButton);
+		GuiHelper.createSpacing(contentContainer);
+		filteredRoutesText = GuiHelper.createLabel(contentContainer, "");
+
+		final ButtonComponent filterButton = (ButtonComponent) new ButtonComponent(false)
+			.setChildOf(contentContainer)
+			.setY(new SiblingConstraint())
+			.setWidth(new PixelConstraint(LEFT_WIDTH));
+
+		filterButton.setText(Text.translatable("selectWorld.edit").getString());
+		filterButton.onClick(() -> UMinecraft.setCurrentScreenObj(createRouteListSelectorScreen()));
+
+		GuiHelper.createSpacing(contentContainer);
+
+		filteredRoutesConditionText = (UIWrappedText) new UIWrappedText("", false)
+			.setChildOf(contentContainer)
+			.setY(new SiblingConstraint())
+			.setWidth(new RelativeConstraint())
+			.setColor(new Color(GuiHelper.MINECRAFT_GUI_TITLE_TEXT_COLOR));
+
+		GuiHelper.createSpacing(contentContainer);
+
+		multiLineTextWidget = (MultiLineTextWidget) new MultiLineTextWidget()
+			.setChildOf(contentContainer)
+			.setY(new SiblingConstraint())
+			.setWidth(new RelativeConstraint());
 	}
 
 	@Override
-	public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-		try {
-			renderBackground(context, mouseX, mouseY, delta);
-			for (int i = 0; i < textFieldCount; i++) {
-				context.drawText(textRenderer, textFieldLabels[i], SQUARE_SIZE + ((width - SQUARE_SIZE * 2) / textFieldLabels.length) * i, SQUARE_SIZE, ARGB_WHITE, false);
-			}
-			context.drawText(textRenderer, TranslationProvider.GUI_MTR_FILTERED_ROUTES.getMutableText(filterRouteIds.size()), SQUARE_SIZE, yStart + TEXT_PADDING, ARGB_WHITE, false);
-			context.drawText(textRenderer, (filterRouteIds.isEmpty() ? TranslationProvider.GUI_MTR_FILTERED_ROUTES_EMPTY : TranslationProvider.GUI_MTR_FILTERED_ROUTES_CONDITION).getMutableText(), SQUARE_SIZE, yStart + SQUARE_SIZE + TEXT_PADDING, ARGB_WHITE, false);
-			int i = 0;
-			for (final long routeId : filterRouteIds) {
-				final Route route = MinecraftClientData.getInstance().routeIdMap.get(routeId);
-				if (route != null) {
-					context.drawText(textRenderer, Text.literal(IGui.formatStationName(route.getName())), SQUARE_SIZE, yStart + SQUARE_SIZE * 3 + TEXT_PADDING + i, ARGB_WHITE, false);
-				}
-				i += TEXT_HEIGHT;
-			}
-			renderAdditional(context);
-			super.render(context, mouseX, mouseY, delta);
-		} catch (Exception e) {
-			MTR.LOGGER.error("", e);
+	public void onTick() {
+		super.onTick();
+		filteredRoutesText.setText(TranslationProvider.GUI_MTR_FILTERED_ROUTES.getString(filterRouteIds.size()));
+		filteredRoutesConditionText.setText((filterRouteIds.isEmpty() ? TranslationProvider.GUI_MTR_FILTERED_ROUTES_EMPTY : TranslationProvider.GUI_MTR_FILTERED_ROUTES_CONDITION).getString());
+
+		final String routeIdsKey = getRouteIdsKey();
+		if (!routeIdsKey.equals(oldRouteIdsKey)) {
+			final ObjectArrayList<ObjectArrayList<ObjectObjectImmutablePair<String, @Nullable Color>>> lines = new ObjectArrayList<>();
+			filterRouteIds.longStream().mapToObj(MinecraftClientData.getDashboardInstance().routeIdMap::get).filter(Objects::nonNull).sorted().forEach(route -> {
+				final String routeNumber = Utilities.formatName(route.getRouteNumber());
+				lines.add(ObjectArrayList.of(
+					new ObjectObjectImmutablePair<>("- ", new Color(route.getColor())),
+					new ObjectObjectImmutablePair<>(IGui.formatStationName(route.getName()) + (routeNumber.isEmpty() ? "" : " " + routeNumber), null)
+				));
+			});
+			multiLineTextWidget.write(lines);
+			oldRouteIdsKey = routeIdsKey;
 		}
 	}
 
 	@Override
-	public void close() {
-		sendUpdate(blockPos, filterRouteIds, stoppedOnly, movingOnly);
-		super.close();
-	}
-
-	protected void renderAdditional(DrawContext context) {
+	public void onScreenClose() {
+		sendUpdate(blockPos, filterRouteIds, stoppedOnlyCheckbox != null && stoppedOnlyCheckbox.isChecked(), movingOnlyCheckbox != null && movingOnlyCheckbox.isChecked());
+		super.onScreenClose();
 	}
 
 	protected void sendUpdate(BlockPos blockPos, LongAVLTreeSet filterRouteIds, boolean stoppedOnly, boolean movingOnly) {
-		RegistryClient.sendPacketToServer(new PacketUpdateTrainSensorConfig(blockPos, filterRouteIds, stoppedOnly, movingOnly));
+		new PacketUpdateTrainSensorConfig(blockPos, filterRouteIds, stoppedOnly, movingOnly).send(MinecraftClient.getInstance().world);
 	}
 
-	private void setChecked(boolean newStoppedOnly, boolean newMovingOnly) {
-		if (newMovingOnly && stoppedOnly) {
-			stoppedOnly = false;
-		} else {
-			stoppedOnly = newStoppedOnly;
+	private void setStoppedOnly(boolean checked) {
+		if (stoppedOnlyCheckbox != null && movingOnlyCheckbox != null) {
+			if (checked) {
+				stoppedOnlyCheckbox.setChecked(true);
+				movingOnlyCheckbox.setChecked(false);
+			} else {
+				stoppedOnlyCheckbox.setChecked(false);
+			}
 		}
-		if (newStoppedOnly && movingOnly) {
-			movingOnly = false;
-		} else {
-			movingOnly = newMovingOnly;
+	}
+
+	private void setMovingOnly(boolean checked) {
+		if (stoppedOnlyCheckbox != null && movingOnlyCheckbox != null) {
+			if (checked) {
+				stoppedOnlyCheckbox.setChecked(false);
+				movingOnlyCheckbox.setChecked(true);
+			} else {
+				movingOnlyCheckbox.setChecked(false);
+			}
 		}
-		IGui.setChecked(stoppedOnlyCheckbox, stoppedOnly);
-		IGui.setChecked(movingOnlyCheckbox, movingOnly);
+	}
+
+	private RouteListSelectorScreen createRouteListSelectorScreen() {
+		final RouteListSelectorScreen routeListSelectorScreen = new RouteListSelectorScreen(selectedRoutes -> {
+			filterRouteIds.clear();
+			selectedRoutes.forEach(route -> filterRouteIds.add(route.getId()));
+		}, false, false, false, this);
+
+		final ObjectArraySet<Route> routes = MinecraftClientData.getDashboardInstance().routes;
+		routeListSelectorScreen.setAvailableList(routes);
+		routes.forEach(route -> {
+			if (filterRouteIds.contains(route.getId())) {
+				routeListSelectorScreen.selectData(route);
+			}
+		});
+
+		return routeListSelectorScreen;
+	}
+
+	private String getRouteIdsKey() {
+		return filterRouteIds.longStream().mapToObj(String::valueOf).collect(Collectors.joining("_"));
 	}
 }

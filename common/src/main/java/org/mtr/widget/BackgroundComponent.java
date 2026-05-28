@@ -5,8 +5,8 @@ import gg.essential.elementa.components.Window;
 import gg.essential.elementa.constraints.*;
 import gg.essential.universal.UMatrixStack;
 import gg.essential.universal.utils.ReleasedDynamicTexture;
-import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
-import it.unimi.dsi.fastutil.objects.ObjectObjectImmutablePair;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectImmutableList;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectObjectImmutablePair;
 import org.mtr.tool.ReleasedDynamicTextureRegistry;
 
 /**
@@ -24,7 +24,6 @@ public final class BackgroundComponent extends StitchedImageComponent {
 	private static final int TAB_WIDTH = 26;
 	private static final int TAB_HEIGHT = 32;
 	private static final int TAB_ICON_SIZE = 16;
-	private static final ReleasedDynamicTexture BRUSH_TEXTURE = ReleasedDynamicTextureRegistry.BRUSH_TEXTURE.get();
 
 	public BackgroundComponent(Window parent, ObjectImmutableList<ObjectObjectImmutablePair<ReleasedDynamicTexture, String>> tabs) {
 		super(256, 256, 176, 222, 6, -INNER_PADDING, 6, 6, 170, 16, ReleasedDynamicTextureRegistry.BACKGROUND_TEXTURE.get());
@@ -33,9 +32,9 @@ public final class BackgroundComponent extends StitchedImageComponent {
 
 		for (int i = 0; i < tabs.size(); i++) {
 			containers[i] = (UIContainer) new UIContainer()
-					.setChildOf(this)
-					.setWidth(new RelativeConstraint())
-					.setHeight(new RelativeConstraint());
+				.setChildOf(this)
+				.setWidth(new RelativeConstraint())
+				.setHeight(new RelativeConstraint());
 		}
 
 		setChildOf(parent);
@@ -107,7 +106,7 @@ public final class BackgroundComponent extends StitchedImageComponent {
 	}
 
 	private void drawTabIcon(UMatrixStack matrixStack, ReleasedDynamicTexture releasedDynamicTexture, int currentTab) {
-		if (releasedDynamicTexture == BRUSH_TEXTURE) {
+		if (releasedDynamicTexture == ReleasedDynamicTextureRegistry.BRUSH_TEXTURE.get()) {
 			drawTabIcon(matrixStack, ReleasedDynamicTextureRegistry.STICK_TEXTURE.get(), currentTab);
 		}
 

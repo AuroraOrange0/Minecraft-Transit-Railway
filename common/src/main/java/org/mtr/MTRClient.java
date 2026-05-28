@@ -1,6 +1,5 @@
 package org.mtr;
 
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import lombok.Getter;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
@@ -11,6 +10,7 @@ import net.minecraft.client.world.ClientWorld;
 import net.minecraft.text.Text;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
+import org.jspecify.annotations.Nullable;
 import org.mtr.block.BlockStationNameTallBase;
 import org.mtr.block.BlockStationNameTallStanding;
 import org.mtr.block.BlockTactileMap;
@@ -30,7 +30,8 @@ import org.mtr.core.servlet.Webserver;
 import org.mtr.data.IGui;
 import org.mtr.generated.WebserverResources;
 import org.mtr.generated.lang.TranslationProvider;
-import org.mtr.libraries.javax.servlet.MultipartConfigElement;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import org.mtr.libraries.jakarta.servlet.MultipartConfigElement;
 import org.mtr.libraries.org.eclipse.jetty.servlet.ServletHolder;
 import org.mtr.map.MapTileProvider;
 import org.mtr.packet.PacketGetUniqueWorldId;
@@ -46,18 +47,24 @@ import org.mtr.sound.ScheduledSound;
 import org.mtr.tool.Drawing;
 import org.mtr.tool.ReleasedDynamicTextureRegistry;
 
-import javax.annotation.Nullable;
 import java.util.Comparator;
 import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+/**
+ * Client-side mod coordinator and webserver host.
+ * Initialises client-side rendering, GUI screens, sound systems, and local webserver for map/tools.
+ * Bridges player interactions with the server and backend simulator.
+ */
 public final class MTRClient {
 
 	@Nullable
 	private static Webserver webserver;
 	/**
-	 * This is the port of the clientside webserver (multiplayer) or the webserver started by Transport Simulation Core (singleplayer). {@code 0} means the webserver is not running
+	 * Port of the webserver used by the client.
+	 * In multiplayer this is the local client-side bridge server; in singleplayer it can be the integrated backend server.
+	 * {@code 0} means the webserver is not running.
 	 */
 	@Getter
 	private static int serverPort;
@@ -207,79 +214,79 @@ public final class MTRClient {
 		RegistryClient.registerBlockEntityRenderer(BlockEntityTypes.EYE_CANDY, context -> new RenderEyeCandy());
 
 		RegistryClient.registerBlockColors((blockState, blockRenderView, blockPos, tintIndex) -> getStationColor(blockPos),
-				Blocks.STATION_COLOR_ANDESITE,
-				Blocks.STATION_COLOR_BEDROCK,
-				Blocks.STATION_COLOR_BIRCH_WOOD,
-				Blocks.STATION_COLOR_BONE_BLOCK,
-				Blocks.STATION_COLOR_CHISELED_QUARTZ_BLOCK,
-				Blocks.STATION_COLOR_CHISELED_STONE_BRICKS,
-				Blocks.STATION_COLOR_CLAY,
-				Blocks.STATION_COLOR_COAL_ORE,
-				Blocks.STATION_COLOR_COBBLESTONE,
-				Blocks.STATION_COLOR_CONCRETE,
-				Blocks.STATION_COLOR_CONCRETE_POWDER,
-				Blocks.STATION_COLOR_CRACKED_STONE_BRICKS,
-				Blocks.STATION_COLOR_DARK_PRISMARINE,
-				Blocks.STATION_COLOR_DIORITE,
-				Blocks.STATION_COLOR_GRAVEL,
-				Blocks.STATION_COLOR_IRON_BLOCK,
-				Blocks.STATION_COLOR_METAL,
-				Blocks.STATION_COLOR_MOSAIC_TILE,
-				Blocks.STATION_COLOR_PLANKS,
-				Blocks.STATION_COLOR_POLISHED_ANDESITE,
-				Blocks.STATION_COLOR_POLISHED_DIORITE,
-				Blocks.STATION_COLOR_PURPUR_BLOCK,
-				Blocks.STATION_COLOR_PURPUR_PILLAR,
-				Blocks.STATION_COLOR_QUARTZ_BLOCK,
-				Blocks.STATION_COLOR_QUARTZ_BRICKS,
-				Blocks.STATION_COLOR_QUARTZ_PILLAR,
-				Blocks.STATION_COLOR_SMOOTH_QUARTZ,
-				Blocks.STATION_COLOR_SMOOTH_STONE,
-				Blocks.STATION_COLOR_SNOW_BLOCK,
-				Blocks.STATION_COLOR_STAINED_GLASS,
-				Blocks.STATION_COLOR_STONE,
-				Blocks.STATION_COLOR_STONE_BRICKS,
-				Blocks.STATION_COLOR_WOOL,
+			Blocks.STATION_COLOR_ANDESITE,
+			Blocks.STATION_COLOR_BEDROCK,
+			Blocks.STATION_COLOR_BIRCH_WOOD,
+			Blocks.STATION_COLOR_BONE_BLOCK,
+			Blocks.STATION_COLOR_CHISELED_QUARTZ_BLOCK,
+			Blocks.STATION_COLOR_CHISELED_STONE_BRICKS,
+			Blocks.STATION_COLOR_CLAY,
+			Blocks.STATION_COLOR_COAL_ORE,
+			Blocks.STATION_COLOR_COBBLESTONE,
+			Blocks.STATION_COLOR_CONCRETE,
+			Blocks.STATION_COLOR_CONCRETE_POWDER,
+			Blocks.STATION_COLOR_CRACKED_STONE_BRICKS,
+			Blocks.STATION_COLOR_DARK_PRISMARINE,
+			Blocks.STATION_COLOR_DIORITE,
+			Blocks.STATION_COLOR_GRAVEL,
+			Blocks.STATION_COLOR_IRON_BLOCK,
+			Blocks.STATION_COLOR_METAL,
+			Blocks.STATION_COLOR_MOSAIC_TILE,
+			Blocks.STATION_COLOR_PLANKS,
+			Blocks.STATION_COLOR_POLISHED_ANDESITE,
+			Blocks.STATION_COLOR_POLISHED_DIORITE,
+			Blocks.STATION_COLOR_PURPUR_BLOCK,
+			Blocks.STATION_COLOR_PURPUR_PILLAR,
+			Blocks.STATION_COLOR_QUARTZ_BLOCK,
+			Blocks.STATION_COLOR_QUARTZ_BRICKS,
+			Blocks.STATION_COLOR_QUARTZ_PILLAR,
+			Blocks.STATION_COLOR_SMOOTH_QUARTZ,
+			Blocks.STATION_COLOR_SMOOTH_STONE,
+			Blocks.STATION_COLOR_SNOW_BLOCK,
+			Blocks.STATION_COLOR_STAINED_GLASS,
+			Blocks.STATION_COLOR_STONE,
+			Blocks.STATION_COLOR_STONE_BRICKS,
+			Blocks.STATION_COLOR_WOOL,
 
-				Blocks.STATION_COLOR_ANDESITE_SLAB,
-				Blocks.STATION_COLOR_BEDROCK_SLAB,
-				Blocks.STATION_COLOR_BIRCH_WOOD_SLAB,
-				Blocks.STATION_COLOR_BONE_BLOCK_SLAB,
-				Blocks.STATION_COLOR_CHISELED_QUARTZ_BLOCK_SLAB,
-				Blocks.STATION_COLOR_CHISELED_STONE_BRICKS_SLAB,
-				Blocks.STATION_COLOR_CLAY_SLAB,
-				Blocks.STATION_COLOR_COAL_ORE_SLAB,
-				Blocks.STATION_COLOR_COBBLESTONE_SLAB,
-				Blocks.STATION_COLOR_CONCRETE_SLAB,
-				Blocks.STATION_COLOR_CONCRETE_POWDER_SLAB,
-				Blocks.STATION_COLOR_CRACKED_STONE_BRICKS_SLAB,
-				Blocks.STATION_COLOR_DARK_PRISMARINE_SLAB,
-				Blocks.STATION_COLOR_DIORITE_SLAB,
-				Blocks.STATION_COLOR_GRAVEL_SLAB,
-				Blocks.STATION_COLOR_IRON_BLOCK_SLAB,
-				Blocks.STATION_COLOR_METAL_SLAB,
-				Blocks.STATION_COLOR_MOSAIC_TILE_SLAB,
-				Blocks.STATION_COLOR_PLANKS_SLAB,
-				Blocks.STATION_COLOR_POLISHED_ANDESITE_SLAB,
-				Blocks.STATION_COLOR_POLISHED_DIORITE_SLAB,
-				Blocks.STATION_COLOR_PURPUR_BLOCK_SLAB,
-				Blocks.STATION_COLOR_PURPUR_PILLAR_SLAB,
-				Blocks.STATION_COLOR_QUARTZ_BLOCK_SLAB,
-				Blocks.STATION_COLOR_QUARTZ_BRICKS_SLAB,
-				Blocks.STATION_COLOR_QUARTZ_PILLAR_SLAB,
-				Blocks.STATION_COLOR_SMOOTH_QUARTZ_SLAB,
-				Blocks.STATION_COLOR_SMOOTH_STONE_SLAB,
-				Blocks.STATION_COLOR_SNOW_BLOCK_SLAB,
-				Blocks.STATION_COLOR_STAINED_GLASS_SLAB,
-				Blocks.STATION_COLOR_STONE_SLAB,
-				Blocks.STATION_COLOR_STONE_BRICKS_SLAB,
-				Blocks.STATION_COLOR_WOOL_SLAB,
+			Blocks.STATION_COLOR_ANDESITE_SLAB,
+			Blocks.STATION_COLOR_BEDROCK_SLAB,
+			Blocks.STATION_COLOR_BIRCH_WOOD_SLAB,
+			Blocks.STATION_COLOR_BONE_BLOCK_SLAB,
+			Blocks.STATION_COLOR_CHISELED_QUARTZ_BLOCK_SLAB,
+			Blocks.STATION_COLOR_CHISELED_STONE_BRICKS_SLAB,
+			Blocks.STATION_COLOR_CLAY_SLAB,
+			Blocks.STATION_COLOR_COAL_ORE_SLAB,
+			Blocks.STATION_COLOR_COBBLESTONE_SLAB,
+			Blocks.STATION_COLOR_CONCRETE_SLAB,
+			Blocks.STATION_COLOR_CONCRETE_POWDER_SLAB,
+			Blocks.STATION_COLOR_CRACKED_STONE_BRICKS_SLAB,
+			Blocks.STATION_COLOR_DARK_PRISMARINE_SLAB,
+			Blocks.STATION_COLOR_DIORITE_SLAB,
+			Blocks.STATION_COLOR_GRAVEL_SLAB,
+			Blocks.STATION_COLOR_IRON_BLOCK_SLAB,
+			Blocks.STATION_COLOR_METAL_SLAB,
+			Blocks.STATION_COLOR_MOSAIC_TILE_SLAB,
+			Blocks.STATION_COLOR_PLANKS_SLAB,
+			Blocks.STATION_COLOR_POLISHED_ANDESITE_SLAB,
+			Blocks.STATION_COLOR_POLISHED_DIORITE_SLAB,
+			Blocks.STATION_COLOR_PURPUR_BLOCK_SLAB,
+			Blocks.STATION_COLOR_PURPUR_PILLAR_SLAB,
+			Blocks.STATION_COLOR_QUARTZ_BLOCK_SLAB,
+			Blocks.STATION_COLOR_QUARTZ_BRICKS_SLAB,
+			Blocks.STATION_COLOR_QUARTZ_PILLAR_SLAB,
+			Blocks.STATION_COLOR_SMOOTH_QUARTZ_SLAB,
+			Blocks.STATION_COLOR_SMOOTH_STONE_SLAB,
+			Blocks.STATION_COLOR_SNOW_BLOCK_SLAB,
+			Blocks.STATION_COLOR_STAINED_GLASS_SLAB,
+			Blocks.STATION_COLOR_STONE_SLAB,
+			Blocks.STATION_COLOR_STONE_BRICKS_SLAB,
+			Blocks.STATION_COLOR_WOOL_SLAB,
 
-				Blocks.STATION_COLOR_POLE,
-				Blocks.STATION_NAME_TALL_BLOCK,
-				Blocks.STATION_NAME_TALL_BLOCK_DOUBLE_SIDED,
-				Blocks.STATION_NAME_TALL_WALL,
-				Blocks.STATION_NAME_TALL_STANDING
+			Blocks.STATION_COLOR_POLE,
+			Blocks.STATION_NAME_TALL_BLOCK,
+			Blocks.STATION_NAME_TALL_BLOCK_DOUBLE_SIDED,
+			Blocks.STATION_NAME_TALL_WALL,
+			Blocks.STATION_NAME_TALL_STANDING
 		);
 
 		RegistryClient.setupPackets();
@@ -442,10 +449,6 @@ public final class MTRClient {
 		return MinecraftClient.getInstance().options.sneakKey.getBoundKeyLocalizedText().getString();
 	}
 
-	public static String getRightClickText() {
-		return MinecraftClient.getInstance().options.useKey.getBoundKeyLocalizedText().getString();
-	}
-
 	public static float getGameTick() {
 		return gameMillis / 50F;
 	}
@@ -477,7 +480,7 @@ public final class MTRClient {
 
 	private static class ResourcePackCreatorWebServlet extends WebServlet {
 
-		public ResourcePackCreatorWebServlet(Function<String, String> contentProvider, String expectedPath) {
+		public ResourcePackCreatorWebServlet(Function<String, @Nullable String> contentProvider, String expectedPath) {
 			super(contentProvider, expectedPath);
 		}
 	}

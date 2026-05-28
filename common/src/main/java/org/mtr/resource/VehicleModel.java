@@ -1,15 +1,16 @@
 package org.mtr.resource;
 
-import com.google.gson.JsonObject;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import it.unimi.dsi.fastutil.objects.ObjectArraySet;
 import net.minecraft.util.Identifier;
 import org.apache.commons.lang3.StringUtils;
+import org.jspecify.annotations.Nullable;
 import org.mtr.MTR;
 import org.mtr.core.serializer.JsonReader;
 import org.mtr.core.serializer.ReaderBase;
 import org.mtr.core.tool.Utilities;
 import org.mtr.generated.resource.VehicleModelSchema;
+import org.mtr.libraries.com.google.gson.JsonObject;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArraySet;
 import org.mtr.model.BlockbenchModelLoader;
 import org.mtr.model.BuiltVehicleModelHolder;
 import org.mtr.model.ModelLoaderBase;
@@ -17,9 +18,21 @@ import org.mtr.model.ObjModelLoader;
 
 import java.util.function.Supplier;
 
+/**
+ * One model entry inside a {@link VehicleResource}: an OBJ or Blockbench mesh paired with
+ * its texture, model-properties file and position-definitions file.
+ *
+ * <p>Each {@code VehicleModel} owns a {@link ModelLoaderBase} instance that parses the mesh
+ * on construction (currently eagerly — see {@code docs/PERFORMANCE.md} §1.3 for the lazy
+ * variant). The built result is exposed lazily through {@link #builtVehicleModelHolderSupplier}.</p>
+ *
+ * <p>The model-properties JSON declares the parts (body / door / display / floor / doorway),
+ * while the position-definitions JSON declares the named anchor points the parts hang off.
+ * Together they let one Blockbench file power many variants — see {@link ModelProperties}.</p>
+ */
 public final class VehicleModel extends VehicleModelSchema {
 
-	final Supplier<BuiltVehicleModelHolder> builtVehicleModelHolderSupplier;
+	final Supplier<@Nullable BuiltVehicleModelHolder> builtVehicleModelHolderSupplier;
 	private final JsonReader modelPropertiesJsonReader;
 	private final JsonReader positionDefinitionsJsonReader;
 	private final ModelLoaderBase modelLoaderBase;
@@ -45,20 +58,20 @@ public final class VehicleModel extends VehicleModelSchema {
 	}
 
 	VehicleModel(
-			String modelResource,
-			String textureResource,
-			String modelPropertiesResource,
-			String positionDefinitionsResource,
-			boolean flipTextureV,
-			ResourceProvider resourceProvider
+		String modelResource,
+		String textureResource,
+		String modelPropertiesResource,
+		String positionDefinitionsResource,
+		boolean flipTextureV,
+		ResourceProvider resourceProvider
 	) {
 		super(
-				modelResource,
-				textureResource,
-				modelPropertiesResource,
-				positionDefinitionsResource,
-				flipTextureV,
-				resourceProvider
+			modelResource,
+			textureResource,
+			modelPropertiesResource,
+			positionDefinitionsResource,
+			flipTextureV,
+			resourceProvider
 		);
 		modelPropertiesJsonReader = new JsonReader(Utilities.parseJson(resourceProvider.get(CustomResourceTools.formatIdentifierWithDefault(modelPropertiesResource, "json"))));
 		positionDefinitionsJsonReader = new JsonReader(Utilities.parseJson(resourceProvider.get(CustomResourceTools.formatIdentifierWithDefault(positionDefinitionsResource, "json"))));
@@ -66,14 +79,27 @@ public final class VehicleModel extends VehicleModelSchema {
 		builtVehicleModelHolderSupplier = createModelSupplier(modelPropertiesJsonReader, positionDefinitionsJsonReader);
 	}
 
+	/**
+	 * Reset the underlying mesh build so the next call to
+	 * {@link #builtVehicleModelHolderSupplier} re-parses. Called during resource reload.
+	 */
 	public void reset() {
 		modelLoaderBase.reset();
 	}
 
+	/**
+	 * @return a flattened wrapper suitable for handing to the resource-pack-creator over
+	 * the wire — drops live loader state, keeps the addressing strings.
+	 */
 	public MinecraftModelResource getAsMinecraftResource() {
 		return new MinecraftModelResource(modelResource, modelPropertiesResource, positionDefinitionsResource);
 	}
 
+	/**
+	 * Collect every texture path referenced by this model into the given set (the body
+	 * texture plus any gangway / barrier panel textures referenced by the model-properties
+	 * JSON).
+	 */
 	public void addToTextureResource(ObjectArraySet<String> textureResources) {
 		final ModelProperties modelProperties = new ModelProperties(modelPropertiesJsonReader);
 		if (modelProperties.gangwayInnerSideTexture != null) {
@@ -123,34 +149,51 @@ public final class VehicleModel extends VehicleModelSchema {
 		return modelProperties.toVehicleModelWrapper(modelResource, textureResource, modelPropertiesResource, positionDefinitionsResource, flipTextureV, parts);
 	}
 
-	private Supplier<BuiltVehicleModelHolder> createModelSupplier(JsonReader modelPropertiesJsonReader, JsonReader positionDefinitionsJsonReader) {
+	private Supplier<@Nullable BuiltVehicleModelHolder> createModelSupplier(JsonReader modelPropertiesJsonReader, JsonReader positionDefinitionsJsonReader) {
 		final ModelProperties modelProperties = new ModelProperties(modelPropertiesJsonReader);
 		final PositionDefinitions positionDefinitions = new PositionDefinitions(positionDefinitionsJsonReader);
 		return () -> modelLoaderBase.get(modelProperties, positionDefinitions);
 	}
 
+	/**
+	 * Build a concrete {@link ModelLoaderBase} for a given model resource path. Dispatches
+	 * on the file extension:
+	 * <ul>
+	 *   <li>{@code .bbmodel} → {@link BlockbenchModelLoader}</li>
+	 *   <li>{@code .obj}     → {@link ObjModelLoader}</li>
+	 *   <li>anything else    → an empty Blockbench loader, with an error logged</li>
+	 * </ul>
+	 *
+	 * <p>This logic is duplicated in {@link StoredModelResourceBase#load(String, String, boolean, double, ResourceProvider)};
+	 * see {@code docs/MIGRATIONS.md} §6 for the consolidation plan.</p>
+	 */
 	public static ModelLoaderBase getModelLoaderBase(String modelResource, String textureResource, ResourceProvider resourceProvider, boolean flipTextureV) {
 		final Identifier texture = CustomResourceTools.formatIdentifierWithDefault(textureResource, "png");
 		final ModelLoaderBase modelLoaderBase;
 
 		if (modelResource.endsWith(".bbmodel")) {
 			final BlockbenchModelLoader blockbenchModelLoader = new BlockbenchModelLoader(texture);
-			blockbenchModelLoader.loadModel(new BlockbenchModel(new JsonReader(Utilities.parseJson(resourceProvider.get(CustomResourceTools.formatIdentifierWithDefault(modelResource, "bbmodel"))))));
+			// Defer both the resource fetch (cached) and the JSON parse to the worker
+			// thread — see docs/PERFORMANCE.md §1.2.
+			blockbenchModelLoader.loadModel(() -> new BlockbenchModel(new JsonReader(Utilities.parseJson(resourceProvider.get(CustomResourceTools.formatIdentifierWithDefault(modelResource, "bbmodel"))))));
 			modelLoaderBase = blockbenchModelLoader;
 		} else if (modelResource.endsWith(".obj")) {
 			final ObjModelLoader objModelLoader = new ObjModelLoader(texture);
+			// Resource fetch itself happens here (cheap when cached, off the main thread
+			// once the cache is warm); the heavy ObjReader / MtlReader / face walk runs on
+			// the worker — see docs/PERFORMANCE.md §1.2.
 			objModelLoader.loadModel(
-					resourceProvider.get(CustomResourceTools.formatIdentifierWithDefault(modelResource, "obj")),
-					mtlString -> resourceProvider.get(CustomResourceTools.getResourceFromSamePath(modelResource, mtlString, "mtl")),
-					textureString -> StringUtils.isEmpty(textureString) ? Identifier.of(MTR.MOD_ID, "textures/block/white.png") : StringUtils.equals(textureString, "default.png") ? texture : CustomResourceTools.getResourceFromSamePath(modelResource, textureString, "png"),
-					true, flipTextureV
+				resourceProvider.get(CustomResourceTools.formatIdentifierWithDefault(modelResource, "obj")),
+				mtlString -> resourceProvider.get(CustomResourceTools.getResourceFromSamePath(modelResource, mtlString, "mtl")),
+				textureString -> StringUtils.isEmpty(textureString) ? Identifier.of(MTR.MOD_ID, "textures/block/white.png") : StringUtils.equals(textureString, "default.png") ? texture : CustomResourceTools.getResourceFromSamePath(modelResource, textureString, "png"),
+				true, flipTextureV
 			);
 			// TODO transform object if needed
 			modelLoaderBase = objModelLoader;
 		} else {
 			MTR.LOGGER.error("[{}] Invalid model!", texture.toString());
 			final BlockbenchModelLoader blockbenchModelLoader = new BlockbenchModelLoader(texture);
-			blockbenchModelLoader.loadModel(new BlockbenchModel(new JsonReader(new JsonObject())));
+			blockbenchModelLoader.loadModel(() -> new BlockbenchModel(new JsonReader(new JsonObject())));
 			modelLoaderBase = blockbenchModelLoader;
 		}
 

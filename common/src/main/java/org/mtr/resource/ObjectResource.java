@@ -1,31 +1,37 @@
 package org.mtr.resource;
 
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.minecraft.text.Text;
+import org.jspecify.annotations.Nullable;
 import org.mtr.config.Config;
 import org.mtr.core.serializer.ReaderBase;
 import org.mtr.generated.resource.ObjectResourceSchema;
-import org.mtr.model.ModelLoaderBase;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.mtr.model.NewOptimizedModel;
 import org.mtr.render.StoredMatrixTransformations;
 import org.mtr.tool.Drawing;
 
-import javax.annotation.Nullable;
 import java.util.function.Supplier;
 
-public final class ObjectResource extends ObjectResourceSchema implements StoredModelResourceBase {
+/**
+ * A static, non-vehicle decorative model placed in the world via an eyecandy block.
+ *
+ * <p>Compared to {@link VehicleResource}, an {@code ObjectResource} has no concept of
+ * doors, floors, or consist position — it's just a transformed mesh attached to a single
+ * texture, optionally tinted by {@link #getColor()}. The supplier-based lazy model load
+ * (see the {@code modelSupplier} field) defers the underlying mesh build until the first
+ * render request.</p>
+ */
+public final class ObjectResource extends ObjectResourceSchema implements StoredModelResourceBase, Comparable<ObjectResource> {
 
 	public final boolean shouldPreload;
-	private final ModelLoaderBase modelLoaderBase;
-	private final Supplier<Object2ObjectOpenHashMap<RenderStage, ObjectArrayList<NewOptimizedModel>>> modelSupplier;
+	private final Supplier<@Nullable Object2ObjectOpenHashMap<RenderStage, ObjectArrayList<NewOptimizedModel>>> modelSupplier;
 
 	public ObjectResource(ReaderBase readerBase, ResourceProvider resourceProvider) {
 		super(readerBase, resourceProvider);
 		updateData(readerBase);
 		shouldPreload = Config.getClient().matchesPreloadResourcePattern(id);
-		modelLoaderBase = VehicleModel.getModelLoaderBase(modelResource, textureResource, resourceProvider, flipTextureV);
-		modelSupplier = modelLoaderBase::get;
+		modelSupplier = VehicleModel.getModelLoaderBase(modelResource, textureResource, resourceProvider, flipTextureV)::get;
 	}
 
 	@Override
@@ -38,13 +44,12 @@ public final class ObjectResource extends ObjectResourceSchema implements Stored
 	public void render(StoredMatrixTransformations storedMatrixTransformations, int light) {
 		final StoredMatrixTransformations newStoredMatrixTransformations = storedMatrixTransformations.copy();
 		newStoredMatrixTransformations.add(matrixStack -> {
-					matrixStack.translate(translation.getX(), translation.getY(), translation.getZ());
-					Drawing.rotateXDegrees(matrixStack, (float) rotation.getX());
-					Drawing.rotateYDegrees(matrixStack, (float) rotation.getY());
-					Drawing.rotateZDegrees(matrixStack, (float) rotation.getZ());
-					matrixStack.scale(clampNumber(scale.getX()), clampNumber(scale.getY()), clampNumber(scale.getZ()));
-//					matrixStack.mirror(mirror.getX(), mirror.getY(), mirror.getZ());
-				}
+				matrixStack.translate(translation.getX(), translation.getY(), translation.getZ());
+				Drawing.rotateXDegrees(matrixStack, (float) rotation.getX());
+				Drawing.rotateYDegrees(matrixStack, (float) rotation.getY());
+				Drawing.rotateZDegrees(matrixStack, (float) rotation.getZ() + 180);
+				matrixStack.scale(clampNumber(scale.getX()), clampNumber(scale.getY()), clampNumber(scale.getZ()));
+			}
 		);
 		StoredModelResourceBase.super.render(newStoredMatrixTransformations, light);
 	}
@@ -63,5 +68,10 @@ public final class ObjectResource extends ObjectResourceSchema implements Stored
 
 	private static float clampNumber(double value) {
 		return value <= 0 ? 1 : (float) value;
+	}
+
+	@Override
+	public int compareTo(ObjectResource objectResource) {
+		return objectResource.getName().compareTo(getName());
 	}
 }

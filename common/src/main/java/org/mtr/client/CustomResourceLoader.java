@@ -1,25 +1,52 @@
 package org.mtr.client;
 
-import it.unimi.dsi.fastutil.objects.*;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.util.Identifier;
 import org.apache.commons.io.IOUtils;
+import org.jspecify.annotations.Nullable;
 import org.mtr.Keys;
 import org.mtr.MTR;
 import org.mtr.config.Config;
 import org.mtr.core.data.TransportMode;
-import org.mtr.core.tool.Utilities;
 import org.mtr.legacy.resource.CustomResourcesConverter;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.*;
+import org.mtr.model.ModelLoaderBase;
 import org.mtr.resource.*;
 
-import javax.annotation.Nullable;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+/**
+ * Vehicle, sign, rail, object and lift resource loading and registration.
+ *
+ * <p>{@link #reload()} is the single entry point invoked on every Minecraft resource
+ * reload. It clears every static cache, then loads in this order:</p>
+ * <ol>
+ *   <li>The bundled default rail.</li>
+ *   <li>Every {@code mtr:mtr_custom_resources.json} found across active resource packs.
+ *       Each file goes through {@link org.mtr.legacy.resource.CustomResourcesConverter}
+ *       which transparently upgrades MTR 3.x format JSON to the current schema (see
+ *       {@code docs/MIGRATIONS.md} §1).</li>
+ *   <li>The temporary {@code mtr_custom_resources_pending_migration.json} manifest, which
+ *       holds bundled vehicles in the process of being moved to the new schema (see
+ *       {@code docs/MIGRATIONS.md} §2).</li>
+ *   <li>{@code mtrsteamloco}-namespaced rails and eyecandies, converted on the fly.</li>
+ *   <li>Validation pass and then a synchronous preload pass for resources matching the
+ *       user-configured preload pattern.</li>
+ * </ol>
+ *
+ * <p>All public accessors return defensive snapshots so callers may iterate freely without
+ * worrying about concurrent reloads.</p>
+ *
+ * <p>Performance notes for the load pipeline live in
+ * {@code docs/PERFORMANCE.md} §1.</p>
+ */
 public class CustomResourceLoader {
 
 	private static long TEST_DURATION;
@@ -31,7 +58,16 @@ public class CustomResourceLoader {
 	public static final String DEFAULT_RAIL_3D_SIDING_ID = "default_3d_siding";
 	public static final String DEFAULT_LIFT_TRANSPARENT_ID = "default_transparent";
 
-	private static final Object2ObjectAVLTreeMap<String, String> RESOURCE_CACHE = new Object2ObjectAVLTreeMap<>();
+	/**
+	 * Shared, thread-safe cache of resource-pack file contents keyed by the resource's
+	 * full string identifier. Reads happen from both the main thread (during
+	 * {@link #reload()}) and from worker threads (during deferred OBJ / Blockbench
+	 * parsing). Kept unbounded for the lifetime of the JVM — see
+	 * {@code docs/PERFORMANCE.md} §1.1 and §1.4 for the planned move to a bounded
+	 * byte-array cache. The {@link MTR#randomString()}-free namespace means duplicate
+	 * fetches always return identical content.
+	 */
+	private static final ConcurrentMap<String, String> RESOURCE_CACHE = new ConcurrentHashMap<>();
 	private static final Object2ObjectAVLTreeMap<TransportMode, ObjectArrayList<VehicleResource>> VEHICLES = new Object2ObjectAVLTreeMap<>();
 	private static final Object2ObjectAVLTreeMap<TransportMode, Object2ObjectAVLTreeMap<String, ObjectBooleanImmutablePair<VehicleResource>>> VEHICLES_CACHE = new Object2ObjectAVLTreeMap<>();
 	private static final Object2ObjectAVLTreeMap<TransportMode, Object2ObjectAVLTreeMap<String, Object2ObjectAVLTreeMap<String, ObjectArrayList<String>>>> VEHICLES_TAGS = new Object2ObjectAVLTreeMap<>();
@@ -54,6 +90,14 @@ public class CustomResourceLoader {
 		}
 	}
 
+	/**
+	 * Rebuild every resource cache from active resource packs.
+	 *
+	 * <p>Idempotent and safe to call from a Minecraft resource-reload listener. Heavy:
+	 * blocks the main thread for the full duration of OBJ / Blockbench parsing for every
+	 * vehicle, then again for the preload pass. See {@code docs/PERFORMANCE.md} §1 for the
+	 * detailed cost breakdown and proposed parallelisation.</p>
+	 */
 	public static void reload() {
 		MINECRAFT_MODEL_RESOURCES.clear();
 		MINECRAFT_TEXTURE_RESOURCES.clear();
@@ -103,7 +147,7 @@ public class CustomResourceLoader {
 					LIFTS_CACHE.put(liftResource.getId(), liftResource);
 				});
 			} catch (Exception e) {
-				MTR.LOGGER.error("", e);
+				MTR.LOGGER.error("Failed to parse custom resources from {}.json — skipping this resource pack entry", CUSTOM_RESOURCES_ID, e);
 			}
 		});
 
@@ -112,7 +156,7 @@ public class CustomResourceLoader {
 			try {
 				CustomResourcesConverter.convert(Config.readResource(inputStream).getAsJsonObject(), CustomResourceLoader::readResource).iterateVehicles(vehicleResource -> registerVehicle(vehicleResource, false));
 			} catch (Exception e) {
-				MTR.LOGGER.error("", e);
+				MTR.LOGGER.error("Failed to parse pending-migration custom resources from {}.json — skipping this resource pack entry", CUSTOM_RESOURCES_PENDING_MIGRATION_ID, e);
 			}
 		});
 
@@ -141,8 +185,25 @@ public class CustomResourceLoader {
 		MTR.LOGGER.info("Loaded {} objects", OBJECTS.size());
 		MTR.LOGGER.info("Loaded {} lifts", LIFTS.size());
 
+		// Wait for any in-flight OBJ / Blockbench parses (submitted by VehicleResource /
+		// RailResource / ObjectResource constructors above) to drain on the worker pool
+		// before we start the preload pass. Without this, models whose parse is still
+		// running would silently no-op out of {@code getCachedVehicleResource} and would
+		// then incur the parse-and-upload cost on the next render frame — exactly the
+		// first-encounter lag spike we are trying to remove. The 60 second cap is a
+		// safety net for pathological packs; in normal use parsing completes in well
+		// under one second after the synchronous registration loop above finishes.
+		if (!ModelLoaderBase.awaitParsing(60_000L)) {
+			MTR.LOGGER.warn("Timed out waiting for async model parsing to finish; preload may incur extra lag");
+		}
+
 		final long time1 = System.currentTimeMillis();
 
+		// NOTE: the preload pass must run on the render thread because the inner build
+		// step eventually calls VertexBuffer#createAndUpload (a GL call). The bulk of the
+		// work (OBJ / Blockbench parsing) has already been awaited above and runs in
+		// parallel on virtual threads; by the time we reach here every model is parsed
+		// and the synchronous build below is just GPU upload.
 		final int[] preloadedVehicleCount = {0};
 		VEHICLES.forEach((transportMode, vehicleResources) -> vehicleResources.forEach(vehicleResource -> {
 			if (vehicleResource.shouldPreload) {
@@ -183,10 +244,18 @@ public class CustomResourceLoader {
 		}
 	}
 
+	/**
+	 * Visit every registered vehicle for the given transport mode.
+	 */
 	public static void iterateVehicles(TransportMode transportMode, Consumer<VehicleResource> consumer) {
 		VEHICLES.get(transportMode).forEach(consumer);
 	}
 
+	/**
+	 * Drop preview vehicles published by the resource-pack creator. Pass {@code ""} to
+	 * clear every creator-registered vehicle; pass a specific id to clear just that one.
+	 * Vehicles loaded from a resource pack are not affected.
+	 */
 	public static void clearCustomVehicles(String vehicleId) {
 		for (final TransportMode transportMode : TransportMode.values()) {
 			final ObjectArrayList<String> vehicleIdsToRemove = new ObjectArrayList<>();
@@ -211,15 +280,11 @@ public class CustomResourceLoader {
 		registerVehicle(vehicleResource, true);
 	}
 
-	public static void getVehicleByIndex(TransportMode transportMode, int index, Consumer<VehicleResource> ifPresent) {
-		if (index >= 0) {
-			final VehicleResource vehicleResource = Utilities.getElement(VEHICLES.get(transportMode), index);
-			if (vehicleResource != null) {
-				ifPresent.accept(vehicleResource);
-			}
-		}
-	}
-
+	/**
+	 * Resolve a vehicle by id within the given transport mode, invoking the callback only
+	 * if a match exists. The callback receives a {@code (resource, fromResourcePackCreator)}
+	 * pair so callers can distinguish creator previews from on-disk packs.
+	 */
 	public static void getVehicleById(TransportMode transportMode, String vehicleId, Consumer<ObjectBooleanImmutablePair<VehicleResource>> ifPresent) {
 		final ObjectBooleanImmutablePair<VehicleResource> vehicleResourceDetails = VEHICLES_CACHE.get(transportMode).get(vehicleId);
 		if (vehicleResourceDetails != null) {
@@ -227,6 +292,11 @@ public class CustomResourceLoader {
 		}
 	}
 
+	/**
+	 * @return the tag-organised vehicle index for the given transport mode:
+	 * {@code tagKey -> tagValue -> [vehicleId, ...]}. Used by the dashboard's tag
+	 * filter.
+	 */
 	public static Object2ObjectAVLTreeMap<String, Object2ObjectAVLTreeMap<String, ObjectArrayList<String>>> getVehicleTags(TransportMode transportMode) {
 		return VEHICLES_TAGS.get(transportMode);
 	}
@@ -273,10 +343,6 @@ public class CustomResourceLoader {
 		}
 	}
 
-	public static void incrementTestDuration(long duration) {
-		TEST_DURATION += duration;
-	}
-
 	public static ObjectArrayList<MinecraftModelResource> getMinecraftModelResources() {
 		return new ObjectArrayList<>(MINECRAFT_MODEL_RESOURCES);
 	}
@@ -311,24 +377,20 @@ public class CustomResourceLoader {
 
 	private static String readResource(Identifier identifier) {
 		final String identifierString = identifier.toString();
-		final String cache = RESOURCE_CACHE.get(identifierString);
-		if (cache == null) {
+		// computeIfAbsent guarantees a single resource fetch per key even when multiple
+		// worker threads request the same file concurrently (e.g. several vehicles sharing
+		// an MTL or texture during async OBJ parsing).
+		return RESOURCE_CACHE.computeIfAbsent(identifierString, key -> {
 			if (Keys.DEBUG) {
 				try (final InputStream inputStream = Files.newInputStream(MinecraftClient.getInstance().runDirectory.toPath().resolve("../src/main/resources/assets").resolve(identifier.getNamespace()).resolve(identifier.getPath()), StandardOpenOption.READ)) {
-					final String content = IOUtils.toString(inputStream, StandardCharsets.UTF_8);
-					RESOURCE_CACHE.put(identifierString, content);
-					return content;
+					return IOUtils.toString(inputStream, StandardCharsets.UTF_8);
 				} catch (Exception e) {
-					MTR.LOGGER.error("", e);
+					MTR.LOGGER.error("Failed to read debug-mode resource [{}] from the development source tree", key, e);
 					return "";
 				}
 			} else {
-				final String content = ResourceManagerHelper.readResource(identifier);
-				RESOURCE_CACHE.put(identifierString, content);
-				return content;
+				return ResourceManagerHelper.readResource(identifier);
 			}
-		} else {
-			return cache;
-		}
+		});
 	}
 }

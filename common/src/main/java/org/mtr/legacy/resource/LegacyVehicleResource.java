@@ -1,9 +1,7 @@
 package org.mtr.legacy.resource;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.minecraft.util.Identifier;
+import org.jspecify.annotations.Nullable;
 import org.mtr.MTR;
 import org.mtr.client.CustomResourceLoader;
 import org.mtr.core.data.TransportMode;
@@ -12,11 +10,13 @@ import org.mtr.core.serializer.JsonWriter;
 import org.mtr.core.serializer.ReaderBase;
 import org.mtr.core.tool.Utilities;
 import org.mtr.legacy.generated.resource.VehicleResourceSchema;
+import org.mtr.libraries.com.google.gson.JsonArray;
+import org.mtr.libraries.com.google.gson.JsonObject;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.mtr.resource.ResourceProvider;
 import org.mtr.resource.VehicleModel;
 import org.mtr.resource.VehicleResource;
 
-import javax.annotation.Nullable;
 import java.util.Locale;
 import java.util.stream.Collectors;
 
@@ -78,11 +78,11 @@ public final class LegacyVehicleResource extends VehicleResourceSchema {
 			}
 
 			if (accel_sound_at_coast) {
-				baseObject.addProperty("legacyUseAccelerationSoundsWhenCoasting", accel_sound_at_coast);
+				baseObject.addProperty("legacyUseAccelerationSoundsWhenCoasting", true);
 			}
 
 			if (const_playback_speed) {
-				baseObject.addProperty("legacyConstantPlaybackSpeed", const_playback_speed);
+				baseObject.addProperty("legacyConstantPlaybackSpeed", true);
 			}
 
 			baseObject.addProperty("legacyDoorCloseSoundTime", door_close_sound_time == 0 ? 0.5 : door_close_sound_time); // MTR 3.x.x defaults to 0.5 s if not specified
@@ -135,106 +135,106 @@ public final class LegacyVehicleResource extends VehicleResourceSchema {
 
 				final double finalDoorMax = doorMax;
 				vehicleResources.add(new VehicleResource(
-						new JsonReader(baseObject),
-						(currentCar, totalCars) -> {
-							boolean isObj = false;
-							boolean reversed = false;
-							final ObjectArrayList<JsonObject> modelObjects = new ObjectArrayList<>();
-							final String[] modelSplit = splitWithEmptyStrings(model, '|');
-							for (int j = 0; j < modelSplit.length; j += 2) {
-								final String[] conditions = j + 1 < modelSplit.length ? splitWithEmptyStrings(modelSplit[j + 1], ';') : new String[]{};
-								if (conditions.length < 2 || matchesFilter(conditions[1].split(","), currentCar, totalCars) <= matchesFilter(conditions[0].split(","), currentCar, totalCars)) {
-									final JsonObject modelObject = new JsonObject();
-									modelObject.addProperty("modelResource", modelSplit[j]);
-									modelObject.addProperty("textureResource", texture_id);
-									modelObject.addProperty("flipTextureV", flipV);
-									modelObjects.add(modelObject);
-									if (modelSplit[j].endsWith(".obj")) {
-										isObj = true;
-									}
-									if (conditions.length >= 3 && conditions[2].equals("reversed")) {
-										reversed = true;
-									}
+					new JsonReader(baseObject),
+					(currentCar, totalCars) -> {
+						boolean isObj = false;
+						boolean reversed = false;
+						final ObjectArrayList<JsonObject> modelObjects = new ObjectArrayList<>();
+						final String[] modelSplit = splitWithEmptyStrings(model, '|');
+						for (int j = 0; j < modelSplit.length; j += 2) {
+							final String[] conditions = j + 1 < modelSplit.length ? splitWithEmptyStrings(modelSplit[j + 1], ';') : new String[]{};
+							if (conditions.length < 2 || matchesFilter(conditions[1].split(","), currentCar, totalCars) <= matchesFilter(conditions[0].split(","), currentCar, totalCars)) {
+								final JsonObject modelObject = new JsonObject();
+								modelObject.addProperty("modelResource", modelSplit[j]);
+								modelObject.addProperty("textureResource", texture_id);
+								modelObject.addProperty("flipTextureV", flipV);
+								modelObjects.add(modelObject);
+								if (modelSplit[j].endsWith(".obj")) {
+									isObj = true;
+								}
+								if (conditions.length >= 3 && conditions[2].equals("reversed")) {
+									reversed = true;
 								}
 							}
+						}
 
-							final JsonArray positionDefinitionsArray = new JsonArray();
-							final JsonArray partsArray = new JsonArray();
+						final JsonArray positionDefinitionsArray = new JsonArray();
+						final JsonArray partsArray = new JsonArray();
 
-							try {
-								processModel(currentCar, totalCars, isObj, reversed, propertiesObject.getAsJsonArray("parts_normal"), positionDefinitionsArray, partsArray, finalDoorMax, "NORMAL", null, null);
-							} catch (Exception ignored) {
-							}
-							try {
-								processModel(currentCar, totalCars, isObj, reversed, propertiesObject.getAsJsonArray("parts_head_1"), positionDefinitionsArray, partsArray, finalDoorMax, "NORMAL", "1", "%1");
-							} catch (Exception ignored) {
-							}
-							try {
-								processModel(currentCar, totalCars, isObj, reversed, propertiesObject.getAsJsonArray("parts_head_2"), positionDefinitionsArray, partsArray, finalDoorMax, "NORMAL", "-1", "%1");
-							} catch (Exception ignored) {
-							}
-							try {
-								processModel(currentCar, totalCars, isObj, reversed, propertiesObject.getAsJsonArray("parts_head_1_headlights"), positionDefinitionsArray, partsArray, finalDoorMax, "ON_ROUTE_FORWARDS", "1", "%1");
-							} catch (Exception ignored) {
-							}
-							try {
-								processModel(currentCar, totalCars, isObj, reversed, propertiesObject.getAsJsonArray("parts_head_2_headlights"), positionDefinitionsArray, partsArray, finalDoorMax, "ON_ROUTE_BACKWARDS", "-1", "%1");
-							} catch (Exception ignored) {
-							}
-							try {
-								processModel(currentCar, totalCars, isObj, reversed, propertiesObject.getAsJsonArray("parts_head_1_tail_lights"), positionDefinitionsArray, partsArray, finalDoorMax, "ON_ROUTE_BACKWARDS", "1", "%1");
-							} catch (Exception ignored) {
-							}
-							try {
-								processModel(currentCar, totalCars, isObj, reversed, propertiesObject.getAsJsonArray("parts_head_2_tail_lights"), positionDefinitionsArray, partsArray, finalDoorMax, "ON_ROUTE_FORWARDS", "-1", "%1");
-							} catch (Exception ignored) {
-							}
-							try {
-								processModel(currentCar, totalCars, isObj, reversed, propertiesObject.getAsJsonArray("parts_end_1"), positionDefinitionsArray, partsArray, finalDoorMax, "NORMAL", "%1", "1");
-							} catch (Exception ignored) {
-							}
-							try {
-								processModel(currentCar, totalCars, isObj, reversed, propertiesObject.getAsJsonArray("parts_end_2"), positionDefinitionsArray, partsArray, finalDoorMax, "NORMAL", "%1", "-1");
-							} catch (Exception ignored) {
-							}
-							try {
-								processModel(currentCar, totalCars, isObj, reversed, propertiesObject.getAsJsonArray("parts_door_opened"), positionDefinitionsArray, partsArray, finalDoorMax, "DOORS_OPENED", null, null);
-							} catch (Exception ignored) {
-							}
-							try {
-								processModel(currentCar, totalCars, isObj, reversed, propertiesObject.getAsJsonArray("parts_door_closed"), positionDefinitionsArray, partsArray, finalDoorMax, "DOORS_CLOSED", null, null);
-							} catch (Exception ignored) {
-							}
-							try {
-								processModel(currentCar, totalCars, isObj, reversed, propertiesObject.getAsJsonArray("parts"), positionDefinitionsArray, partsArray, finalDoorMax, null, null, null);
-							} catch (Exception ignored) {
-							}
+						try {
+							processModel(currentCar, totalCars, isObj, reversed, propertiesObject.getAsJsonArray("parts_normal"), positionDefinitionsArray, partsArray, finalDoorMax, "NORMAL", null, null);
+						} catch (Exception ignored) {
+						}
+						try {
+							processModel(currentCar, totalCars, isObj, reversed, propertiesObject.getAsJsonArray("parts_head_1"), positionDefinitionsArray, partsArray, finalDoorMax, "NORMAL", "1", "%1");
+						} catch (Exception ignored) {
+						}
+						try {
+							processModel(currentCar, totalCars, isObj, reversed, propertiesObject.getAsJsonArray("parts_head_2"), positionDefinitionsArray, partsArray, finalDoorMax, "NORMAL", "-1", "%1");
+						} catch (Exception ignored) {
+						}
+						try {
+							processModel(currentCar, totalCars, isObj, reversed, propertiesObject.getAsJsonArray("parts_head_1_headlights"), positionDefinitionsArray, partsArray, finalDoorMax, "ON_ROUTE_FORWARDS", "1", "%1");
+						} catch (Exception ignored) {
+						}
+						try {
+							processModel(currentCar, totalCars, isObj, reversed, propertiesObject.getAsJsonArray("parts_head_2_headlights"), positionDefinitionsArray, partsArray, finalDoorMax, "ON_ROUTE_BACKWARDS", "-1", "%1");
+						} catch (Exception ignored) {
+						}
+						try {
+							processModel(currentCar, totalCars, isObj, reversed, propertiesObject.getAsJsonArray("parts_head_1_tail_lights"), positionDefinitionsArray, partsArray, finalDoorMax, "ON_ROUTE_BACKWARDS", "1", "%1");
+						} catch (Exception ignored) {
+						}
+						try {
+							processModel(currentCar, totalCars, isObj, reversed, propertiesObject.getAsJsonArray("parts_head_2_tail_lights"), positionDefinitionsArray, partsArray, finalDoorMax, "ON_ROUTE_FORWARDS", "-1", "%1");
+						} catch (Exception ignored) {
+						}
+						try {
+							processModel(currentCar, totalCars, isObj, reversed, propertiesObject.getAsJsonArray("parts_end_1"), positionDefinitionsArray, partsArray, finalDoorMax, "NORMAL", "%1", "1");
+						} catch (Exception ignored) {
+						}
+						try {
+							processModel(currentCar, totalCars, isObj, reversed, propertiesObject.getAsJsonArray("parts_end_2"), positionDefinitionsArray, partsArray, finalDoorMax, "NORMAL", "%1", "-1");
+						} catch (Exception ignored) {
+						}
+						try {
+							processModel(currentCar, totalCars, isObj, reversed, propertiesObject.getAsJsonArray("parts_door_opened"), positionDefinitionsArray, partsArray, finalDoorMax, "DOORS_OPENED", null, null);
+						} catch (Exception ignored) {
+						}
+						try {
+							processModel(currentCar, totalCars, isObj, reversed, propertiesObject.getAsJsonArray("parts_door_closed"), positionDefinitionsArray, partsArray, finalDoorMax, "DOORS_CLOSED", null, null);
+						} catch (Exception ignored) {
+						}
+						try {
+							processModel(currentCar, totalCars, isObj, reversed, propertiesObject.getAsJsonArray("parts"), positionDefinitionsArray, partsArray, finalDoorMax, null, null, null);
+						} catch (Exception ignored) {
+						}
 
-							final JsonObject modelPropertiesObject = new JsonObject();
-							modelPropertiesObject.addProperty("modelYOffset", 1);
-							modelPropertiesObject.addProperty("gangwayInnerSideResource", (gangway_connection_id.isEmpty() ? texture_id : gangway_connection_id) + "_connector_side.png");
-							modelPropertiesObject.addProperty("gangwayInnerTopResource", (gangway_connection_id.isEmpty() ? texture_id : gangway_connection_id) + "_connector_roof.png");
-							modelPropertiesObject.addProperty("gangwayInnerBottomResource", (gangway_connection_id.isEmpty() ? texture_id : gangway_connection_id) + "_connector_floor.png");
-							modelPropertiesObject.addProperty("gangwayOuterSideResource", (gangway_connection_id.isEmpty() ? texture_id : gangway_connection_id) + "_connector_exterior.png");
-							modelPropertiesObject.addProperty("gangwayOuterTopResource", (gangway_connection_id.isEmpty() ? texture_id : gangway_connection_id) + "_connector_exterior.png");
-							modelPropertiesObject.addProperty("gangwayOuterBottomResource", (gangway_connection_id.isEmpty() ? texture_id : gangway_connection_id) + "_connector_exterior.png");
-							modelPropertiesObject.addProperty("gangwayWidth", 1.5);
-							modelPropertiesObject.addProperty("gangwayHeight", 2.25);
-							modelPropertiesObject.addProperty("gangwayYOffset", 1);
-							modelPropertiesObject.addProperty("gangwayZOffset", 0.5);
-							modelPropertiesObject.addProperty("barrierInnerSideResource", train_barrier_id + "_exterior.png");
-							modelPropertiesObject.addProperty("barrierOuterSideResource", train_barrier_id + "_exterior.png");
-							modelPropertiesObject.addProperty("barrierWidth", 2.25);
-							modelPropertiesObject.addProperty("barrierHeight", 1);
-							modelPropertiesObject.addProperty("barrierYOffset", 1.25);
-							modelPropertiesObject.addProperty("barrierZOffset", 0.25);
-							modelPropertiesObject.add("parts", partsArray);
+						final JsonObject modelPropertiesObject = new JsonObject();
+						modelPropertiesObject.addProperty("modelYOffset", 1);
+						modelPropertiesObject.addProperty("gangwayInnerSideResource", (gangway_connection_id.isEmpty() ? texture_id : gangway_connection_id) + "_connector_side.png");
+						modelPropertiesObject.addProperty("gangwayInnerTopResource", (gangway_connection_id.isEmpty() ? texture_id : gangway_connection_id) + "_connector_roof.png");
+						modelPropertiesObject.addProperty("gangwayInnerBottomResource", (gangway_connection_id.isEmpty() ? texture_id : gangway_connection_id) + "_connector_floor.png");
+						modelPropertiesObject.addProperty("gangwayOuterSideResource", (gangway_connection_id.isEmpty() ? texture_id : gangway_connection_id) + "_connector_exterior.png");
+						modelPropertiesObject.addProperty("gangwayOuterTopResource", (gangway_connection_id.isEmpty() ? texture_id : gangway_connection_id) + "_connector_exterior.png");
+						modelPropertiesObject.addProperty("gangwayOuterBottomResource", (gangway_connection_id.isEmpty() ? texture_id : gangway_connection_id) + "_connector_exterior.png");
+						modelPropertiesObject.addProperty("gangwayWidth", 1.5);
+						modelPropertiesObject.addProperty("gangwayHeight", 2.25);
+						modelPropertiesObject.addProperty("gangwayYOffset", 1);
+						modelPropertiesObject.addProperty("gangwayZOffset", 0.5);
+						modelPropertiesObject.addProperty("barrierInnerSideResource", train_barrier_id + "_exterior.png");
+						modelPropertiesObject.addProperty("barrierOuterSideResource", train_barrier_id + "_exterior.png");
+						modelPropertiesObject.addProperty("barrierWidth", 2.25);
+						modelPropertiesObject.addProperty("barrierHeight", 1);
+						modelPropertiesObject.addProperty("barrierYOffset", 1.25);
+						modelPropertiesObject.addProperty("barrierZOffset", 0.25);
+						modelPropertiesObject.add("parts", partsArray);
 
-							final JsonObject positionDefinitionsObject = new JsonObject();
-							positionDefinitionsObject.add("positionDefinitions", positionDefinitionsArray);
-							return modelObjects.stream().map(modelObject -> new VehicleModel(new JsonReader(modelObject), new JsonReader(modelPropertiesObject), new JsonReader(positionDefinitionsObject), resourceProvider)).collect(Collectors.toCollection(ObjectArrayList::new));
-						},
-						resourceProvider
+						final JsonObject positionDefinitionsObject = new JsonObject();
+						positionDefinitionsObject.add("positionDefinitions", positionDefinitionsArray);
+						return modelObjects.stream().map(modelObject -> new VehicleModel(new JsonReader(modelObject), new JsonReader(modelPropertiesObject), new JsonReader(positionDefinitionsObject), resourceProvider)).collect(Collectors.toCollection(ObjectArrayList::new));
+					},
+					resourceProvider
 				));
 			} else {
 				baseObject.getAsJsonArray("models").forEach(jsonElement -> {
@@ -269,28 +269,13 @@ public final class LegacyVehicleResource extends VehicleResourceSchema {
 				partsObject.addProperty("doorAnimationType", door_animation_type);
 
 				if (renderConditionOverride == null) {
-					final String renderCondition;
-					switch (tryGet(propertiesPartsObject, "render_condition").toUpperCase(Locale.ENGLISH)) {
-						case "DOORS_OPEN":
-						case "DOORS_LEFT_OPEN":
-						case "DOORS_RIGHT_OPEN":
-							renderCondition = "DOORS_OPENED";
-							break;
-						case "DOORS_CLOSED":
-						case "DOORS_LEFT_CLOSED":
-						case "DOORS_RIGHT_CLOSED":
-							renderCondition = "DOORS_CLOSED";
-							break;
-						case "MOVING_FORWARDS":
-							renderCondition = "ON_ROUTE_FORWARDS";
-							break;
-						case "MOVING_BACKWARDS":
-							renderCondition = "ON_ROUTE_BACKWARDS";
-							break;
-						default:
-							renderCondition = "NORMAL";
-							break;
-					}
+					final String renderCondition = switch (tryGet(propertiesPartsObject, "render_condition").toUpperCase(Locale.ENGLISH)) {
+						case "DOORS_OPEN", "DOORS_LEFT_OPEN", "DOORS_RIGHT_OPEN" -> "DOORS_OPENED";
+						case "DOORS_CLOSED", "DOORS_LEFT_CLOSED", "DOORS_RIGHT_CLOSED" -> "DOORS_CLOSED";
+						case "MOVING_FORWARDS" -> "ON_ROUTE_FORWARDS";
+						case "MOVING_BACKWARDS" -> "ON_ROUTE_BACKWARDS";
+						default -> "NORMAL";
+					};
 					partsObject.addProperty("condition", renderCondition);
 				} else {
 					partsObject.addProperty("condition", renderConditionOverride);
@@ -329,53 +314,38 @@ public final class LegacyVehicleResource extends VehicleResourceSchema {
 				final double doorXMultiplier;
 				final double doorZMultiplier;
 				if (propertiesPartsObject.has("door_offset")) {
-					switch (tryGet(propertiesPartsObject, "door_offset").toUpperCase(Locale.ENGLISH)) {
-						case "LEFT_NEGATIVE":
+					doorZMultiplier = switch (tryGet(propertiesPartsObject, "door_offset").toUpperCase(Locale.ENGLISH)) {
+						case "LEFT_NEGATIVE" -> {
 							doorXMultiplier = mirror ? -1 : 1;
-							doorZMultiplier = -doorMax;
-							break;
-						case "RIGHT_NEGATIVE":
+							yield -doorMax;
+						}
+						case "RIGHT_NEGATIVE" -> {
 							doorXMultiplier = mirror ? 1 : -1;
-							doorZMultiplier = -doorMax;
-							break;
-						case "LEFT_POSITIVE":
+							yield -doorMax;
+						}
+						case "LEFT_POSITIVE" -> {
 							doorXMultiplier = mirror ? -1 : 1;
-							doorZMultiplier = doorMax;
-							break;
-						case "RIGHT_POSITIVE":
+							yield doorMax;
+						}
+						case "RIGHT_POSITIVE" -> {
 							doorXMultiplier = mirror ? 1 : -1;
-							doorZMultiplier = doorMax;
-							break;
-						default:
+							yield doorMax;
+						}
+						default -> {
 							doorXMultiplier = 0;
-							doorZMultiplier = 0;
-							break;
-					}
+							yield 0;
+						}
+					};
 				} else {
-					switch (tryGet(propertiesPartsObject, "door_offset_x").toUpperCase(Locale.ENGLISH)) {
-						case "LEFT":
-						case "LEFT_NEGATIVE":
-						case "RIGHT":
-						case "RIGHT_NEGATIVE":
-							doorXMultiplier = -1;
-							break;
-						default:
-							doorXMultiplier = 0;
-							break;
-					}
-					switch (tryGet(propertiesPartsObject, "door_offset_z").toUpperCase(Locale.ENGLISH)) {
-						case "LEFT_NEGATIVE":
-						case "RIGHT_NEGATIVE":
-							doorZMultiplier = -doorMax;
-							break;
-						case "LEFT":
-						case "RIGHT":
-							doorZMultiplier = doorMax;
-							break;
-						default:
-							doorZMultiplier = 0;
-							break;
-					}
+					doorXMultiplier = switch (tryGet(propertiesPartsObject, "door_offset_x").toUpperCase(Locale.ENGLISH)) {
+						case "LEFT", "LEFT_NEGATIVE", "RIGHT", "RIGHT_NEGATIVE" -> -1;
+						default -> 0;
+					};
+					doorZMultiplier = switch (tryGet(propertiesPartsObject, "door_offset_z").toUpperCase(Locale.ENGLISH)) {
+						case "LEFT_NEGATIVE", "RIGHT_NEGATIVE" -> -doorMax;
+						case "LEFT", "RIGHT" -> doorMax;
+						default -> 0;
+					};
 				}
 				partsObject.addProperty("doorXMultiplier", doorXMultiplier);
 				partsObject.addProperty("doorZMultiplier", (isObj ? -1 : 1) * doorZMultiplier);

@@ -38,11 +38,11 @@ public final class EventRegistryClientImpl {
 	}
 
 	public static void registerChunkLoad(BiConsumer<ClientWorld, Chunk> consumer) {
-		MainEventBusClient.chunkLoadConsumer = consumer;
+		ModEventBusClient.chunkLoadConsumer = consumer;
 	}
 
 	public static void registerChunkUnload(BiConsumer<ClientWorld, Chunk> consumer) {
-		MainEventBusClient.chunkUnloadConsumer = consumer;
+		ModEventBusClient.chunkUnloadConsumer = consumer;
 	}
 
 	public static void registerResourceReloadEvent(Runnable runnable) {

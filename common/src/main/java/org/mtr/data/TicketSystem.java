@@ -1,6 +1,5 @@
 package org.mtr.data;
 
-import it.unimi.dsi.fastutil.objects.ObjectImmutableList;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.scoreboard.ScoreHolder;
 import net.minecraft.scoreboard.ScoreboardCriterion;
@@ -11,17 +10,21 @@ import net.minecraft.text.Text;
 import net.minecraft.util.StringIdentifiable;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
+import org.jspecify.annotations.Nullable;
 import org.mtr.MTR;
 import org.mtr.core.data.Station;
 import org.mtr.core.operation.NearbyAreasRequest;
 import org.mtr.core.operation.NearbyAreasResponse;
 import org.mtr.core.servlet.OperationProcessor;
 import org.mtr.generated.lang.TranslationProvider;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectImmutableList;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import java.util.function.Consumer;
 
+/**
+ * Fare collection and player balance management.
+ * Handles ticket barriers, balance tracking via scoreboards, zone-based fares, and fare evasion consequences.
+ */
 public class TicketSystem {
 
 	public static final String BALANCE_OBJECTIVE = "mtr_balance";
@@ -42,14 +45,14 @@ public class TicketSystem {
 			if (stations.isEmpty()) {
 				callback.accept(EnumTicketBarrierOpen.CLOSED);
 			} else {
-				final Station station = stations.get(0);
+				final Station station = stations.getFirst();
 				final boolean isEntering;
 
 				if (isEntrance && isExit) {
 					isEntering = !entered(
-							getPlayerScore(world, player, ENTRY_ZONE_1_OBJECTIVE, ENTRY_ZONE_1_TITLE),
-							getPlayerScore(world, player, ENTRY_ZONE_2_OBJECTIVE, ENTRY_ZONE_2_TITLE),
-							getPlayerScore(world, player, ENTRY_ZONE_3_OBJECTIVE, ENTRY_ZONE_3_TITLE)
+						getPlayerScore(world, player, ENTRY_ZONE_1_OBJECTIVE, ENTRY_ZONE_1_TITLE),
+						getPlayerScore(world, player, ENTRY_ZONE_2_OBJECTIVE, ENTRY_ZONE_2_TITLE),
+						getPlayerScore(world, player, ENTRY_ZONE_3_OBJECTIVE, ENTRY_ZONE_3_TITLE)
 					);
 				} else {
 					isEntering = isEntrance;
@@ -191,7 +194,6 @@ public class TicketSystem {
 			name = nameIn;
 		}
 
-		@Nonnull
 		@Override
 		public String asString() {
 			return name;

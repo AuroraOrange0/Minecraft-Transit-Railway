@@ -1,15 +1,18 @@
 package org.mtr.servlet;
 
-import com.google.gson.JsonParser;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import gg.essential.universal.UMinecraft;
+import lombok.Getter;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
+import org.jspecify.annotations.Nullable;
 import org.mtr.MTR;
 import org.mtr.client.CustomResourceLoader;
 import org.mtr.core.serializer.JsonReader;
-import org.mtr.libraries.javax.servlet.AsyncContext;
-import org.mtr.libraries.javax.servlet.http.HttpServletRequest;
-import org.mtr.libraries.javax.servlet.http.HttpServletResponse;
+import org.mtr.libraries.com.google.gson.JsonParser;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import org.mtr.libraries.jakarta.servlet.AsyncContext;
+import org.mtr.libraries.jakarta.servlet.http.HttpServletRequest;
+import org.mtr.libraries.jakarta.servlet.http.HttpServletResponse;
 import org.mtr.resource.ResourceWrapper;
 import org.mtr.screen.FakePauseScreen;
 import org.mtr.screen.ReloadCustomResourcesScreen;
@@ -18,7 +21,6 @@ import org.mtr.sound.BveVehicleSoundConfig;
 import org.mtr.sound.LegacyVehicleSound;
 import org.mtr.sound.VehicleSoundBase;
 
-import javax.annotation.Nullable;
 import java.nio.file.Files;
 import java.util.Locale;
 
@@ -30,6 +32,7 @@ public final class ResourcePackCreatorOperationServlet extends AbstractResourceP
 	private static float speed;
 	private static float targetSpeed;
 	private static float acceleration;
+	@Getter
 	private static int doorMultiplier = -1;
 
 	@Override
@@ -55,7 +58,7 @@ public final class ResourcePackCreatorOperationServlet extends AbstractResourceP
 				preview(httpServletRequest, httpServletResponse, asyncContext);
 				break;
 			case "/force-reload":
-				minecraftClient.execute(() -> minecraftClient.setScreen(new ReloadCustomResourcesScreen(() -> {
+				minecraftClient.execute(() -> UMinecraft.setCurrentScreenObj(new ReloadCustomResourcesScreen(() -> {
 					CustomResourceLoader.reload();
 					returnStandardResponse(httpServletResponse, asyncContext, "");
 				})));
@@ -76,13 +79,10 @@ public final class ResourcePackCreatorOperationServlet extends AbstractResourceP
 		asyncContext.setTimeout(0);
 		setEncoding(httpServletRequest, httpServletResponse);
 
-		switch (httpServletRequest.getPathInfo()) {
-			case "/update":
-				update(httpServletRequest, httpServletResponse, asyncContext);
-				break;
-			default:
-				returnErrorResponse(httpServletResponse, asyncContext);
-				break;
+		if ("/update".equals(httpServletRequest.getPathInfo())) {
+			update(httpServletRequest, httpServletResponse, asyncContext);
+		} else {
+			returnErrorResponse(httpServletResponse, asyncContext);
 		}
 	}
 
@@ -104,10 +104,6 @@ public final class ResourcePackCreatorOperationServlet extends AbstractResourceP
 				vehicleSoundBase.playMotorSound(clientPlayerEntity.getBlockPos(), speed, speed - oldSpeed, acceleration, true);
 			}
 		}
-	}
-
-	public static int getDoorMultiplier() {
-		return doorMultiplier;
 	}
 
 	private static void update(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse, AsyncContext asyncContext) {
@@ -140,18 +136,11 @@ public final class ResourcePackCreatorOperationServlet extends AbstractResourceP
 		minecraftClient.execute(() -> {
 			final ClientPlayerEntity clientPlayerEntity = minecraftClient.player;
 			if (clientPlayerEntity != null) {
-				final VehicleSoundBase tempVehicleSoundBase;
-				switch (type.toLowerCase(Locale.ENGLISH)) {
-					case "bve":
-						tempVehicleSoundBase = new BveVehicleSound(new BveVehicleSoundConfig(id));
-						break;
-					case "legacy":
-						tempVehicleSoundBase = new LegacyVehicleSound(id, legacySpeedSoundCount, legacyUseAccelerationSoundsWhenCoasting, legacyConstantPlaybackSpeed, id, 0.5);
-						break;
-					default:
-						tempVehicleSoundBase = null;
-						break;
-				}
+				final VehicleSoundBase tempVehicleSoundBase = switch (type.toLowerCase(Locale.ENGLISH)) {
+					case "bve" -> new BveVehicleSound(new BveVehicleSoundConfig(id));
+					case "legacy" -> new LegacyVehicleSound(id, legacySpeedSoundCount, legacyUseAccelerationSoundsWhenCoasting, legacyConstantPlaybackSpeed, id, 0.5);
+					default -> null;
+				};
 
 				if (tempVehicleSoundBase != null) {
 					switch (mode.toLowerCase(Locale.ENGLISH)) {

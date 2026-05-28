@@ -1,27 +1,27 @@
 package org.mtr.widget;
 
-import it.unimi.dsi.fastutil.ints.IntArrayList;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import it.unimi.dsi.fastutil.objects.ObjectArraySet;
-import it.unimi.dsi.fastutil.objects.ObjectObjectImmutablePair;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.ColorHelper;
+import org.jspecify.annotations.Nullable;
 import org.mtr.client.CustomResourceLoader;
 import org.mtr.core.data.*;
 import org.mtr.core.tool.Utilities;
 import org.mtr.font.FontRenderHelper;
 import org.mtr.font.FontRenderOptions;
 import org.mtr.generated.lang.TranslationProvider;
+import org.mtr.libraries.it.unimi.dsi.fastutil.ints.IntArrayList;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArraySet;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectObjectImmutablePair;
 import org.mtr.tool.DataHelper;
 import org.mtr.tool.Drawing;
 import org.mtr.tool.GuiHelper;
 import org.mtr.tool.RouteHelper;
 
-import javax.annotation.Nullable;
 import java.util.Collections;
 
 public final class ScrollableListWidget<T> extends ScrollablePanelWidget {
@@ -69,9 +69,9 @@ public final class ScrollableListWidget<T> extends ScrollablePanelWidget {
 
 						// Draw the action button
 						deferredRenders.add(() -> new Drawing(matrixStack, RenderLayer.getGuiTextured(listItem.isExpanded() ? GuiHelper.CHEVRON_UP_TEXTURE_ID : GuiHelper.CHEVRON_DOWN_TEXTURE_ID))
-								.setVerticesWH(leftBound + GuiHelper.DEFAULT_PADDING / 2F, startY + GuiHelper.DEFAULT_PADDING / 2F, GuiHelper.DEFAULT_ICON_SIZE, GuiHelper.DEFAULT_ICON_SIZE)
-								.setUv()
-								.draw()
+							.setVerticesWH(leftBound + GuiHelper.DEFAULT_PADDING / 2F, startY + GuiHelper.DEFAULT_PADDING / 2F, GuiHelper.DEFAULT_ICON_SIZE, GuiHelper.DEFAULT_ICON_SIZE)
+							.setUv()
+							.draw()
 						);
 					} else {
 						listItem.iterateActions(indexList, (actionIndex, identifier, callback) -> {
@@ -89,9 +89,9 @@ public final class ScrollableListWidget<T> extends ScrollablePanelWidget {
 
 							// Draw the action button
 							deferredRenders.add(() -> new Drawing(matrixStack, RenderLayer.getGuiTextured(identifier))
-									.setVerticesWH(leftBound + GuiHelper.DEFAULT_PADDING / 2F, startY + GuiHelper.DEFAULT_PADDING / 2F, GuiHelper.DEFAULT_ICON_SIZE, GuiHelper.DEFAULT_ICON_SIZE)
-									.setUv()
-									.draw()
+								.setVerticesWH(leftBound + GuiHelper.DEFAULT_PADDING / 2F, startY + GuiHelper.DEFAULT_PADDING / 2F, GuiHelper.DEFAULT_ICON_SIZE, GuiHelper.DEFAULT_ICON_SIZE)
+								.setUv()
+								.draw()
 							);
 						});
 					}
@@ -109,11 +109,11 @@ public final class ScrollableListWidget<T> extends ScrollablePanelWidget {
 
 				// Draw text
 				deferredRenders.add(() -> FontRenderHelper.render(matrixStack, listItem.text, fontRenderOptionsBuilder
-						.horizontalSpace(endX - startX - listItem.iconWidth - GuiHelper.DEFAULT_PADDING * 2 - (isMouseOver ? GuiHelper.DEFAULT_LINE_SIZE * listItem.actionCount() : 0))
-						.offsetX(startX + listItem.iconWidth + GuiHelper.DEFAULT_PADDING)
-						.offsetY((float) startY)
-						.textOverflow(FontRenderOptions.TextOverflow.COMPRESS)
-						.build()
+					.horizontalSpace(endX - startX - listItem.iconWidth - GuiHelper.DEFAULT_PADDING * 2 - (isMouseOver ? GuiHelper.DEFAULT_LINE_SIZE * listItem.actionCount() : 0))
+					.offsetX(startX + listItem.iconWidth + GuiHelper.DEFAULT_PADDING)
+					.offsetY((float) startY)
+					.textOverflow(FontRenderOptions.TextOverflow.COMPRESS)
+					.build()
 				));
 			}
 
@@ -162,6 +162,7 @@ public final class ScrollableListWidget<T> extends ScrollablePanelWidget {
 		return dataList.stream().anyMatch(ListItem::isExpanded);
 	}
 
+	@Nullable
 	public T getHoverData() {
 		return hoverItem == null ? null : hoverItem.data;
 	}
@@ -180,9 +181,9 @@ public final class ScrollableListWidget<T> extends ScrollablePanelWidget {
 
 	private FontRenderOptions.FontRenderOptionsBuilder initDimensions() {
 		final FontRenderOptions.FontRenderOptionsBuilder fontRenderOptionsBuilder = FontRenderOptions.builder()
-				.maxFontSize(GuiHelper.MINECRAFT_FONT_SIZE)
-				.verticalSpace(GuiHelper.DEFAULT_LINE_SIZE)
-				.verticalTextAlignment(FontRenderOptions.Alignment.CENTER);
+			.maxFontSize(GuiHelper.MINECRAFT_FONT_SIZE)
+			.verticalSpace(GuiHelper.DEFAULT_LINE_SIZE)
+			.verticalTextAlignment(FontRenderOptions.Alignment.CENTER);
 
 		final boolean fixedWidth = minWidth == maxWidth;
 		final boolean fixedHeight = minHeight == maxHeight;
@@ -214,12 +215,12 @@ public final class ScrollableListWidget<T> extends ScrollablePanelWidget {
 		final ObjectArrayList<ListItem<T>> dataList = new ObjectArrayList<>();
 
 		sortedAreas.forEach(area -> dataList.add(ListItem.createChild(
-				(drawing, x, y) -> drawing.setVerticesWH(x + GuiHelper.DEFAULT_PADDING, y + GuiHelper.DEFAULT_PADDING, GuiHelper.MINECRAFT_FONT_SIZE, GuiHelper.MINECRAFT_FONT_SIZE).setColor(ColorHelper.fullAlpha(area.getColor())).draw(),
-				null,
-				GuiHelper.DEFAULT_PADDING + GuiHelper.MINECRAFT_FONT_SIZE,
-				area,
-				Utilities.formatName(area.getName()),
-				actions
+			(drawing, x, y) -> drawing.setVerticesWH(x + GuiHelper.DEFAULT_PADDING, y + GuiHelper.DEFAULT_PADDING, GuiHelper.MINECRAFT_FONT_SIZE, GuiHelper.MINECRAFT_FONT_SIZE).setColor(ColorHelper.fullAlpha(area.getColor())).draw(),
+			null,
+			GuiHelper.DEFAULT_PADDING + GuiHelper.MINECRAFT_FONT_SIZE,
+			area,
+			Utilities.formatName(area.getName()),
+			actions
 		)));
 
 		scrollableListWidget.setData(dataList);
@@ -241,7 +242,7 @@ public final class ScrollableListWidget<T> extends ScrollablePanelWidget {
 				colors = savedRail.area == null ? new IntArrayList() : IntArrayList.of(savedRail.area.getColor());
 				final ObjectArrayList<String> vehicleNames = new ObjectArrayList<>();
 				for (final VehicleCar vehicleCar : siding.getVehicleCars()) {
-					final String[] vehicleName = {null};
+					final @Nullable String[] vehicleName = {null};
 					// TODO use vehicle family instead
 					CustomResourceLoader.getVehicleById(siding.getTransportMode(), vehicleCar.getVehicleId(), vehicleResourceDetails -> vehicleName[0] = vehicleResourceDetails.left().getName().getString());
 					if (vehicleName[0] != null && !vehicleNames.contains(vehicleName[0])) {
@@ -258,12 +259,12 @@ public final class ScrollableListWidget<T> extends ScrollablePanelWidget {
 			}
 
 			dataList.add(ListItem.createChild(
-					(drawing, x, y) -> GuiHelper.drawCircle(drawing, x + GuiHelper.DEFAULT_PADDING / 2F, y + GuiHelper.DEFAULT_PADDING / 2F, GuiHelper.DEFAULT_LINE_SIZE - GuiHelper.DEFAULT_PADDING, 32, colors),
-					(matrixStack, x, y) -> drawPlatformNumber(matrixStack, x, y, savedRail.getName()),
-					GuiHelper.DEFAULT_LINE_SIZE - GuiHelper.DEFAULT_PADDING / 2,
-					savedRail,
-					text,
-					actions
+				(drawing, x, y) -> GuiHelper.drawCircle(drawing, x + GuiHelper.DEFAULT_PADDING / 2F, y + GuiHelper.DEFAULT_PADDING / 2F, GuiHelper.DEFAULT_LINE_SIZE - GuiHelper.DEFAULT_PADDING, 32, colors),
+				(matrixStack, x, y) -> drawPlatformNumber(matrixStack, x, y, savedRail.getName()),
+				GuiHelper.DEFAULT_LINE_SIZE - GuiHelper.DEFAULT_PADDING / 2,
+				savedRail,
+				text,
+				actions
 			));
 		});
 
@@ -289,12 +290,12 @@ public final class ScrollableListWidget<T> extends ScrollablePanelWidget {
 
 			if (lastListItem == null || !routeKey.equals(lastKey)) {
 				currentListItem = ListItem.createParent(
-						(drawing, x, y) -> drawing.setVerticesWH(x + GuiHelper.DEFAULT_PADDING, y + GuiHelper.DEFAULT_PADDING, GuiHelper.MINECRAFT_FONT_SIZE, GuiHelper.MINECRAFT_FONT_SIZE).setColor(ColorHelper.fullAlpha(route.getColor())).draw(),
-						null,
-						GuiHelper.DEFAULT_PADDING + GuiHelper.MINECRAFT_FONT_SIZE,
-						Utilities.formatName(routeNameSplit[0]),
-						routeKey,
-						new ObjectArrayList<>()
+					(drawing, x, y) -> drawing.setVerticesWH(x + GuiHelper.DEFAULT_PADDING, y + GuiHelper.DEFAULT_PADDING, GuiHelper.MINECRAFT_FONT_SIZE, GuiHelper.MINECRAFT_FONT_SIZE).setColor(ColorHelper.fullAlpha(route.getColor())).draw(),
+					null,
+					GuiHelper.DEFAULT_PADDING + GuiHelper.MINECRAFT_FONT_SIZE,
+					Utilities.formatName(routeNameSplit[0]),
+					routeKey,
+					new ObjectArrayList<>()
 				);
 				groupedRoutes.add(currentListItem);
 			} else {
@@ -318,12 +319,12 @@ public final class ScrollableListWidget<T> extends ScrollablePanelWidget {
 			final String stationName = platform.area == null ? "" : Utilities.formatName(platform.area.getName());
 
 			dataList.add(ListItem.createChild(
-					(drawing, x, y) -> drawing.setVerticesWH(x + GuiHelper.DEFAULT_PADDING / 2F, y + GuiHelper.DEFAULT_PADDING / 2F, GuiHelper.DEFAULT_LINE_SIZE - GuiHelper.DEFAULT_PADDING, GuiHelper.DEFAULT_LINE_SIZE - GuiHelper.DEFAULT_PADDING).setColor(stationColor).draw(),
-					(matrixStack, x, y) -> drawPlatformNumber(matrixStack, x, y, platform.getName()),
-					GuiHelper.DEFAULT_PADDING + GuiHelper.MINECRAFT_FONT_SIZE,
-					routePlatformData,
-					customDestinationPrefix + stationName,
-					actions
+				(drawing, x, y) -> drawing.setVerticesWH(x + GuiHelper.DEFAULT_PADDING / 2F, y + GuiHelper.DEFAULT_PADDING / 2F, GuiHelper.DEFAULT_LINE_SIZE - GuiHelper.DEFAULT_PADDING, GuiHelper.DEFAULT_LINE_SIZE - GuiHelper.DEFAULT_PADDING).setColor(stationColor).draw(),
+				(matrixStack, x, y) -> drawPlatformNumber(matrixStack, x, y, platform.getName()),
+				GuiHelper.DEFAULT_PADDING + GuiHelper.MINECRAFT_FONT_SIZE,
+				routePlatformData,
+				customDestinationPrefix + stationName,
+				actions
 			));
 		});
 
@@ -359,16 +360,16 @@ public final class ScrollableListWidget<T> extends ScrollablePanelWidget {
 
 	private static void drawPlatformNumber(MatrixStack matrixStack, double x, double y, String name) {
 		FontRenderHelper.render(matrixStack, Utilities.formatName(name), FontRenderOptions.builder()
-				.horizontalPositioning(FontRenderOptions.Alignment.CENTER)
-				.verticalPositioning(FontRenderOptions.Alignment.CENTER)
-				.horizontalSpace(GuiHelper.MINECRAFT_TEXT_LINE_HEIGHT)
-				.verticalSpace(GuiHelper.MINECRAFT_TEXT_LINE_HEIGHT)
-				.horizontalTextAlignment(FontRenderOptions.Alignment.CENTER)
-				.verticalTextAlignment(FontRenderOptions.Alignment.CENTER)
-				.offsetX((float) x + GuiHelper.DEFAULT_LINE_SIZE / 2F)
-				.offsetY((float) y + GuiHelper.DEFAULT_LINE_SIZE / 2F)
-				.textOverflow(FontRenderOptions.TextOverflow.SCALE)
-				.build()
+			.horizontalPositioning(FontRenderOptions.Alignment.CENTER)
+			.verticalPositioning(FontRenderOptions.Alignment.CENTER)
+			.horizontalSpace(GuiHelper.MINECRAFT_TEXT_LINE_HEIGHT)
+			.verticalSpace(GuiHelper.MINECRAFT_TEXT_LINE_HEIGHT)
+			.horizontalTextAlignment(FontRenderOptions.Alignment.CENTER)
+			.verticalTextAlignment(FontRenderOptions.Alignment.CENTER)
+			.offsetX((float) x + GuiHelper.DEFAULT_LINE_SIZE / 2F)
+			.offsetY((float) y + GuiHelper.DEFAULT_LINE_SIZE / 2F)
+			.textOverflow(FontRenderOptions.TextOverflow.SCALE)
+			.build()
 		);
 	}
 }

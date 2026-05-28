@@ -1,6 +1,5 @@
 package org.mtr.item;
 
-import it.unimi.dsi.fastutil.objects.ObjectObjectImmutablePair;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.entity.player.PlayerEntity;
@@ -13,9 +12,8 @@ import net.minecraft.world.World;
 import org.mtr.block.BlockNode;
 import org.mtr.client.MinecraftClientData;
 import org.mtr.core.data.Rail;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectObjectImmutablePair;
 import org.mtr.packet.PacketUpdateLastRailStyles;
-
-import javax.annotation.Nonnull;
 
 public class ItemBrush extends Item {
 
@@ -26,7 +24,6 @@ public class ItemBrush extends Item {
 	/**
 	 * Behaviour for shift-clicking on a block can't be defined in the {@link Block#onUse(BlockState, World, BlockPos, PlayerEntity, BlockHitResult)} method, so that behaviour is defined here instead.
 	 */
-	@Nonnull
 	@Override
 	public ActionResult useOnBlock(ItemUsageContext context) {
 		final World world = context.getWorld();

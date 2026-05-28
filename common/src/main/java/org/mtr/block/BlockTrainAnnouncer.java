@@ -1,9 +1,5 @@
 package org.mtr.block;
 
-import it.unimi.dsi.fastutil.longs.Long2ObjectAVLTreeMap;
-import it.unimi.dsi.fastutil.longs.LongAVLTreeSet;
-import it.unimi.dsi.fastutil.longs.LongArrayList;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import lombok.Getter;
 import net.minecraft.block.AbstractBlock;
 import net.minecraft.block.BlockState;
@@ -17,9 +13,12 @@ import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 import org.mtr.client.IDrawing;
 import org.mtr.core.tool.Utilities;
+import org.mtr.libraries.it.unimi.dsi.fastutil.longs.Long2ObjectAVLTreeMap;
+import org.mtr.libraries.it.unimi.dsi.fastutil.longs.LongAVLTreeSet;
+import org.mtr.libraries.it.unimi.dsi.fastutil.longs.LongArrayList;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.mtr.registry.BlockEntityTypes;
 
-import javax.annotation.Nonnull;
 import java.util.Arrays;
 import java.util.stream.Collectors;
 
@@ -31,7 +30,6 @@ public class BlockTrainAnnouncer extends BlockTrainSensorBase {
 		super(settings);
 	}
 
-	@Nonnull
 	@Override
 	public BlockEntity createBlockEntity(BlockPos blockPos, BlockState blockState) {
 		return new TrainAnnouncerBlockEntity(blockPos, blockState);
@@ -43,7 +41,7 @@ public class BlockTrainAnnouncer extends BlockTrainSensorBase {
 		QUEUE.forEach((time, tasks) -> {
 			if (time <= currentMillis) {
 				tasks.forEach(Runnable::run);
-				itemsToRemove.add(time.longValue());
+				itemsToRemove.add(time);
 			}
 		});
 		itemsToRemove.forEach(QUEUE::remove);

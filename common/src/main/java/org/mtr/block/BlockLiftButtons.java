@@ -1,6 +1,5 @@
 package org.mtr.block;
 
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import net.minecraft.block.*;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.entity.player.PlayerEntity;
@@ -23,12 +22,12 @@ import org.mtr.core.data.Lift;
 import org.mtr.core.data.LiftDirection;
 import org.mtr.core.operation.PressLift;
 import org.mtr.generated.lang.TranslationProvider;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import org.mtr.packet.PacketPressLiftButton;
 import org.mtr.registry.BlockEntityTypes;
 import org.mtr.registry.Items;
 import org.mtr.registry.RegistryClient;
 
-import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
@@ -41,7 +40,6 @@ public class BlockLiftButtons extends BlockWaterloggable implements BlockEntityP
 		super(settings);
 	}
 
-	@Nonnull
 	@Override
 	protected ActionResult onUse(BlockState state, World world, BlockPos pos, PlayerEntity player, BlockHitResult hit) {
 		final ActionResult result = IBlock.checkHoldingBrush(world, player, () -> {
@@ -94,20 +92,17 @@ public class BlockLiftButtons extends BlockWaterloggable implements BlockEntityP
 		}
 	}
 
-	@Nonnull
 	@Override
 	public BlockState getPlacementState(ItemPlacementContext itemPlacementContext) {
 		final Direction facing = itemPlacementContext.getHorizontalPlayerFacing();
 		return super.getPlacementState(itemPlacementContext).with(Properties.HORIZONTAL_FACING, facing);
 	}
 
-	@Nonnull
 	@Override
 	public VoxelShape getOutlineShape(BlockState state, BlockView world, BlockPos pos, ShapeContext context) {
 		return IBlock.getVoxelShapeByDirection(4, 0, 0, 12, 16, 1, IBlock.getStatePropertySafe(state, Properties.HORIZONTAL_FACING));
 	}
 
-	@Nonnull
 	@Override
 	public BlockEntity createBlockEntity(BlockPos blockPos, BlockState blockState) {
 		return new LiftButtonsBlockEntity(blockPos, blockState);

@@ -1,7 +1,5 @@
 package org.mtr.map;
 
-import it.unimi.dsi.fastutil.bytes.ByteArrayList;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
@@ -15,10 +13,12 @@ import net.minecraft.world.Heightmap;
 import net.minecraft.world.LightType;
 import net.minecraft.world.World;
 import net.minecraft.world.biome.BiomeEffects;
+import org.jspecify.annotations.Nullable;
 import org.mtr.cache.CachedFileResource;
+import org.mtr.libraries.it.unimi.dsi.fastutil.bytes.ByteArrayList;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.mtr.tool.Drawing;
 
-import javax.annotation.Nullable;
 import java.awt.*;
 import java.nio.file.Path;
 
@@ -38,21 +38,21 @@ public final class MapTileResource extends CachedFileResource {
 
 	// See https://github.com/jpenilla/squaremap/blob/master/common/src/main/java/xyz/jpenilla/squaremap/common/data/BiomeColors.java
 	private static final ObjectArrayList<Block> GRASS_COLOR_BLOCKS = ObjectArrayList.of(
-			Blocks.GRASS_BLOCK,
-			Blocks.SHORT_GRASS,
-			Blocks.TALL_GRASS,
-			Blocks.FERN,
-			Blocks.LARGE_FERN,
-			Blocks.POTTED_FERN,
-			Blocks.SUGAR_CANE
+		Blocks.GRASS_BLOCK,
+		Blocks.SHORT_GRASS,
+		Blocks.TALL_GRASS,
+		Blocks.FERN,
+		Blocks.LARGE_FERN,
+		Blocks.POTTED_FERN,
+		Blocks.SUGAR_CANE
 	);
 	private static final ObjectArrayList<Block> FOLIAGE_COLOR_BLOCKS = ObjectArrayList.of(
-			Blocks.VINE,
-			Blocks.OAK_LEAVES,
-			Blocks.JUNGLE_LEAVES,
-			Blocks.ACACIA_LEAVES,
-			Blocks.DARK_OAK_LEAVES,
-			Blocks.MANGROVE_LEAVES
+		Blocks.VINE,
+		Blocks.OAK_LEAVES,
+		Blocks.JUNGLE_LEAVES,
+		Blocks.ACACIA_LEAVES,
+		Blocks.DARK_OAK_LEAVES,
+		Blocks.MANGROVE_LEAVES
 	);
 
 	public MapTileResource(World world, MapTileProvider.MapType mapType, int chunkX, int y, int chunkZ, Path path) {
@@ -64,9 +64,8 @@ public final class MapTileResource extends CachedFileResource {
 		this.chunkZ = chunkZ;
 	}
 
-	@Nullable
 	@Override
-	protected byte[] generate(@Nullable byte[] oldData) {
+	protected byte @Nullable [] generate(byte @Nullable [] oldData) {
 		final ImageConverter imageConverter = new ImageConverter(oldData);
 
 		for (int x = 0; x < MapTileProvider.TILE_SIZE; x++) {
@@ -131,7 +130,7 @@ public final class MapTileResource extends CachedFileResource {
 	}
 
 	@Override
-	protected void dataUpdated(@Nullable byte[] data) {
+	protected void dataUpdated(byte @Nullable [] data) {
 		if (data == null) {
 			this.vertexBuffer = null;
 		} else {
@@ -144,10 +143,10 @@ public final class MapTileResource extends CachedFileResource {
 
 				for (int i = 0; i < data.length; i += 5) {
 					final Color color = new Color(
-							data[i + 1] & 0xFF,
-							data[i + 2] & 0xFF,
-							data[i + 3] & 0xFF,
-							data[i] & 0xFF
+						data[i + 1] & 0xFF,
+						data[i + 2] & 0xFF,
+						data[i + 3] & 0xFF,
+						data[i] & 0xFF
 					);
 					int count = (data[i + 4] & 0xFF) + 1;
 
@@ -245,7 +244,7 @@ public final class MapTileResource extends CachedFileResource {
 		private boolean modified = false;
 		private final int[] pixels;
 
-		private ImageConverter(@Nullable byte[] data) {
+		private ImageConverter(byte @Nullable [] data) {
 			pixels = new int[MapTileProvider.TILE_SIZE * MapTileProvider.TILE_SIZE];
 			if (data != null) {
 				int pixelIndex = 0;

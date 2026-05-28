@@ -3,10 +3,6 @@ package org.mtr.widget;
 import gg.essential.elementa.UIComponent;
 import gg.essential.elementa.constraints.PixelConstraint;
 import gg.essential.universal.UMatrixStack;
-import it.unimi.dsi.fastutil.ints.IntArrayList;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import it.unimi.dsi.fastutil.objects.ObjectCollection;
-import it.unimi.dsi.fastutil.objects.ObjectObjectImmutablePair;
 import kotlin.Pair;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.Screen;
@@ -14,12 +10,17 @@ import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.ColorHelper;
+import org.jspecify.annotations.Nullable;
 import org.mtr.client.CustomResourceLoader;
 import org.mtr.core.data.*;
 import org.mtr.core.tool.Utilities;
 import org.mtr.font.FontRenderHelper;
 import org.mtr.font.FontRenderOptions;
 import org.mtr.generated.lang.TranslationProvider;
+import org.mtr.libraries.it.unimi.dsi.fastutil.ints.IntArrayList;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectCollection;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectObjectImmutablePair;
 import org.mtr.registry.UConverters;
 import org.mtr.render.SpecialSignStationExitRenderer;
 import org.mtr.resource.SignResource;
@@ -27,9 +28,10 @@ import org.mtr.tool.DataHelper;
 import org.mtr.tool.Drawing;
 import org.mtr.tool.GuiHelper;
 
-import javax.annotation.Nullable;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.function.Function;
+import java.util.function.ToIntFunction;
 
 public final class ListComponent<T> extends UIComponent {
 
@@ -59,9 +61,9 @@ public final class ListComponent<T> extends UIComponent {
 		hoverItem = null;
 
 		final FontRenderOptions.FontRenderOptionsBuilder fontRenderOptionsBuilder = FontRenderOptions.builder()
-				.maxFontSize(GuiHelper.MINECRAFT_FONT_SIZE)
-				.verticalSpace(GuiHelper.DEFAULT_LINE_SIZE)
-				.verticalTextAlignment(FontRenderOptions.Alignment.CENTER);
+			.maxFontSize(GuiHelper.MINECRAFT_FONT_SIZE)
+			.verticalSpace(GuiHelper.DEFAULT_LINE_SIZE)
+			.verticalTextAlignment(FontRenderOptions.Alignment.CENTER);
 
 		final MatrixStack matrixStack = UConverters.convert(uMatrixStack);
 		final Drawing drawing = new Drawing(matrixStack, RenderLayer.getGui());
@@ -91,9 +93,9 @@ public final class ListComponent<T> extends UIComponent {
 
 					// Draw the action button
 					deferredRenders.add(() -> new Drawing(matrixStack, RenderLayer.getGuiTextured(listItem.isExpanded() ? GuiHelper.CHEVRON_UP_TEXTURE_ID : GuiHelper.CHEVRON_DOWN_TEXTURE_ID))
-							.setVerticesWH(leftBound + GuiHelper.DEFAULT_PADDING / 2F, startY + GuiHelper.DEFAULT_PADDING / 2F, GuiHelper.DEFAULT_ICON_SIZE, GuiHelper.DEFAULT_ICON_SIZE)
-							.setUv()
-							.draw()
+						.setVerticesWH(leftBound + GuiHelper.DEFAULT_PADDING / 2F, startY + GuiHelper.DEFAULT_PADDING / 2F, GuiHelper.DEFAULT_ICON_SIZE, GuiHelper.DEFAULT_ICON_SIZE)
+						.setUv()
+						.draw()
 					);
 				} else {
 					listItem.iterateActions(indexList, (actionIndex, identifier, callback) -> {
@@ -111,9 +113,9 @@ public final class ListComponent<T> extends UIComponent {
 
 						// Draw the action button
 						deferredRenders.add(() -> new Drawing(matrixStack, RenderLayer.getGuiTextured(identifier))
-								.setVerticesWH(leftBound + GuiHelper.DEFAULT_PADDING / 2F, startY + GuiHelper.DEFAULT_PADDING / 2F, GuiHelper.DEFAULT_ICON_SIZE, GuiHelper.DEFAULT_ICON_SIZE)
-								.setUv()
-								.draw()
+							.setVerticesWH(leftBound + GuiHelper.DEFAULT_PADDING / 2F, startY + GuiHelper.DEFAULT_PADDING / 2F, GuiHelper.DEFAULT_ICON_SIZE, GuiHelper.DEFAULT_ICON_SIZE)
+							.setUv()
+							.draw()
 						);
 					});
 				}
@@ -131,11 +133,11 @@ public final class ListComponent<T> extends UIComponent {
 
 			// Draw text
 			deferredRenders.add(() -> FontRenderHelper.render(matrixStack, listItem.text, fontRenderOptionsBuilder
-					.horizontalSpace(right - left - listItem.iconWidth - GuiHelper.DEFAULT_PADDING * 2 - (isMouseOver ? GuiHelper.DEFAULT_LINE_SIZE * listItem.actionCount() : 0))
-					.offsetX(left + listItem.iconWidth + GuiHelper.DEFAULT_PADDING)
-					.offsetY(startY)
-					.textOverflow(FontRenderOptions.TextOverflow.COMPRESS)
-					.build()
+				.horizontalSpace(right - left - listItem.iconWidth - GuiHelper.DEFAULT_PADDING * 2 - (isMouseOver ? GuiHelper.DEFAULT_LINE_SIZE * listItem.actionCount() : 0))
+				.offsetX(left + listItem.iconWidth + GuiHelper.DEFAULT_PADDING)
+				.offsetY(startY)
+				.textOverflow(FontRenderOptions.TextOverflow.COMPRESS)
+				.build()
 			));
 
 			return false;
@@ -164,6 +166,7 @@ public final class ListComponent<T> extends UIComponent {
 		return dataList.stream().anyMatch(ListItem::isExpanded);
 	}
 
+	@Nullable
 	public T getHoverData() {
 		return hoverItem == null ? null : hoverItem.data;
 	}
@@ -180,6 +183,21 @@ public final class ListComponent<T> extends UIComponent {
 		}
 	}
 
+	public static <T> void setGeneric(ListComponent<T> listComponent, ObjectCollection<T> genericDataList, Function<T, String> getName, ToIntFunction<T> getColor, ObjectArrayList<ObjectObjectImmutablePair<Identifier, ListItem.ActionConsumer<T>>> actions) {
+		final ObjectArrayList<ListItem<T>> dataList = new ObjectArrayList<>();
+
+		genericDataList.forEach(genericData -> dataList.add(ListItem.createChild(
+			(drawing, x, y) -> drawing.setVerticesWH(x + GuiHelper.DEFAULT_PADDING, y + GuiHelper.DEFAULT_PADDING, GuiHelper.MINECRAFT_FONT_SIZE, GuiHelper.MINECRAFT_FONT_SIZE).setColor(ColorHelper.fullAlpha(getColor.applyAsInt(genericData))).draw(),
+			null,
+			GuiHelper.DEFAULT_PADDING + GuiHelper.MINECRAFT_FONT_SIZE,
+			genericData,
+			Utilities.formatName(getName.apply(genericData)),
+			actions
+		)));
+
+		listComponent.setData(dataList);
+	}
+
 	public static <T extends AreaBase<T, U>, U extends SavedRailBase<U, T>> void setAreas(ListComponent<T> listComponent, ObjectCollection<T> areas, @Nullable TransportMode transportMode, ObjectArrayList<ObjectObjectImmutablePair<Identifier, ListItem.ActionConsumer<T>>> actions) {
 		final ObjectArrayList<T> sortedAreas = new ObjectArrayList<>();
 		areas.forEach(route -> {
@@ -188,18 +206,7 @@ public final class ListComponent<T> extends UIComponent {
 			}
 		});
 		Collections.sort(sortedAreas);
-		final ObjectArrayList<ListItem<T>> dataList = new ObjectArrayList<>();
-
-		sortedAreas.forEach(area -> dataList.add(ListItem.createChild(
-				(drawing, x, y) -> drawing.setVerticesWH(x + GuiHelper.DEFAULT_PADDING, y + GuiHelper.DEFAULT_PADDING, GuiHelper.MINECRAFT_FONT_SIZE, GuiHelper.MINECRAFT_FONT_SIZE).setColor(ColorHelper.fullAlpha(area.getColor())).draw(),
-				null,
-				GuiHelper.DEFAULT_PADDING + GuiHelper.MINECRAFT_FONT_SIZE,
-				area,
-				Utilities.formatName(area.getName()),
-				actions
-		)));
-
-		listComponent.setData(dataList);
+		setGeneric(listComponent, sortedAreas, NameColorDataBase::getName, NameColorDataBase::getColor, actions);
 	}
 
 	public static <T extends AreaBase<T, U>, U extends SavedRailBase<U, T>> void setSavedRails(ListComponent<U> listComponent, ObjectCollection<U> savedRails, ObjectArrayList<ObjectObjectImmutablePair<Identifier, ListItem.ActionConsumer<U>>> actions) {
@@ -218,7 +225,7 @@ public final class ListComponent<T> extends UIComponent {
 				colors = savedRail.area == null ? new IntArrayList() : IntArrayList.of(savedRail.area.getColor());
 				final ObjectArrayList<String> vehicleNames = new ObjectArrayList<>();
 				for (final VehicleCar vehicleCar : siding.getVehicleCars()) {
-					final String[] vehicleName = {null};
+					final @Nullable String[] vehicleName = {null};
 					// TODO use vehicle family instead
 					CustomResourceLoader.getVehicleById(siding.getTransportMode(), vehicleCar.getVehicleId(), vehicleResourceDetails -> vehicleName[0] = vehicleResourceDetails.left().getName().getString());
 					if (vehicleName[0] != null && !vehicleNames.contains(vehicleName[0])) {
@@ -235,12 +242,12 @@ public final class ListComponent<T> extends UIComponent {
 			}
 
 			dataList.add(ListItem.createChild(
-					(drawing, x, y) -> GuiHelper.drawCircle(drawing, x + GuiHelper.DEFAULT_PADDING / 2F, y + GuiHelper.DEFAULT_PADDING / 2F, GuiHelper.DEFAULT_LINE_SIZE - GuiHelper.DEFAULT_PADDING, 32, colors),
-					(matrixStack, x, y) -> drawPlatformNumber(matrixStack, x, y, savedRail.getName()),
-					GuiHelper.DEFAULT_LINE_SIZE - GuiHelper.DEFAULT_PADDING / 2,
-					savedRail,
-					text,
-					actions
+				(drawing, x, y) -> GuiHelper.drawCircle(drawing, x + GuiHelper.DEFAULT_PADDING / 2F, y + GuiHelper.DEFAULT_PADDING / 2F, GuiHelper.DEFAULT_LINE_SIZE - GuiHelper.DEFAULT_PADDING, 32, colors),
+				(matrixStack, x, y) -> drawPlatformNumber(matrixStack, x, y, savedRail.getName()),
+				GuiHelper.DEFAULT_LINE_SIZE - GuiHelper.DEFAULT_PADDING / 2,
+				savedRail,
+				text,
+				actions
 			));
 		});
 
@@ -268,12 +275,12 @@ public final class ListComponent<T> extends UIComponent {
 					final int color = lastRoute.getColor();
 					Collections.sort(combinedRouteNames);
 					groupedRoutes.add(ListItem.createChild(
-							(drawing, x, y) -> drawing.setVerticesWH(x + GuiHelper.DEFAULT_PADDING, y + GuiHelper.DEFAULT_PADDING, GuiHelper.MINECRAFT_FONT_SIZE, GuiHelper.MINECRAFT_FONT_SIZE).setColor(ColorHelper.fullAlpha(color)).draw(),
-							null,
-							GuiHelper.DEFAULT_PADDING + GuiHelper.MINECRAFT_FONT_SIZE,
-							lastRoute,
-							String.join("|", combinedRouteNames),
-							actions
+						(drawing, x, y) -> drawing.setVerticesWH(x + GuiHelper.DEFAULT_PADDING, y + GuiHelper.DEFAULT_PADDING, GuiHelper.MINECRAFT_FONT_SIZE, GuiHelper.MINECRAFT_FONT_SIZE).setColor(ColorHelper.fullAlpha(color)).draw(),
+						null,
+						GuiHelper.DEFAULT_PADDING + GuiHelper.MINECRAFT_FONT_SIZE,
+						lastRoute,
+						String.join("|", combinedRouteNames),
+						actions
 					));
 					combinedRouteNames.clear();
 				}
@@ -299,12 +306,12 @@ public final class ListComponent<T> extends UIComponent {
 
 				if (lastListItem == null || !routeKey.equals(lastKey)) {
 					currentListItem = ListItem.createParent(
-							(drawing, x, y) -> drawing.setVerticesWH(x + GuiHelper.DEFAULT_PADDING, y + GuiHelper.DEFAULT_PADDING, GuiHelper.MINECRAFT_FONT_SIZE, GuiHelper.MINECRAFT_FONT_SIZE).setColor(ColorHelper.fullAlpha(route.getColor())).draw(),
-							null,
-							GuiHelper.DEFAULT_PADDING + GuiHelper.MINECRAFT_FONT_SIZE,
-							Utilities.formatName(routeNameSplit[0]),
-							routeKey,
-							new ObjectArrayList<>()
+						(drawing, x, y) -> drawing.setVerticesWH(x + GuiHelper.DEFAULT_PADDING, y + GuiHelper.DEFAULT_PADDING, GuiHelper.MINECRAFT_FONT_SIZE, GuiHelper.MINECRAFT_FONT_SIZE).setColor(ColorHelper.fullAlpha(route.getColor())).draw(),
+						null,
+						GuiHelper.DEFAULT_PADDING + GuiHelper.MINECRAFT_FONT_SIZE,
+						Utilities.formatName(routeNameSplit[0]),
+						routeKey,
+						new ObjectArrayList<>()
 					);
 					groupedRoutes.add(currentListItem);
 				} else {
@@ -329,12 +336,12 @@ public final class ListComponent<T> extends UIComponent {
 			final String stationName = platform.area == null ? "" : Utilities.formatName(platform.area.getName());
 
 			dataList.add(ListItem.createChild(
-					(drawing, x, y) -> drawing.setVerticesWH(x + GuiHelper.DEFAULT_PADDING / 2F, y + GuiHelper.DEFAULT_PADDING / 2F, GuiHelper.DEFAULT_LINE_SIZE - GuiHelper.DEFAULT_PADDING, GuiHelper.DEFAULT_LINE_SIZE - GuiHelper.DEFAULT_PADDING).setColor(stationColor).draw(),
-					(matrixStack, x, y) -> drawPlatformNumber(matrixStack, x, y, platform.getName()),
-					GuiHelper.DEFAULT_PADDING + GuiHelper.MINECRAFT_FONT_SIZE,
-					routePlatformData,
-					customDestinationPrefix + stationName,
-					actions
+				(drawing, x, y) -> drawing.setVerticesWH(x + GuiHelper.DEFAULT_PADDING / 2F, y + GuiHelper.DEFAULT_PADDING / 2F, GuiHelper.DEFAULT_LINE_SIZE - GuiHelper.DEFAULT_PADDING, GuiHelper.DEFAULT_LINE_SIZE - GuiHelper.DEFAULT_PADDING).setColor(stationColor).draw(),
+				(matrixStack, x, y) -> drawPlatformNumber(matrixStack, x, y, platform.getName()),
+				GuiHelper.DEFAULT_PADDING + GuiHelper.MINECRAFT_FONT_SIZE,
+				routePlatformData,
+				customDestinationPrefix + stationName,
+				actions
 			));
 		});
 
@@ -359,12 +366,12 @@ public final class ListComponent<T> extends UIComponent {
 
 			if (flatten) {
 				dataList.add(ListItem.createChild(
-						drawIcon,
-						deferredDrawIcon,
-						GuiHelper.DEFAULT_PADDING + GuiHelper.MINECRAFT_FONT_SIZE,
-						stationExit,
-						String.join(" ", titles),
-						actions
+					drawIcon,
+					deferredDrawIcon,
+					GuiHelper.DEFAULT_PADDING + GuiHelper.MINECRAFT_FONT_SIZE,
+					stationExit,
+					String.join(" ", titles),
+					actions
 				));
 			} else {
 				final ObjectArrayList<ListItem<StationExit>> destinationListItems = new ObjectArrayList<>();
@@ -374,12 +381,12 @@ public final class ListComponent<T> extends UIComponent {
 				}
 
 				dataList.add(ListItem.createParent(
-						drawIcon,
-						deferredDrawIcon,
-						GuiHelper.DEFAULT_PADDING + GuiHelper.MINECRAFT_FONT_SIZE,
-						String.join(" ", titles),
-						Utilities.formatName(stationExit.getName()),
-						destinationListItems
+					drawIcon,
+					deferredDrawIcon,
+					GuiHelper.DEFAULT_PADDING + GuiHelper.MINECRAFT_FONT_SIZE,
+					String.join(" ", titles),
+					Utilities.formatName(stationExit.getName()),
+					destinationListItems
 				));
 			}
 		});
@@ -416,16 +423,16 @@ public final class ListComponent<T> extends UIComponent {
 
 	private static void drawPlatformNumber(MatrixStack matrixStack, double x, double y, String name) {
 		FontRenderHelper.render(matrixStack, Utilities.formatName(name), FontRenderOptions.builder()
-				.horizontalPositioning(FontRenderOptions.Alignment.CENTER)
-				.verticalPositioning(FontRenderOptions.Alignment.CENTER)
-				.horizontalSpace(GuiHelper.MINECRAFT_TEXT_LINE_HEIGHT)
-				.verticalSpace(GuiHelper.MINECRAFT_TEXT_LINE_HEIGHT)
-				.horizontalTextAlignment(FontRenderOptions.Alignment.CENTER)
-				.verticalTextAlignment(FontRenderOptions.Alignment.CENTER)
-				.offsetX((float) x + GuiHelper.DEFAULT_LINE_SIZE / 2F)
-				.offsetY((float) y + GuiHelper.DEFAULT_LINE_SIZE / 2F)
-				.textOverflow(FontRenderOptions.TextOverflow.SCALE)
-				.build()
+			.horizontalPositioning(FontRenderOptions.Alignment.CENTER)
+			.verticalPositioning(FontRenderOptions.Alignment.CENTER)
+			.horizontalSpace(GuiHelper.MINECRAFT_TEXT_LINE_HEIGHT)
+			.verticalSpace(GuiHelper.MINECRAFT_TEXT_LINE_HEIGHT)
+			.horizontalTextAlignment(FontRenderOptions.Alignment.CENTER)
+			.verticalTextAlignment(FontRenderOptions.Alignment.CENTER)
+			.offsetX((float) x + GuiHelper.DEFAULT_LINE_SIZE / 2F)
+			.offsetY((float) y + GuiHelper.DEFAULT_LINE_SIZE / 2F)
+			.textOverflow(FontRenderOptions.TextOverflow.SCALE)
+			.build()
 		);
 	}
 }

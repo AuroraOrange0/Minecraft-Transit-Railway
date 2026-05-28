@@ -1,10 +1,5 @@
 package org.mtr.render;
 
-import it.unimi.dsi.fastutil.ints.IntAVLTreeSet;
-import it.unimi.dsi.fastutil.ints.IntArrayList;
-import it.unimi.dsi.fastutil.longs.LongArrayList;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
@@ -14,6 +9,7 @@ import net.minecraft.client.world.ClientWorld;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
+import org.jspecify.annotations.Nullable;
 import org.mtr.MTR;
 import org.mtr.block.BlockNode;
 import org.mtr.block.BlockSignalBase;
@@ -24,9 +20,13 @@ import org.mtr.core.data.Position;
 import org.mtr.core.data.TwoPositionsBase;
 import org.mtr.core.tool.Utilities;
 import org.mtr.data.IGui;
+import org.mtr.libraries.it.unimi.dsi.fastutil.ints.IntAVLTreeSet;
+import org.mtr.libraries.it.unimi.dsi.fastutil.ints.IntArrayList;
+import org.mtr.libraries.it.unimi.dsi.fastutil.longs.LongArrayList;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.mtr.tool.Drawing;
 
-import javax.annotation.Nullable;
 import java.util.Collections;
 
 public abstract class RenderSignalBase<T extends BlockSignalBase.BlockEntityBase> extends BlockEntityRendererExtension<T> implements IBlock, IGui {
@@ -73,13 +73,13 @@ public abstract class RenderSignalBase<T extends BlockSignalBase.BlockEntityBase
 						MainRenderer.scheduleRender(Identifier.of(MTR.MOD_ID, "textures/block/white.png"), false, occupied ? QueuedRenderLayer.EXTERIOR : QueuedRenderLayer.LIGHT, (matrixStack, vertexConsumer, offset) -> {
 							storedMatrixTransformationsNew.transform(matrixStack, offset);
 							IDrawing.drawTexture(
-									matrixStack, vertexConsumer,
-									x, colorIndicatorHeight, -0.15625F,
-									x + 0.03125F, colorIndicatorHeight, -0.15625F,
-									x + 0.03125F, colorIndicatorHeight, -0.15625F - width,
-									x, colorIndicatorHeight, -0.15625F - width,
-									0, 0, 1, 1,
-									Direction.UP, occupied ? MainRenderer.getFlashingColor(signalColor, 1) : signalColor | ARGB_BLACK, IGui.DEFAULT_LIGHT
+								matrixStack, vertexConsumer,
+								x, colorIndicatorHeight, -0.15625F,
+								x + 0.03125F, colorIndicatorHeight, -0.15625F,
+								x + 0.03125F, colorIndicatorHeight, -0.15625F - width,
+								x, colorIndicatorHeight, -0.15625F - width,
+								0, 0, 1, 1,
+								Direction.UP, occupied ? MainRenderer.getFlashingColor(signalColor, 1) : signalColor | ARGB_BLACK, IGui.DEFAULT_LIGHT
 							);
 							matrixStack.pop();
 						});
