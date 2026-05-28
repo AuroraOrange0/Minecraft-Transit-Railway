@@ -67,9 +67,7 @@ tasks.named("build") {
 tasks.shadowJar {
 	configurations = listOf(project.configurations["shadowBundle"])
 	archiveClassifier.set("dev-shadow")
-	minimize {
-		exclude(dependency("org.mtr:Shadow-Libraries-net:.*"))
-	}
+	minimize()
 	relocate("com.logisticscraft", "org.mtr.libraries.com.logisticscraft")
 	relocate("de.javagl", "org.mtr.libraries.de.javagl")
 	relocate("gg.essential.elementa", "org.mtr.libraries.gg.essential.elementa")
