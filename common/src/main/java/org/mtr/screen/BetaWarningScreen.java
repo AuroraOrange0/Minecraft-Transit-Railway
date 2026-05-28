@@ -52,6 +52,7 @@ public class BetaWarningScreen extends ScreenBase implements IGui, Utilities {
 		context.drawCenteredTextWithShadow(textRenderer, "Please back up your worlds before continuing!", width / 2, i += TEXT_HEIGHT, System.currentTimeMillis() % 1000 < 500 ? 0xFFFF00 : 0xFF9900);
 		i = wrapAndRender(context, "- This is a very early release for Minecraft 1.21.x versions. Please report any bugs you find.", i + SQUARE_SIZE);
 		i = wrapAndRender(context, "- Lift / Elevator rendering has NOT been implemented yet.", i);
+		i = wrapAndRender(context, "- Some model previews in GUI screens have NOT been implemented yet.", i);
 		context.drawCenteredTextWithShadow(textRenderer, "Thank you and enjoy :)", width / 2, i, ARGB_WHITE);
 
 		context.getMatrices().push();
