@@ -40,17 +40,26 @@ java {
 
 dependencies {
 	minecraft("com.mojang:minecraft:${sc.current.version}")
-	mappings(loom.officialMojangMappings())
+	if (sc.current.version == "1.21.4") {
+		mappings("net.fabricmc:yarn:1.21.4+build.8:v2")
+	} else {
+		mappings(loom.officialMojangMappings())
+	}
 
 	modImplementation("net.fabricmc:fabric-loader:${property("dependency.fabric_loader")}")
-	modImplementation(fletchingTable.modrinth("fabric-api", sc.current.version))
+	modImplementation("net.fabricmc.fabric-api:fabric-api:${property("dependency.fabric_api")}")
+	modImplementation("gg.essential:universalcraft-${property("dependency.universal_craft_minecraft")}-fabric:${property("dependency.universal_craft")}")
 	modImplementation(fletchingTable.modrinth("modmenu", sc.current.version))
 
 	implementation("org.mtr:transport-simulation-core:+")
 	implementation("com.logisticscraft:occlusionculling:+")
 	implementation("gg.essential:elementa:${property("dependency.elementa")}")
-	implementation("gg.essential:universalcraft-${property("dependency.universal_craft_minecraft")}-fabric:${property("dependency.universal_craft")}")
 	implementation("org.jspecify:jspecify:+")
+	implementation("net.fabricmc:fabric-language-kotlin:+")
+
+	testImplementation("org.junit.jupiter:junit-jupiter-api:5.+")
+	testImplementation("org.junit.platform:junit-platform-launcher:1.+")
+	testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.+")
 }
 
 tasks {
@@ -62,6 +71,9 @@ tasks {
 			"mod_license" to project.property("mod.license"),
 			"mod_author" to project.property("mod.author"),
 			"mod_version" to project.property("mod.version"),
+			"mod_homepage" to project.property("mod.homepage"),
+			"mod_sources" to project.property("mod.sources"),
+			"mod_issues" to project.property("mod.issues"),
 			"minecraft_version" to sc.current.version,
 		)
 
@@ -70,6 +82,11 @@ tasks {
 		}
 
 		exclude("**/neoforge.mods.toml")
+	}
+
+	test {
+		useJUnitPlatform()
+		testLogging { showStandardStreams = true }
 	}
 
 	javadoc {

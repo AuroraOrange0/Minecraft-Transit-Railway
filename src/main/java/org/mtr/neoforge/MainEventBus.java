@@ -2,7 +2,7 @@ package org.mtr.neoforge;
 
 //? if neoforge {
 
-import com.mojang.brigadier.CommandDispatcher;
+/*import com.mojang.brigadier.CommandDispatcher;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.ServerCommandSource;
@@ -117,4 +117,4 @@ public final class MainEventBus {
 	}
 }
 
-//? }
+*///? }

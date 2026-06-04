@@ -2,7 +2,7 @@ package org.mtr.neoforge;
 
 //? if neoforge {
 
-import net.minecraft.server.world.ServerWorld;
+/*import net.minecraft.server.world.ServerWorld;
 import net.minecraft.world.chunk.Chunk;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -49,4 +49,4 @@ public final class ModEventBus {
 	}
 }
 
-//? }
+*///? }

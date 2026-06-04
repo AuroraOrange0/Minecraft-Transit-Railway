@@ -2,7 +2,7 @@ package org.mtr.neoforge;
 
 //? if neoforge {
 
-import net.minecraft.block.Block;
+/*import net.minecraft.block.Block;
 import net.minecraft.block.entity.BlockEntityType;
 import net.minecraft.component.ComponentType;
 import net.minecraft.entity.EntityType;
@@ -38,4 +38,4 @@ public final class MTRNeoForge {
 	}
 }
 
-//? }
+*///? }

@@ -1,15 +1,21 @@
 package org.mtr.registry;
 
+//? if fabric {
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerChunkEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
+//? }
+
+//? if neoforge {
+/*import org.mtr.neoforge.MainEventBus;
+import org.mtr.neoforge.ModEventBus;
+*///? }
+
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.world.chunk.Chunk;
-import org.mtr.neoforge.MainEventBus;
-import org.mtr.neoforge.ModEventBus;
 
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -22,8 +28,8 @@ public final class EventRegistryServer {
 		//? }
 
 		//? if neoforge {
-		MainEventBus.serverStartingConsumer = consumer;
-		//? }
+		/*MainEventBus.serverStartingConsumer = consumer;
+		*///? }
 	}
 
 	public static void registerServerStarted(Consumer<MinecraftServer> consumer) {
@@ -32,8 +38,8 @@ public final class EventRegistryServer {
 		//? }
 
 		//? if neoforge {
-		MainEventBus.serverStartedConsumer = consumer;
-		//? }
+		/*MainEventBus.serverStartedConsumer = consumer;
+		*///? }
 	}
 
 	public static void registerServerStopping(Consumer<MinecraftServer> consumer) {
@@ -42,8 +48,8 @@ public final class EventRegistryServer {
 		//? }
 
 		//? if neoforge {
-		MainEventBus.serverStoppingConsumer = consumer;
-		//? }
+		/*MainEventBus.serverStoppingConsumer = consumer;
+		*///? }
 	}
 
 	public static void registerServerStopped(Consumer<MinecraftServer> consumer) {
@@ -52,8 +58,8 @@ public final class EventRegistryServer {
 		//? }
 
 		//? if neoforge {
-		MainEventBus.serverStoppedConsumer = consumer;
-		//? }
+		/*MainEventBus.serverStoppedConsumer = consumer;
+		*///? }
 	}
 
 	public static void registerStartServerTick(Runnable runnable) {
@@ -62,8 +68,8 @@ public final class EventRegistryServer {
 		//? }
 
 		//? if neoforge {
-		MainEventBus.startServerTickRunnable = runnable;
-		//? }
+		/*MainEventBus.startServerTickRunnable = runnable;
+		*///? }
 	}
 
 	public static void registerEndServerTick(Runnable runnable) {
@@ -72,8 +78,8 @@ public final class EventRegistryServer {
 		//? }
 
 		//? if neoforge {
-		MainEventBus.endServerTickRunnable = runnable;
-		//? }
+		/*MainEventBus.endServerTickRunnable = runnable;
+		*///? }
 	}
 
 	public static void registerStartWorldTick(Consumer<ServerWorld> consumer) {
@@ -82,8 +88,8 @@ public final class EventRegistryServer {
 		//? }
 
 		//? if neoforge {
-		MainEventBus.startWorldTickRunnable = consumer;
-		//? }
+		/*MainEventBus.startWorldTickRunnable = consumer;
+		*///? }
 	}
 
 	public static void registerEndWorldTick(Consumer<ServerWorld> consumer) {
@@ -92,8 +98,8 @@ public final class EventRegistryServer {
 		//? }
 
 		//? if neoforge {
-		MainEventBus.endWorldTickRunnable = consumer;
-		//? }
+		/*MainEventBus.endWorldTickRunnable = consumer;
+		*///? }
 	}
 
 	public static void registerPlayerJoin(BiConsumer<MinecraftServer, ServerPlayerEntity> consumer) {
@@ -102,8 +108,8 @@ public final class EventRegistryServer {
 		//? }
 
 		//? if neoforge {
-		MainEventBus.playerJoinRunnable = consumer;
-		//? }
+		/*MainEventBus.playerJoinRunnable = consumer;
+		*///? }
 	}
 
 	public static void registerPlayerDisconnect(BiConsumer<MinecraftServer, ServerPlayerEntity> consumer) {
@@ -112,8 +118,8 @@ public final class EventRegistryServer {
 		//? }
 
 		//? if neoforge {
-		MainEventBus.playerDisconnectRunnable = consumer;
-		//? }
+		/*MainEventBus.playerDisconnectRunnable = consumer;
+		*///? }
 	}
 
 	public static void registerChunkLoad(BiConsumer<ServerWorld, Chunk> consumer) {
@@ -122,8 +128,8 @@ public final class EventRegistryServer {
 		//? }
 
 		//? if neoforge {
-		ModEventBus.chunkLoadConsumer = consumer;
-		//? }
+		/*ModEventBus.chunkLoadConsumer = consumer;
+		*///? }
 	}
 
 	public static void registerChunkUnload(BiConsumer<ServerWorld, Chunk> consumer) {
@@ -132,7 +138,7 @@ public final class EventRegistryServer {
 		//? }
 
 		//? if neoforge {
-		ModEventBus.chunkUnloadConsumer = consumer;
-		//? }
+		/*ModEventBus.chunkUnloadConsumer = consumer;
+		*///? }
 	}
 }

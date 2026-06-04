@@ -1,6 +1,7 @@
 package org.mtr.render;
 
 import net.minecraft.block.Block;
+import net.minecraft.client.model.*;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.render.OverlayTexture;
 import net.minecraft.client.render.VertexConsumerProvider;

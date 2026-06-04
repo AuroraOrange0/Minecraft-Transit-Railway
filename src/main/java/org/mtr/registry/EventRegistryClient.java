@@ -1,5 +1,6 @@
 package org.mtr.registry;
 
+//? if fabric {
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientChunkEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
@@ -8,6 +9,13 @@ import net.fabricmc.fabric.api.client.rendering.v1.IdentifiedLayer;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
 import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
 import net.fabricmc.fabric.api.resource.SimpleSynchronousResourceReloadListener;
+//? }
+
+//? if neoforge {
+/*import org.mtr.neoforge.MainEventBusClient;
+import org.mtr.neoforge.ModEventBusClient;
+*///? }
+
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.render.RenderTickCounter;
 import net.minecraft.client.render.VertexConsumerProvider;
@@ -19,8 +27,6 @@ import net.minecraft.util.Identifier;
 import net.minecraft.world.chunk.Chunk;
 import org.mtr.MTR;
 import org.mtr.MTRClient;
-import org.mtr.neoforge.MainEventBusClient;
-import org.mtr.neoforge.ModEventBusClient;
 
 import java.util.Random;
 import java.util.function.BiConsumer;
@@ -34,8 +40,8 @@ public final class EventRegistryClient {
 		//? }
 
 		//? if neoforge {
-		MainEventBusClient.startClientTickRunnable = runnable;
-		//? }
+		/*MainEventBusClient.startClientTickRunnable = runnable;
+		*///? }
 	}
 
 	public static void registerEndClientTick(Runnable runnable) {
@@ -44,8 +50,8 @@ public final class EventRegistryClient {
 		//? }
 
 		//? if neoforge {
-		MainEventBusClient.endClientTickRunnable = runnable;
-		//? }
+		/*MainEventBusClient.endClientTickRunnable = runnable;
+		*///? }
 	}
 
 	public static void registerStartWorldTick(Consumer<ClientWorld> consumer) {
@@ -54,8 +60,8 @@ public final class EventRegistryClient {
 		//? }
 
 		//? if neoforge {
-		MainEventBusClient.startWorldTickRunnable = consumer;
-		//? }
+		/*MainEventBusClient.startWorldTickRunnable = consumer;
+		*///? }
 	}
 
 	public static void registerEndWorldTick(Consumer<ClientWorld> consumer) {
@@ -64,8 +70,8 @@ public final class EventRegistryClient {
 		//? }
 
 		//? if neoforge {
-		MainEventBusClient.endWorldTickRunnable = consumer;
-		//? }
+		/*MainEventBusClient.endWorldTickRunnable = consumer;
+		*///? }
 	}
 
 	public static void registerClientJoin(Runnable runnable) {
@@ -74,8 +80,8 @@ public final class EventRegistryClient {
 		//? }
 
 		//? if neoforge {
-		MainEventBusClient.clientJoinRunnable = runnable;
-		//? }
+		/*MainEventBusClient.clientJoinRunnable = runnable;
+		*///? }
 	}
 
 	public static void registerClientDisconnect(Runnable runnable) {
@@ -84,8 +90,8 @@ public final class EventRegistryClient {
 		//? }
 
 		//? if neoforge {
-		MainEventBusClient.clientDisconnectRunnable = runnable;
-		//? }
+		/*MainEventBusClient.clientDisconnectRunnable = runnable;
+		*///? }
 	}
 
 	public static void registerChunkLoad(BiConsumer<ClientWorld, Chunk> consumer) {
@@ -94,8 +100,8 @@ public final class EventRegistryClient {
 		//? }
 
 		//? if neoforge {
-		ModEventBusClient.chunkLoadConsumer = consumer;
-		//? }
+		/*ModEventBusClient.chunkLoadConsumer = consumer;
+		*///? }
 	}
 
 	public static void registerChunkUnload(BiConsumer<ClientWorld, Chunk> consumer) {
@@ -104,8 +110,8 @@ public final class EventRegistryClient {
 		//? }
 
 		//? if neoforge {
-		ModEventBusClient.chunkUnloadConsumer = consumer;
-		//? }
+		/*ModEventBusClient.chunkUnloadConsumer = consumer;
+		*///? }
 	}
 
 	public static void registerResourceReloadEvent(Runnable runnable) {
@@ -125,8 +131,8 @@ public final class EventRegistryClient {
 		//? }
 
 		//? if neoforge {
-		ModEventBusClient.resourceReloadRunnable = runnable;
-		//? }
+		/*ModEventBusClient.resourceReloadRunnable = runnable;
+		*///? }
 	}
 
 	public static void registerWorldRenderEvent(MTRClient.WorldRenderCallback worldRenderCallback) {
@@ -141,8 +147,8 @@ public final class EventRegistryClient {
 		//? }
 
 		//? if neoforge {
-		MainEventBusClient.worldRenderCallback = worldRenderCallback;
-		//? }
+		/*MainEventBusClient.worldRenderCallback = worldRenderCallback;
+		*///? }
 	}
 
 	public static void registerHudLayerRenderEvent(BiConsumer<DrawContext, RenderTickCounter> hudLayerRenderCallback) {
@@ -151,7 +157,7 @@ public final class EventRegistryClient {
 		//? }
 
 		//? if neoforge {
-		MainEventBusClient.hudLayerRenderCallback = hudLayerRenderCallback;
-		//? }
+		/*MainEventBusClient.hudLayerRenderCallback = hudLayerRenderCallback;
+		*///? }
 	}
 }

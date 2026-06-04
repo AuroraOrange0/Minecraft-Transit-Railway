@@ -2,7 +2,7 @@ package org.mtr.neoforge;
 
 //? if neoforge {
 
-import net.minecraft.client.option.KeyBinding;
+/*import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.world.chunk.Chunk;
 import net.neoforged.api.distmarker.Dist;
@@ -73,4 +73,4 @@ public final class ModEventBusClient {
 	}
 }
 
-//? }
+*///? }

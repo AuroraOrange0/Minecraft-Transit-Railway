@@ -33,10 +33,10 @@ jobs:
         run: npm run build --prefix website
       - name: Setup files
         run: ./gradlew setupFiles -PcrowdinApiKey="${{ secrets.CROWDIN_API_KEY }}" -PpatreonApiKey="${{ secrets.PATREON_API_KEY }}" --no-daemon
+      - name: Build mod
+        run: ./gradlew 1.21.4-fabric:build --no-daemon
 
 # TODO fix build script
-#     - name: Build mod
-#       run: ./gradlew build --no-daemon
 #     - name: Capture release artifacts
 #       if: env.BUILD_ARTIFACTS == 'true'
 #       uses: actions/upload-artifact@main

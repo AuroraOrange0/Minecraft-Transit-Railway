@@ -10,6 +10,7 @@ pluginManagement {
 
 plugins {
 	id("dev.kikugie.stonecutter") version "+"
+	id("org.gradle.toolchains.foojay-resolver-convention") version "+"
 }
 
 stonecutter {

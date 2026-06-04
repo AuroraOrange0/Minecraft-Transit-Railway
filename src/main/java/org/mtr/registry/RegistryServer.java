@@ -1,11 +1,19 @@
 package org.mtr.registry;
 
-import com.mojang.brigadier.CommandDispatcher;
+//? if fabric {
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.itemgroup.v1.FabricItemGroup;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.fabricmc.fabric.api.object.builder.v1.block.entity.FabricBlockEntityTypeBuilder;
+//? }
+
+//? if neoforge {
+/*import org.mtr.neoforge.MTRNeoForge;
+import org.mtr.neoforge.ModEventBus;
+*///? }
+
+import com.mojang.brigadier.CommandDispatcher;
 import net.minecraft.block.AbstractBlock;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
@@ -21,6 +29,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.network.codec.PacketCodec;
 import net.minecraft.network.codec.PacketCodecs;
 import net.minecraft.registry.Registries;
+import net.minecraft.registry.Registry;
 import net.minecraft.registry.RegistryKey;
 import net.minecraft.registry.RegistryKeys;
 import net.minecraft.server.command.ServerCommandSource;
@@ -35,8 +44,6 @@ import org.mtr.MTR;
 import org.mtr.fabric.MTRFabric;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import org.mtr.neoforge.MTRNeoForge;
-import org.mtr.neoforge.ModEventBus;
 import org.mtr.packet.*;
 
 import java.util.function.BiFunction;
@@ -63,8 +70,8 @@ public final class RegistryServer {
 		//? }
 
 		//? if neoforge {
-		return new ObjectHolder<>(MTRNeoForge.BLOCKS.register(registryName, identifier -> factory.apply(AbstractBlock.Settings.create().registryKey(RegistryKey.of(RegistryKeys.BLOCK, identifier)))));
-		//? }
+		/*return new ObjectHolder<>(MTRNeoForge.BLOCKS.register(registryName, identifier -> factory.apply(AbstractBlock.Settings.create().registryKey(RegistryKey.of(RegistryKeys.BLOCK, identifier)))));
+		*///? }
 	}
 
 	public static ObjectHolder<Item> registerItem(String registryName, Function<Item.Settings, Item> factory, @Nullable String itemGroupRegistryName) {
@@ -77,12 +84,12 @@ public final class RegistryServer {
 		//? }
 
 		//? if neoforge {
-		final ObjectHolder<Item> objectHolder = new ObjectHolder<>(MTRNeoForge.ITEMS.register(registryName, identifier -> factory.apply(new Item.Settings().registryKey(RegistryKey.of(RegistryKeys.ITEM, identifier)))));
+		/*final ObjectHolder<Item> objectHolder = new ObjectHolder<>(MTRNeoForge.ITEMS.register(registryName, identifier -> factory.apply(new Item.Settings().registryKey(RegistryKey.of(RegistryKeys.ITEM, identifier)))));
 		if (itemGroupRegistryName != null) {
 			ITEM_GROUP_ENTRIES.computeIfAbsent(itemGroupRegistryName, key -> new ObjectArrayList<>()).add(objectHolder::get);
 		}
 		return objectHolder;
-		//? }
+		*///? }
 	}
 
 	public static <T extends BlockEntity> ObjectHolder<BlockEntityType<T>> registerBlockEntityType(String registryName, BiFunction<BlockPos, BlockState, T> factory, Supplier<Block> blockSupplier) {
@@ -91,8 +98,8 @@ public final class RegistryServer {
 		//? }
 
 		//? if neoforge {
-		return new ObjectHolder<>(MTRNeoForge.BLOCK_ENTITY_TYPES.register(registryName, () -> new BlockEntityType<>(factory::apply, blockSupplier.get())));
-		//? }
+		/*return new ObjectHolder<>(MTRNeoForge.BLOCK_ENTITY_TYPES.register(registryName, () -> new BlockEntityType<>(factory::apply, blockSupplier.get())));
+		*///? }
 	}
 
 	public static <T extends Entity> ObjectHolder<EntityType<T>> registerEntityType(String registryName, BiFunction<EntityType<T>, World, T> factory, float width, float height) {
@@ -101,8 +108,8 @@ public final class RegistryServer {
 		//? }
 
 		//? if neoforge {
-		return new ObjectHolder<>(MTRNeoForge.ENTITY_TYPES.register(registryName, identifier -> EntityType.Builder.create(factory::apply, SpawnGroup.MISC).dimensions(width, height).build(RegistryKey.of(RegistryKeys.ENTITY_TYPE, Identifier.of(MTR.MOD_ID, registryName)))));
-		//? }
+		/*return new ObjectHolder<>(MTRNeoForge.ENTITY_TYPES.register(registryName, identifier -> EntityType.Builder.create(factory::apply, SpawnGroup.MISC).dimensions(width, height).build(RegistryKey.of(RegistryKeys.ENTITY_TYPE, Identifier.of(MTR.MOD_ID, registryName)))));
+		*///? }
 	}
 
 	public static String registerItemGroup(String registryName, Supplier<ItemStack> iconSupplier) {
@@ -112,9 +119,9 @@ public final class RegistryServer {
 		//? }
 
 		//? if neoforge {
-		MTRNeoForge.ITEM_GROUPS.register(registryName, () -> ItemGroup.builder().icon(iconSupplier).displayName(Text.translatable(String.format("itemGroup.%s.%s", MTR.MOD_ID, registryName))).entries((displayContext, entries) -> ITEM_GROUP_ENTRIES.getOrDefault(registryName, new ObjectArrayList<>()).forEach(itemSupplier -> entries.add(itemSupplier.get()))).build());
+		/*MTRNeoForge.ITEM_GROUPS.register(registryName, () -> ItemGroup.builder().icon(iconSupplier).displayName(Text.translatable(String.format("itemGroup.%s.%s", MTR.MOD_ID, registryName))).entries((displayContext, entries) -> ITEM_GROUP_ENTRIES.getOrDefault(registryName, new ObjectArrayList<>()).forEach(itemSupplier -> entries.add(itemSupplier.get()))).build());
 		return registryName;
-		//? }
+		*///? }
 	}
 
 	public static ObjectHolder<SoundEvent> registerSoundEvent(String registryName, Supplier<SoundEvent> supplier) {
@@ -123,8 +130,8 @@ public final class RegistryServer {
 		//? }
 
 		//? if neoforge {
-		return new ObjectHolder<>(MTRNeoForge.SOUND_EVENTS.register(registryName, supplier));
-		//? }
+		/*return new ObjectHolder<>(MTRNeoForge.SOUND_EVENTS.register(registryName, supplier));
+		*///? }
 	}
 
 	public static void registerCommands(Consumer<CommandDispatcher<ServerCommandSource>> consumer) {
@@ -133,8 +140,8 @@ public final class RegistryServer {
 		//? }
 
 		//? if neoforge {
-		MainEventBus.commandConsumer = consumer;
-		//? }
+		/*MainEventBus.commandConsumer = consumer;
+		*///? }
 	}
 
 	public static <T> ObjectHolder<ComponentType<T>> registerDataComponentType(String registryName, Supplier<ComponentType<T>> supplier) {
@@ -143,8 +150,8 @@ public final class RegistryServer {
 		//? }
 
 		//? if neoforge {
-		return new ObjectHolder<>(MTRNeoForge.DATA_COMPONENT_TYPES.register(registryName, supplier));
-		//? }
+		/*return new ObjectHolder<>(MTRNeoForge.DATA_COMPONENT_TYPES.register(registryName, supplier));
+		*///? }
 	}
 
 	public static void setupPackets() {
@@ -160,7 +167,7 @@ public final class RegistryServer {
 		//? }
 
 		//? if neoforge {
-		ModEventBus.PAYLOAD_HANDLERS.add(payloadRegistrar -> payloadRegistrar.playBidirectional(MTR.PACKET_IDENTIFIER_C2S, PacketCodec.tuple(PacketCodecs.BYTE_ARRAY, CustomPacketC2S::buffer, CustomPacketC2S::new), new DirectionalPayloadHandler<>((customPacketC2S, context) -> {
+		/*ModEventBus.PAYLOAD_HANDLERS.add(payloadRegistrar -> payloadRegistrar.playBidirectional(MTR.PACKET_IDENTIFIER_C2S, PacketCodec.tuple(PacketCodecs.BYTE_ARRAY, CustomPacketC2S::buffer, CustomPacketC2S::new), new DirectionalPayloadHandler<>((customPacketC2S, context) -> {
 		}, (customPacketC2S, context) -> {
 			final PlayerEntity player = context.player();
 			if (player instanceof ServerPlayerEntity) {
@@ -172,7 +179,7 @@ public final class RegistryServer {
 				}, ((ServerPlayerEntity) player).server::execute);
 			}
 		})));
-		//? }
+		*///? }
 	}
 
 	public static <T extends PacketHandler> void registerPacket(Class<T> classObject, Function<PacketBufferReceiver, T> getInstance) {
@@ -181,8 +188,8 @@ public final class RegistryServer {
 		//? }
 
 		//? if neoforge {
-		ModEventBus.PACKETS.put(classObject.getName(), getInstance);
-		//? }
+		/*ModEventBus.PACKETS.put(classObject.getName(), getInstance);
+		*///? }
 	}
 
 	public static <T extends PacketHandler> void sendPacketToClient(ServerPlayerEntity serverPlayerEntity, T data) {
@@ -194,11 +201,11 @@ public final class RegistryServer {
 		//? }
 
 		//? if neoforge {
-		final PacketBufferSender packetBufferSender = new PacketBufferSender();
+		/*final PacketBufferSender packetBufferSender = new PacketBufferSender();
 		packetBufferSender.writeString(data.getClass().getName());
 		data.write(packetBufferSender);
 		packetBufferSender.send(bytes -> PacketDistributor.sendToPlayer(serverPlayerEntity, new CustomPacketS2C(bytes)), serverPlayerEntity.server::execute);
-		//? }
+		*///? }
 	}
 
 	//? if fabric {

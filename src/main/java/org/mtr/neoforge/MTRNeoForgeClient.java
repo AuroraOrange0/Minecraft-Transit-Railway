@@ -2,7 +2,7 @@ package org.mtr.neoforge;
 
 //? if neoforge {
 
-import net.neoforged.api.distmarker.Dist;
+/*import net.neoforged.api.distmarker.Dist;
 import net.neoforged.fml.common.Mod;
 import org.mtr.MTR;
 import org.mtr.MTRClient;
@@ -15,4 +15,4 @@ public final class MTRNeoForgeClient {
 	}
 }
 
-//? }
+*///? }

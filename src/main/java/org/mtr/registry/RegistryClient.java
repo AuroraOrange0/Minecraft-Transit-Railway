@@ -1,10 +1,18 @@
 package org.mtr.registry;
 
+//? if fabric {
 import net.fabricmc.fabric.api.blockrenderlayer.v1.BlockRenderLayerMap;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.client.rendering.v1.ColorProviderRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry;
+//? }
+
+//? if neoforge {
+/*import org.mtr.neoforge.ModEventBus;
+import org.mtr.neoforge.ModEventBusClient;
+*///? }
+
 import net.minecraft.block.Block;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.block.entity.BlockEntityType;
@@ -19,8 +27,6 @@ import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import org.mtr.MTR;
 import org.mtr.fabric.MTRFabric;
-import org.mtr.neoforge.ModEventBus;
-import org.mtr.neoforge.ModEventBusClient;
 import org.mtr.packet.CustomPacketC2S;
 import org.mtr.packet.PacketBufferReceiver;
 import org.mtr.packet.PacketBufferSender;
@@ -37,8 +43,8 @@ public final class RegistryClient {
 		//? }
 
 		//? if neoforge {
-		ModEventBusClient.BLOCK_ENTITY_RENDERERS.add(event -> event.registerBlockEntityRenderer(blockEntityType.get(), factory));
-		//?}
+		/*ModEventBusClient.BLOCK_ENTITY_RENDERERS.add(event -> event.registerBlockEntityRenderer(blockEntityType.get(), factory));
+		*///?}
 	}
 
 	public static <T extends Entity, U extends T> void registerEntityRenderer(ObjectHolder<EntityType<U>> entityType, EntityRendererFactory<T> factory) {
@@ -47,8 +53,8 @@ public final class RegistryClient {
 		//? }
 
 		//? if neoforge {
-		ModEventBusClient.BLOCK_ENTITY_RENDERERS.add(event -> event.registerEntityRenderer(entityType.get(), factory));
-		//?}
+		/*ModEventBusClient.BLOCK_ENTITY_RENDERERS.add(event -> event.registerEntityRenderer(entityType.get(), factory));
+		*///?}
 	}
 
 	public static void registerBlockRenderType(RenderLayer renderLayer, ObjectHolder<Block> block) {
@@ -57,8 +63,8 @@ public final class RegistryClient {
 		//? }
 
 		//? if neoforge {
-		ModEventBusClient.CLIENT_OBJECTS_TO_REGISTER.add(() -> RenderLayers.setRenderLayer(block.get(), renderLayer));
-		//?}
+		/*ModEventBusClient.CLIENT_OBJECTS_TO_REGISTER.add(() -> RenderLayers.setRenderLayer(block.get(), renderLayer));
+		*///?}
 	}
 
 	public static void registerKeyBinding(KeyBinding keyBinding) {
@@ -67,8 +73,8 @@ public final class RegistryClient {
 		//? }
 
 		//? if neoforge {
-		ModEventBusClient.KEY_BINDINGS.add(keyBinding);
-		//?}
+		/*ModEventBusClient.KEY_BINDINGS.add(keyBinding);
+		*///?}
 	}
 
 	@SafeVarargs
@@ -78,8 +84,8 @@ public final class RegistryClient {
 		//? }
 
 		//? if neoforge {
-		ModEventBusClient.BLOCK_COLORS.add(event -> event.getBlockColors().registerColorProvider(blockColorProvider, Arrays.stream(blocks).map(ObjectHolder::get).toArray(Block[]::new)));
-		//?}
+		/*ModEventBusClient.BLOCK_COLORS.add(event -> event.getBlockColors().registerColorProvider(blockColorProvider, Arrays.stream(blocks).map(ObjectHolder::get).toArray(Block[]::new)));
+		*///?}
 	}
 
 	public static void setupPackets() {
@@ -93,14 +99,14 @@ public final class RegistryClient {
 		//? }
 
 		//? if neoforge {
-		ModEventBus.PAYLOAD_HANDLERS.add(payloadRegistrar -> payloadRegistrar.playBidirectional(MTR.PACKET_IDENTIFIER_S2C, PacketCodec.tuple(PacketCodecs.BYTE_ARRAY, CustomPacketS2C::buffer, CustomPacketS2C::new), new DirectionalPayloadHandler<>((customPacketS2C, context) -> PacketBufferReceiver.receive(customPacketS2C.buffer(), packetBufferReceiver -> {
+		/*ModEventBus.PAYLOAD_HANDLERS.add(payloadRegistrar -> payloadRegistrar.playBidirectional(MTR.PACKET_IDENTIFIER_S2C, PacketCodec.tuple(PacketCodecs.BYTE_ARRAY, CustomPacketS2C::buffer, CustomPacketS2C::new), new DirectionalPayloadHandler<>((customPacketS2C, context) -> PacketBufferReceiver.receive(customPacketS2C.buffer(), packetBufferReceiver -> {
 			final Function<PacketBufferReceiver, ? extends PacketHandler> getInstance = ModEventBus.PACKETS.get(packetBufferReceiver.readString());
 			if (getInstance != null) {
 				getInstance.apply(packetBufferReceiver).runClient();
 			}
 		}, MinecraftClient.getInstance()::execute), (customPacketS2C, context) -> {
 		})));
-		//?}
+		*///?}
 	}
 
 	public static <T extends PacketHandler> void sendPacketToServer(T data) {
@@ -112,10 +118,10 @@ public final class RegistryClient {
 		//? }
 
 		//? if neoforge {
-		final PacketBufferSender packetBufferSender = new PacketBufferSender();
+		/*final PacketBufferSender packetBufferSender = new PacketBufferSender();
 		packetBufferSender.writeString(data.getClass().getName());
 		data.write(packetBufferSender);
 		packetBufferSender.send(bytes -> PacketDistributor.sendToServer(new CustomPacketC2S(bytes)), MinecraftClient.getInstance()::execute);
-		//?}
+		*///?}
 	}
 }

@@ -42,6 +42,22 @@ dependencies {
 	implementation("gg.essential:elementa:${property("dependency.elementa")}")
 	implementation("gg.essential:universalcraft-${property("dependency.universal_craft_minecraft")}-neoforge:${property("dependency.universal_craft")}")
 	implementation("org.jspecify:jspecify:+")
+
+	testImplementation("org.junit.jupiter:junit-jupiter-api:5.+")
+	testImplementation("org.junit.platform:junit-platform-launcher:1.+")
+	testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:5.+")
+}
+
+neoForge {
+	version = property("dependency.neoforge") as String
+
+	mods {
+		register(property("mod.id") as String) {
+			sourceSet(sourceSets["main"])
+		}
+	}
+
+	sourceSets["main"].resources.srcDir("src/main/generated")
 }
 
 tasks {
@@ -53,6 +69,9 @@ tasks {
 			"mod_license" to project.property("mod.license"),
 			"mod_author" to project.property("mod.author"),
 			"mod_version" to project.property("mod.version"),
+			"mod_homepage" to project.property("mod.homepage"),
+			"mod_sources" to project.property("mod.sources"),
+			"mod_issues" to project.property("mod.issues"),
 			"minecraft_version" to sc.current.version,
 		)
 
@@ -61,6 +80,11 @@ tasks {
 		}
 
 		exclude("**/fabric.mod.json")
+	}
+
+	test {
+		useJUnitPlatform()
+		testLogging { showStandardStreams = true }
 	}
 
 	javadoc {
@@ -85,6 +109,10 @@ tasks {
 		from(jar.map { it.archiveFile })
 		into(rootProject.layout.buildDirectory.file("libs/${project.property("mod.version")}"))
 		dependsOn("build")
+	}
+
+	named("createMinecraftArtifacts") {
+		dependsOn("stonecutterGenerate")
 	}
 
 	register("setupWebsiteFiles") {

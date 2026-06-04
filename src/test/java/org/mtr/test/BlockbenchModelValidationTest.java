@@ -1,11 +1,11 @@
 package org.mtr.test;
 
-import org.mtr.libraries.com.google.gson.JsonObject;
-import org.mtr.libraries.com.google.gson.JsonParser;
 import org.apache.commons.io.FilenameUtils;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mtr.MTR;
+import org.mtr.libraries.com.google.gson.JsonObject;
+import org.mtr.libraries.com.google.gson.JsonParser;
 import org.mtr.resource.BlockbenchModelValidator;
 
 import java.io.IOException;
@@ -15,7 +15,7 @@ public final class BlockbenchModelValidationTest {
 
 	@Test
 	public void validate() throws IOException {
-		try (final DirectoryStream<Path> stream = Files.newDirectoryStream(Paths.get(System.getProperty("user.dir")).resolve("src/main/resources/assets/mtr/models/vehicle"))) {
+		try (final DirectoryStream<Path> stream = Files.newDirectoryStream(Paths.get(System.getProperty("user.dir")).resolve("../../src/main/resources/assets/mtr/models/vehicle"))) {
 			stream.forEach(path -> {
 				final String id = FilenameUtils.getBaseName(path.toString());
 				MTR.LOGGER.info("Validating {}", id);
