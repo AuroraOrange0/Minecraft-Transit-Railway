@@ -1,7 +1,6 @@
 package org.mtr.data;
 
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.world.World;
+import net.minecraft.server.level.ServerLevel;
 import org.mtr.MTR;
 import org.mtr.core.operation.ArrivalResponse;
 import org.mtr.core.operation.ArrivalsRequest;
@@ -17,11 +16,11 @@ import java.util.function.Consumer;
 public final class ArrivalsCacheServer extends ArrivalsCache {
 
 	private long millisOffset = 0;
-	private final World world;
+	private final ServerLevel world;
 
 	private static final Object2ObjectAVLTreeMap<String, ArrivalsCacheServer> INSTANCES = new Object2ObjectAVLTreeMap<>();
 
-	private ArrivalsCacheServer(World world) {
+	private ArrivalsCacheServer(ServerLevel world) {
 		super(1000);
 		this.world = world;
 	}
@@ -46,8 +45,8 @@ public final class ArrivalsCacheServer extends ArrivalsCache {
 		);
 	}
 
-	public static ArrivalsCacheServer getInstance(ServerWorld serverWorld) {
-		return INSTANCES.computeIfAbsent(serverWorld.getRegistryKey().getValue().toString(), worldId -> new ArrivalsCacheServer(serverWorld));
+	public static ArrivalsCacheServer getInstance(ServerLevel serverWorld) {
+		return INSTANCES.computeIfAbsent(serverWorld.dimension().location().toString(), worldId -> new ArrivalsCacheServer(serverWorld));
 	}
 
 	public static void tickAll() {

@@ -16,15 +16,15 @@ import net.fabricmc.fabric.api.resource.SimpleSynchronousResourceReloadListener;
 import org.mtr.neoforge.ModEventBusClient;
 *///? }
 
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.render.RenderTickCounter;
-import net.minecraft.client.render.VertexConsumerProvider;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.client.world.ClientWorld;
-import net.minecraft.resource.ResourceManager;
-import net.minecraft.resource.ResourceType;
-import net.minecraft.util.Identifier;
-import net.minecraft.world.chunk.Chunk;
+import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.client.DeltaTracker;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.packs.PackType;
+import net.minecraft.server.packs.resources.ResourceManager;
+import net.minecraft.world.level.chunk.ChunkAccess;
 import org.mtr.MTR;
 import org.mtr.MTRClient;
 
@@ -41,7 +41,7 @@ public final class EventRegistryClient {
 
 		//? if neoforge {
 		/*MainEventBusClient.startClientTickRunnable = runnable;
-		*///? }
+		 *///? }
 	}
 
 	public static void registerEndClientTick(Runnable runnable) {
@@ -51,27 +51,27 @@ public final class EventRegistryClient {
 
 		//? if neoforge {
 		/*MainEventBusClient.endClientTickRunnable = runnable;
-		*///? }
+		 *///? }
 	}
 
-	public static void registerStartWorldTick(Consumer<ClientWorld> consumer) {
+	public static void registerStartWorldTick(Consumer<ClientLevel> consumer) {
 		//? if fabric {
 		ClientTickEvents.START_WORLD_TICK.register(consumer::accept);
 		//? }
 
 		//? if neoforge {
 		/*MainEventBusClient.startWorldTickRunnable = consumer;
-		*///? }
+		 *///? }
 	}
 
-	public static void registerEndWorldTick(Consumer<ClientWorld> consumer) {
+	public static void registerEndWorldTick(Consumer<ClientLevel> consumer) {
 		//? if fabric {
 		ClientTickEvents.END_WORLD_TICK.register(consumer::accept);
 		//? }
 
 		//? if neoforge {
 		/*MainEventBusClient.endWorldTickRunnable = consumer;
-		*///? }
+		 *///? }
 	}
 
 	public static void registerClientJoin(Runnable runnable) {
@@ -81,7 +81,7 @@ public final class EventRegistryClient {
 
 		//? if neoforge {
 		/*MainEventBusClient.clientJoinRunnable = runnable;
-		*///? }
+		 *///? }
 	}
 
 	public static void registerClientDisconnect(Runnable runnable) {
@@ -91,40 +91,40 @@ public final class EventRegistryClient {
 
 		//? if neoforge {
 		/*MainEventBusClient.clientDisconnectRunnable = runnable;
-		*///? }
+		 *///? }
 	}
 
-	public static void registerChunkLoad(BiConsumer<ClientWorld, Chunk> consumer) {
+	public static void registerChunkLoad(BiConsumer<ClientLevel, ChunkAccess> consumer) {
 		//? if fabric {
 		ClientChunkEvents.CHUNK_LOAD.register(consumer::accept);
 		//? }
 
 		//? if neoforge {
 		/*ModEventBusClient.chunkLoadConsumer = consumer;
-		*///? }
+		 *///? }
 	}
 
-	public static void registerChunkUnload(BiConsumer<ClientWorld, Chunk> consumer) {
+	public static void registerChunkUnload(BiConsumer<ClientLevel, ChunkAccess> consumer) {
 		//? if fabric {
 		ClientChunkEvents.CHUNK_UNLOAD.register(consumer::accept);
 		//? }
 
 		//? if neoforge {
 		/*ModEventBusClient.chunkUnloadConsumer = consumer;
-		*///? }
+		 *///? }
 	}
 
 	public static void registerResourceReloadEvent(Runnable runnable) {
 		//? if fabric {
-		final Identifier identifier = Identifier.of(Integer.toHexString(new Random().nextInt()), "resource");
-		ResourceManagerHelper.get(ResourceType.CLIENT_RESOURCES).registerReloadListener(new SimpleSynchronousResourceReloadListener() {
+		final ResourceLocation identifier = ResourceLocation.fromNamespaceAndPath(Integer.toHexString(new Random().nextInt()), "resource");
+		ResourceManagerHelper.get(PackType.CLIENT_RESOURCES).registerReloadListener(new SimpleSynchronousResourceReloadListener() {
 			@Override
-			public Identifier getFabricId() {
+			public ResourceLocation getFabricId() {
 				return identifier;
 			}
 
 			@Override
-			public void reload(ResourceManager manager) {
+			public void onResourceManagerReload(ResourceManager manager) {
 				runnable.run();
 			}
 		});
@@ -132,32 +132,32 @@ public final class EventRegistryClient {
 
 		//? if neoforge {
 		/*ModEventBusClient.resourceReloadRunnable = runnable;
-		*///? }
+		 *///? }
 	}
 
 	public static void registerWorldRenderEvent(MTRClient.WorldRenderCallback worldRenderCallback) {
 		//? if fabric {
 		WorldRenderEvents.AFTER_ENTITIES.register(worldRenderContext -> {
-			final MatrixStack matrixStack = worldRenderContext.matrixStack();
-			final VertexConsumerProvider vertexConsumerProvider = worldRenderContext.consumers();
+			final PoseStack matrixStack = worldRenderContext.matrixStack();
+			final MultiBufferSource vertexConsumerProvider = worldRenderContext.consumers();
 			if (matrixStack != null && vertexConsumerProvider != null) {
-				worldRenderCallback.accept(matrixStack, vertexConsumerProvider, worldRenderContext.camera().getPos());
+				worldRenderCallback.accept(matrixStack, vertexConsumerProvider, worldRenderContext.camera().getPosition());
 			}
 		});
 		//? }
 
 		//? if neoforge {
 		/*MainEventBusClient.worldRenderCallback = worldRenderCallback;
-		*///? }
+		 *///? }
 	}
 
-	public static void registerHudLayerRenderEvent(BiConsumer<DrawContext, RenderTickCounter> hudLayerRenderCallback) {
+	public static void registerHudLayerRenderEvent(BiConsumer<GuiGraphics, DeltaTracker> hudLayerRenderCallback) {
 		//? if fabric {
-		HudLayerRegistrationCallback.EVENT.register(layeredDrawerWrapper -> layeredDrawerWrapper.attachLayerBefore(IdentifiedLayer.CHAT, Identifier.of(MTR.MOD_ID, "gui"), hudLayerRenderCallback::accept));
+		HudLayerRegistrationCallback.EVENT.register(layeredDrawerWrapper -> layeredDrawerWrapper.attachLayerBefore(IdentifiedLayer.CHAT, ResourceLocation.fromNamespaceAndPath(MTR.MOD_ID, "gui"), hudLayerRenderCallback::accept));
 		//? }
 
 		//? if neoforge {
 		/*MainEventBusClient.hudLayerRenderCallback = hudLayerRenderCallback;
-		*///? }
+		 *///? }
 	}
 }

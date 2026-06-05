@@ -1,9 +1,9 @@
 package org.mtr.client;
 
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.texture.NativeImage;
-import net.minecraft.client.texture.NativeImageBackedTexture;
-import net.minecraft.util.Identifier;
+import com.mojang.blaze3d.platform.NativeImage;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.texture.DynamicTexture;
+import net.minecraft.resources.ResourceLocation;
 import org.jspecify.annotations.Nullable;
 import org.mtr.MTR;
 import org.mtr.config.Config;
@@ -35,7 +35,7 @@ import java.util.function.Supplier;
  * <p>Most "text on a sign" textures (station names, PIDS rows, exit letters, direction
  * arrows, …) are not shipped in the resource pack — they are drawn at runtime by
  * {@link RouteMapGenerator} from live simulation data, then uploaded to GL as
- * {@link NativeImageBackedTexture}s. This class owns that pipeline.</p>
+ * {@link DynamicTexture}s. This class owns that pipeline.</p>
  *
  * <p>Caller flow:</p>
  * <ol>
@@ -65,15 +65,15 @@ public class DynamicTextureCache implements IGui {
 	private final Object2ObjectLinkedOpenHashMap<String, DynamicResource> dynamicResources = new Object2ObjectLinkedOpenHashMap<>();
 	private final ObjectOpenHashSet<String> generatingResources = new ObjectOpenHashSet<>();
 	private final MessageQueue<Runnable> resourceRegistryQueue = new MessageQueue<>();
-	private final Object2LongArrayMap<Identifier> deletedResources = new Object2LongArrayMap<>();
+	private final Object2LongArrayMap<ResourceLocation> deletedResources = new Object2LongArrayMap<>();
 
 	public static DynamicTextureCache instance = new DynamicTextureCache();
 
 	public static final float LINE_HEIGHT_MULTIPLIER = 1.25F;
 	private static final int COOLDOWN_TIME = 10000; // Images not requested within the last 10 seconds will be unregistered
-	private static final Identifier DEFAULT_BLACK_RESOURCE = Identifier.of(MTR.MOD_ID, "textures/block/black.png");
-	private static final Identifier DEFAULT_WHITE_RESOURCE = Identifier.of(MTR.MOD_ID, "textures/block/white.png");
-	private static final Identifier DEFAULT_TRANSPARENT_RESOURCE = Identifier.of(MTR.MOD_ID, "textures/block/transparent.png");
+	private static final ResourceLocation DEFAULT_BLACK_RESOURCE = ResourceLocation.fromNamespaceAndPath(MTR.MOD_ID, "textures/block/black.png");
+	private static final ResourceLocation DEFAULT_WHITE_RESOURCE = ResourceLocation.fromNamespaceAndPath(MTR.MOD_ID, "textures/block/white.png");
+	private static final ResourceLocation DEFAULT_TRANSPARENT_RESOURCE = ResourceLocation.fromNamespaceAndPath(MTR.MOD_ID, "textures/block/transparent.png");
 	private static final int MAX_IMAGE_SIZE = 2048;
 
 	/**
@@ -113,10 +113,10 @@ public class DynamicTextureCache implements IGui {
 		});
 		keysToRemove.forEach(dynamicResources::remove);
 
-		final ObjectArrayList<Identifier> deletedResourcesToRemove = new ObjectArrayList<>();
+		final ObjectArrayList<ResourceLocation> deletedResourcesToRemove = new ObjectArrayList<>();
 		deletedResources.forEach((identifier, expiryTime) -> {
 			if (expiryTime < currentTimeMillis) {
-				MinecraftClient.getInstance().getTextureManager().destroyTexture(identifier);
+				Minecraft.getInstance().getTextureManager().release(identifier);
 				deletedResourcesToRemove.add(identifier);
 			}
 		});
@@ -147,7 +147,7 @@ public class DynamicTextureCache implements IGui {
 		return getResource(String.format("single_row_station_name_%s_%s", platformId, aspectRatio), () -> RouteMapGenerator.generateSingleRowStationName(platformId, aspectRatio), DefaultRenderingColor.WHITE);
 	}
 
-	public DynamicResource getSignText(String text, IGui.HorizontalAlignment horizontalAlignment, float paddingScale, int backgroundColor, int textColor) {
+	public DynamicResource getSignText(String text, HorizontalAlignment horizontalAlignment, float paddingScale, int backgroundColor, int textColor) {
 		return getResource(String.format("sign_text_%s_%s_%s_%s_%s", text, horizontalAlignment, paddingScale, backgroundColor, textColor), () -> RouteMapGenerator.generateSignText(text, horizontalAlignment, paddingScale, backgroundColor, textColor), DefaultRenderingColor.TRANSPARENT);
 	}
 
@@ -159,11 +159,11 @@ public class DynamicTextureCache implements IGui {
 		return getResource(String.format("exit_sign_letter_%s_%s", exitLetter, exitNumber), () -> RouteMapGenerator.generateExitSignLetter(exitLetter, exitNumber, backgroundColor), DefaultRenderingColor.TRANSPARENT);
 	}
 
-	public DynamicResource getRouteSquare(int color, String routeName, IGui.HorizontalAlignment horizontalAlignment) {
+	public DynamicResource getRouteSquare(int color, String routeName, HorizontalAlignment horizontalAlignment) {
 		return getResource(String.format("route_square_%s_%s_%s", color, routeName, horizontalAlignment), () -> RouteMapGenerator.generateRouteSquare(color, routeName, horizontalAlignment), DefaultRenderingColor.TRANSPARENT);
 	}
 
-	public DynamicResource getDirectionArrow(long platformId, boolean hasLeft, boolean hasRight, IGui.HorizontalAlignment horizontalAlignment, boolean showToString, float paddingScale, float aspectRatio, int backgroundColor, int textColor, int transparentColor) {
+	public DynamicResource getDirectionArrow(long platformId, boolean hasLeft, boolean hasRight, HorizontalAlignment horizontalAlignment, boolean showToString, float paddingScale, float aspectRatio, int backgroundColor, int textColor, int transparentColor) {
 		return getResource(String.format("direction_arrow_%s_%s_%s_%s_%s_%s_%s_%s_%s_%s", platformId, hasLeft, hasRight, horizontalAlignment, showToString, paddingScale, aspectRatio, backgroundColor, textColor, transparentColor), () -> RouteMapGenerator.generateDirectionArrow(platformId, hasLeft, hasRight, horizontalAlignment, showToString, paddingScale, aspectRatio, backgroundColor, textColor, transparentColor), transparentColor == 0 && backgroundColor == ARGB_WHITE ? DefaultRenderingColor.WHITE : DefaultRenderingColor.TRANSPARENT);
 	}
 
@@ -192,7 +192,7 @@ public class DynamicTextureCache implements IGui {
 	 * @return tightly-packed {@code BYTE_GRAY} pixels suitable for compositing into a
 	 * {@link NativeImage}; empty if the fonts have not yet loaded
 	 */
-	public byte[] getTextPixels(String text, int[] dimensions, int maxWidth, int maxHeight, int fontSizeCjk, int fontSize, int padding, IGui.@Nullable HorizontalAlignment horizontalAlignment) {
+	public byte[] getTextPixels(String text, int[] dimensions, int maxWidth, int maxHeight, int fontSizeCjk, int fontSize, int padding, @Nullable HorizontalAlignment horizontalAlignment) {
 		if (maxWidth <= 0 || font == null || fontCjk == null) {
 			dimensions[0] = 0;
 			dimensions[1] = 0;
@@ -301,7 +301,7 @@ public class DynamicTextureCache implements IGui {
 
 		MainRenderer.WORKER_THREAD.scheduleDynamicTextures(() -> {
 			while (font == null) {
-				ResourceManagerHelper.readResource(Identifier.of(MTR.MOD_ID, "font/noto-sans-semibold.ttf"), inputStream -> {
+				ResourceManagerHelper.readResource(ResourceLocation.fromNamespaceAndPath(MTR.MOD_ID, "font/noto-sans-semibold.ttf"), inputStream -> {
 					try {
 						font = Font.createFont(Font.TRUETYPE_FONT, inputStream);
 					} catch (Exception e) {
@@ -311,7 +311,7 @@ public class DynamicTextureCache implements IGui {
 			}
 
 			while (fontCjk == null) {
-				ResourceManagerHelper.readResource(Identifier.of(MTR.MOD_ID, "font/noto-serif-tc-semibold.ttf"), inputStream -> {
+				ResourceManagerHelper.readResource(ResourceLocation.fromNamespaceAndPath(MTR.MOD_ID, "font/noto-serif-tc-semibold.ttf"), inputStream -> {
 					try {
 						fontCjk = Font.createFont(Font.TRUETYPE_FONT, inputStream);
 					} catch (Exception e) {
@@ -337,16 +337,16 @@ public class DynamicTextureCache implements IGui {
 						newNativeImage = new NativeImage(NativeImage.Format.RGBA, Math.min(newMaxImageSize, nativeImage.getWidth()), Math.min(newMaxImageSize, nativeImage.getHeight()), false);
 						for (int x = 0; x < Math.min(newMaxImageSize, nativeImage.getWidth()); x++) {
 							for (int y = 0; y < Math.min(newMaxImageSize, nativeImage.getHeight()); y++) {
-								newNativeImage.setColorArgb(x, y, nativeImage.getColorArgb(x, y));
+								newNativeImage.setPixel(x, y, nativeImage.getPixel(x, y));
 							}
 						}
 					} else {
 						newNativeImage = nativeImage;
 					}
 
-					final NativeImageBackedTexture nativeImageBackedTexture = new NativeImageBackedTexture(newNativeImage);
-					final Identifier identifier = Identifier.of(MTR.MOD_ID, "id_" + MTR.randomString());
-					MinecraftClient.getInstance().getTextureManager().registerTexture(identifier, nativeImageBackedTexture);
+					final DynamicTexture nativeImageBackedTexture = new DynamicTexture(newNativeImage);
+					final ResourceLocation identifier = ResourceLocation.fromNamespaceAndPath(MTR.MOD_ID, "id_" + MTR.randomString());
+					Minecraft.getInstance().getTextureManager().register(identifier, nativeImageBackedTexture);
 					dynamicResourceNew = new DynamicResource(identifier, nativeImageBackedTexture);
 					dynamicResources.put(key, dynamicResourceNew);
 				}
@@ -369,7 +369,7 @@ public class DynamicTextureCache implements IGui {
 	/**
 	 * Generated-texture handle returned by every {@code getXxx(...)} accessor.
 	 *
-	 * <p>Holds the GL {@link Identifier} to bind plus the rendered pixel dimensions.
+	 * <p>Holds the GL {@link ResourceLocation} to bind plus the rendered pixel dimensions.
 	 * Instances are short-lived: a fresh one is allocated each time a texture is
 	 * regenerated, and {@link #remove()} cancels any in-flight scheduled renders and
 	 * evicts cached render-layer entries.</p>
@@ -380,12 +380,12 @@ public class DynamicTextureCache implements IGui {
 		private boolean needsRefresh;
 		public final int width;
 		public final int height;
-		public final Identifier identifier;
+		public final ResourceLocation identifier;
 
-		private DynamicResource(Identifier identifier, @Nullable NativeImageBackedTexture nativeImageBackedTexture) {
+		private DynamicResource(ResourceLocation identifier, @Nullable DynamicTexture nativeImageBackedTexture) {
 			this.identifier = identifier;
 			if (nativeImageBackedTexture != null) {
-				final NativeImage nativeImage = nativeImageBackedTexture.getImage();
+				final NativeImage nativeImage = nativeImageBackedTexture.getPixels();
 				if (nativeImage != null) {
 					width = nativeImage.getWidth();
 					height = nativeImage.getHeight();
@@ -412,7 +412,7 @@ public class DynamicTextureCache implements IGui {
 
 		private final DynamicResource dynamicResource;
 
-		DefaultRenderingColor(Identifier identifier) {
+		DefaultRenderingColor(ResourceLocation identifier) {
 			dynamicResource = new DynamicResource(identifier, null);
 		}
 	}

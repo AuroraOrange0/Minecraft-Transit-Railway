@@ -1,9 +1,9 @@
 package org.mtr.map;
 
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gl.VertexBuffer;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
+import com.mojang.blaze3d.vertex.VertexBuffer;
+import net.minecraft.client.Minecraft;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.Level;
 import org.jspecify.annotations.Nullable;
 import org.mtr.MTR;
 import org.mtr.cache.CachedFileProvider;
@@ -17,13 +17,13 @@ import java.util.Locale;
  */
 public final class MapTileProvider extends CachedFileProvider<MapTileResource> {
 
-	private final World world;
+	private final Level world;
 	private final MapType mapType;
 
 	public static final int TILE_SIZE = 256;
 
-	public MapTileProvider(World world, String uniqueWorldId, MapType mapType) {
-		super(MinecraftClient.getInstance().runDirectory.toPath().resolve("config/cache/map").resolve(uniqueWorldId).resolve(MTR.getWorldId(world)));
+	public MapTileProvider(Level world, String uniqueWorldId, MapType mapType) {
+		super(Minecraft.getInstance().gameDirectory.toPath().resolve("config/cache/map").resolve(uniqueWorldId).resolve(MTR.getWorldId(world)));
 		this.world = world;
 		this.mapType = mapType;
 	}

@@ -7,7 +7,7 @@ import gg.essential.elementa.constraints.*;
 import gg.essential.universal.UMatrixStack;
 import kotlin.Unit;
 import lombok.Setter;
-import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.Minecraft;
 import org.jspecify.annotations.Nullable;
 import org.mtr.tool.ReleasedDynamicTextureRegistry;
 
@@ -169,7 +169,7 @@ public final class TextInputComponent extends StitchedImageComponent {
 			final long currentTime = System.currentTimeMillis();
 
 			if (isActive() && (currentTime - lastCursorChangeTime < CURSOR_FLASH_TIME || currentTime % CURSOR_FLASH_TIME < CURSOR_FLASH_TIME / 2)) {
-				getCursorComponent().setColor(getCursorColor()).setWidth(new PixelConstraint(1 / (float) MinecraftClient.getInstance().getWindow().getScaleFactor()));
+				getCursorComponent().setColor(getCursorColor()).setWidth(new PixelConstraint(1 / (float) Minecraft.getInstance().getWindow().getGuiScale()));
 			} else {
 				getCursorComponent().setColor(new Color(0, 0, 0, 0));
 			}

@@ -1,8 +1,8 @@
 package org.mtr.packet;
 
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import org.jspecify.annotations.Nullable;
 import org.mtr.MTR;
 import org.mtr.block.BlockPIDSBase;
@@ -17,7 +17,7 @@ public final class PacketUpdatePIDSConfig extends BlockEntityPacketHandler {
 	private final int displayPage;
 
 	public PacketUpdatePIDSConfig(PacketBufferReceiver packetBufferReceiver) {
-		blockPos = BlockPos.fromLong(packetBufferReceiver.readLong());
+		blockPos = BlockPos.of(packetBufferReceiver.readLong());
 
 		final int maxMessages = packetBufferReceiver.readInt();
 		messages = new String[maxMessages];
@@ -66,7 +66,7 @@ public final class PacketUpdatePIDSConfig extends BlockEntityPacketHandler {
 	}
 
 	@Override
-	protected void setData(@Nullable World world) {
+	protected void setData(@Nullable Level world) {
 		if (world == null || !MTR.isChunkLoaded(world, blockPos)) {
 			return;
 		}

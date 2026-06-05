@@ -1,7 +1,7 @@
 package org.mtr.render;
 
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.util.math.Vec3d;
+import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.world.phys.Vec3;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
 import java.util.function.Consumer;
@@ -9,7 +9,7 @@ import java.util.function.Consumer;
 public class StoredMatrixTransformations {
 
 	public final boolean useDefaultOffset;
-	private final ObjectArrayList<Consumer<MatrixStack>> transformations = new ObjectArrayList<>();
+	private final ObjectArrayList<Consumer<PoseStack>> transformations = new ObjectArrayList<>();
 	private final double initialTranslateX;
 	private final double initialTranslateY;
 	private final double initialTranslateZ;
@@ -35,7 +35,7 @@ public class StoredMatrixTransformations {
 		this.initialTranslateZ = initialTranslateZ;
 	}
 
-	public void add(Consumer<MatrixStack> transformation) {
+	public void add(Consumer<PoseStack> transformation) {
 		transformations.add(transformation);
 	}
 
@@ -43,8 +43,8 @@ public class StoredMatrixTransformations {
 		transformations.addAll(storedMatrixTransformations.transformations);
 	}
 
-	public void transform(MatrixStack matrixStack, Vec3d offset) {
-		matrixStack.push();
+	public void transform(PoseStack matrixStack, Vec3 offset) {
+		matrixStack.pushPose();
 		if (useDefaultOffset) {
 			matrixStack.translate(initialTranslateX - offset.x, initialTranslateY - offset.y, initialTranslateZ - offset.z);
 		}

@@ -1,7 +1,7 @@
 package org.mtr.screen;
 
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
 import org.mtr.data.IGui;
 import org.mtr.generated.lang.TranslationProvider;
 
@@ -17,16 +17,16 @@ public class ReloadCustomResourcesScreen extends ScreenBase implements IGui {
 	}
 
 	@Override
-	public void render(DrawContext context, int mouseX, int mouseY, float delta) {
+	public void render(GuiGraphics context, int mouseX, int mouseY, float delta) {
 		renderBackground(context, mouseX, mouseY, delta);
-		context.drawCenteredTextWithShadow(MinecraftClient.getInstance().textRenderer, resourceReloadingInProgressText, width / 2, height / 2 - TEXT_HEIGHT / 2, ARGB_WHITE);
+		context.drawCenteredString(Minecraft.getInstance().font, resourceReloadingInProgressText, width / 2, height / 2 - TEXT_HEIGHT / 2, ARGB_WHITE);
 		super.render(context, mouseX, mouseY, delta);
 
 		if (i > 10) {
 			i = -1;
 			task.run();
 		} else if (i < 0) {
-			MinecraftClient.getInstance().setScreen(null);
+			Minecraft.getInstance().setScreen(null);
 		} else {
 			i++;
 		}

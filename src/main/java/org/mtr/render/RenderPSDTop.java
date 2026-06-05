@@ -1,12 +1,12 @@
 package org.mtr.render;
 
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.world.World;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Mth;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
 import org.mtr.MTR;
 import org.mtr.block.BlockPSDAPGDoorBase;
 import org.mtr.block.BlockPSDAPGGlassEndBase;
@@ -17,10 +17,10 @@ import org.mtr.client.IDrawing;
 
 public class RenderPSDTop extends RenderRouteBase<BlockPSDTop.PSDTopBlockEntity> {
 
-	private static final float END_FRONT_OFFSET = 1 / (MathHelper.SQUARE_ROOT_OF_TWO * 16);
+	private static final float END_FRONT_OFFSET = 1 / (Mth.SQRT_OF_TWO * 16);
 	private static final float BOTTOM_DIAGONAL_OFFSET = ((float) Math.sqrt(3) - 1) / 32;
-	private static final float ROOT_TWO_SCALED = MathHelper.SQUARE_ROOT_OF_TWO / 16;
-	private static final float BOTTOM_END_DIAGONAL_OFFSET = END_FRONT_OFFSET - BOTTOM_DIAGONAL_OFFSET / MathHelper.SQUARE_ROOT_OF_TWO;
+	private static final float ROOT_TWO_SCALED = Mth.SQRT_OF_TWO / 16;
+	private static final float BOTTOM_END_DIAGONAL_OFFSET = END_FRONT_OFFSET - BOTTOM_DIAGONAL_OFFSET / Mth.SQRT_OF_TWO;
 	private static final float COLOR_STRIP_START = 14.5F / 16;
 	private static final float COLOR_STRIP_END = 15 / 16F;
 
@@ -29,10 +29,10 @@ public class RenderPSDTop extends RenderRouteBase<BlockPSDTop.PSDTopBlockEntity>
 	}
 
 	@Override
-	protected RenderType getRenderType(World world, BlockPos pos, BlockState state) {
+	protected RenderType getRenderType(Level world, BlockPos pos, BlockState state) {
 		final BlockPSDTop.EnumPersistent persistent = IBlock.getStatePropertySafe(state, BlockPSDTop.PERSISTENT);
 		if (persistent == BlockPSDTop.EnumPersistent.NONE) {
-			final Block blockBelow = world.getBlockState(pos.down()).getBlock();
+			final Block blockBelow = world.getBlockState(pos.below()).getBlock();
 			if (blockBelow instanceof BlockPSDAPGDoorBase) {
 				return RenderType.ARROW;
 			} else if (!(blockBelow instanceof BlockPSDAPGGlassEndBase)) {
@@ -53,7 +53,7 @@ public class RenderPSDTop extends RenderRouteBase<BlockPSDTop.PSDTopBlockEntity>
 		if (!airLeft && !airRight || persistent) {
 			return;
 		}
-		MainRenderer.scheduleRender(Identifier.of(MTR.MOD_ID, "textures/block/psd_top.png"), false, QueuedRenderLayer.EXTERIOR, (matrixStack, vertexConsumer, offset) -> {
+		MainRenderer.scheduleRender(ResourceLocation.fromNamespaceAndPath(MTR.MOD_ID, "textures/block/psd_top.png"), false, QueuedRenderLayer.EXTERIOR, (matrixStack, vertexConsumer, offset) -> {
 			storedMatrixTransformations.transform(matrixStack, offset);
 			if (airLeft) {
 				// back
@@ -95,7 +95,7 @@ public class RenderPSDTop extends RenderRouteBase<BlockPSDTop.PSDTopBlockEntity>
 				// left side diagonal square
 				IDrawing.drawTexture(matrixStack, vertexConsumer, -0.5F + BOTTOM_END_DIAGONAL_OFFSET, BOTTOM_DIAGONAL_OFFSET, -0.5F - BOTTOM_END_DIAGONAL_OFFSET, -0.5F, 0, -0.5F, -0.5F, 0.0625F, -0.5F, -0.5F + END_FRONT_OFFSET, 0.0625F, -0.5F - END_FRONT_OFFSET, 0, 0.9375F, 0.0625F, 1, facing, -1, light);
 			}
-			matrixStack.pop();
+			matrixStack.popPose();
 		});
 	}
 
@@ -113,7 +113,7 @@ public class RenderPSDTop extends RenderRouteBase<BlockPSDTop.PSDTopBlockEntity>
 			if (airRight) {
 				IDrawing.drawTexture(matrixStack, vertexConsumer, 0.25F - END_FRONT_OFFSET, COLOR_STRIP_START, 0.125F - END_FRONT_OFFSET, 1 - END_FRONT_OFFSET, COLOR_STRIP_END, -0.625F - END_FRONT_OFFSET, facing, -1, light);
 			}
-			matrixStack.pop();
+			matrixStack.popPose();
 		});
 	}
 

@@ -1,8 +1,8 @@
 package org.mtr.packet;
 
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import org.jspecify.annotations.Nullable;
 import org.mtr.MTR;
 import org.mtr.block.BlockSignalBase;
@@ -17,7 +17,7 @@ public final class PacketUpdateSignalConfig extends BlockEntityPacketHandler {
 	private final boolean isBackSide;
 
 	public PacketUpdateSignalConfig(PacketBufferReceiver packetBufferReceiver) {
-		blockPos = BlockPos.fromLong(packetBufferReceiver.readLong());
+		blockPos = BlockPos.of(packetBufferReceiver.readLong());
 		acceptRedstone = packetBufferReceiver.readBoolean();
 		outputRedstone = packetBufferReceiver.readBoolean();
 		final int signalColorCount = packetBufferReceiver.readInt();
@@ -47,7 +47,7 @@ public final class PacketUpdateSignalConfig extends BlockEntityPacketHandler {
 	}
 
 	@Override
-	protected void setData(@Nullable World world) {
+	protected void setData(@Nullable Level world) {
 		if (world == null || !MTR.isChunkLoaded(world, blockPos)) {
 			return;
 		}

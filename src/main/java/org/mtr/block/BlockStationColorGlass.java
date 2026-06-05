@@ -1,31 +1,31 @@
 package org.mtr.block;
 
-import net.minecraft.block.AbstractBlock;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.SlabBlock;
-import net.minecraft.block.enums.SlabType;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.world.BlockView;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.block.SlabBlock;
+import net.minecraft.world.level.block.state.BlockBehaviour;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.SlabType;
 
 public class BlockStationColorGlass extends BlockStationColor {
 
-	public BlockStationColorGlass(AbstractBlock.Settings settings) {
-		super(settings.nonOpaque());
+	public BlockStationColorGlass(BlockBehaviour.Properties settings) {
+		super(settings.noOcclusion());
 	}
 
 	@Override
-	public boolean isSideInvisible(BlockState state, BlockState neighborState, Direction direction) {
-		return neighborState.getBlock() instanceof BlockStationColorGlass || (neighborState.getBlock() instanceof BlockStationColorGlassSlab && neighborState.get(SlabBlock.TYPE) == SlabType.DOUBLE) || super.isSideInvisible(state, neighborState, direction);
+	public boolean skipRendering(BlockState state, BlockState neighborState, Direction direction) {
+		return neighborState.getBlock() instanceof BlockStationColorGlass || (neighborState.getBlock() instanceof BlockStationColorGlassSlab && neighborState.getValue(SlabBlock.TYPE) == SlabType.DOUBLE) || super.skipRendering(state, neighborState, direction);
 	}
 
 	@Override
-	public float getAmbientOcclusionLightLevel(BlockState state, BlockView world, BlockPos pos) {
+	public float getShadeBrightness(BlockState state, BlockGetter world, BlockPos pos) {
 		return 1;
 	}
 
 	@Override
-	protected boolean isTransparent(BlockState state) {
+	protected boolean propagatesSkylightDown(BlockState state) {
 		return true;
 	}
 }

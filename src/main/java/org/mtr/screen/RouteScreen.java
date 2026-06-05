@@ -140,7 +140,7 @@ public final class RouteScreen extends NameColorDataScreenBase<Route> {
 	}
 
 	@Override
-	protected void onClose() {
+	protected void close() {
 		data.setRouteNumber(routeNumberTextInput.getText());
 		data.setRouteType(routeType);
 		data.setHidden(isHiddenCheckbox.isChecked());

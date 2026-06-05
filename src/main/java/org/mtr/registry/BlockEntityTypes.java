@@ -1,6 +1,6 @@
 package org.mtr.registry;
 
-import net.minecraft.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.entity.BlockEntityType;
 import org.mtr.MTR;
 import org.mtr.block.*;
 

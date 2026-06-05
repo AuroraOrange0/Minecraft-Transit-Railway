@@ -1,7 +1,7 @@
 package org.mtr.widget;
 
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
 import org.mtr.tool.GuiHelper;
 
 import java.util.function.Consumer;
@@ -17,7 +17,7 @@ public final class ButtonGroupWidget extends ClickableWidgetBase {
 		int totalTextWidth = 0;
 
 		for (int i = 0; i < messages.length; i++) {
-			rawTextWidths[i] = MinecraftClient.getInstance().textRenderer.getWidth(messages[i]);
+			rawTextWidths[i] = Minecraft.getInstance().font.width(messages[i]);
 			totalTextWidth += GuiHelper.DEFAULT_PADDING * 2 + rawTextWidths[i];
 		}
 
@@ -33,19 +33,19 @@ public final class ButtonGroupWidget extends ClickableWidgetBase {
 		}
 
 		this.totalWidgetWidth = totalWidgetWidth;
-		setDimensions(totalWidgetWidth, GuiHelper.DEFAULT_LINE_SIZE);
+		setSize(totalWidgetWidth, GuiHelper.DEFAULT_LINE_SIZE);
 	}
 
 	@Override
-	public void init(Consumer<ClickableWidgetBase> addDrawableChild) {
+	public void init(Consumer<ClickableWidgetBase> addRenderableWidget) {
 		for (final BetterButtonWidget button : buttons) {
-			addDrawableChild.accept(button);
+			addRenderableWidget.accept(button);
 		}
 	}
 
 	@Override
-	protected void renderWidget(DrawContext context, int mouseX, int mouseY, float delta) {
-		setDimensions(totalWidgetWidth, GuiHelper.DEFAULT_LINE_SIZE);
+	protected void renderWidget(GuiGraphics context, int mouseX, int mouseY, float delta) {
+		setSize(totalWidgetWidth, GuiHelper.DEFAULT_LINE_SIZE);
 		int x = getX();
 		for (BetterButtonWidget button : buttons) {
 			button.active = active;

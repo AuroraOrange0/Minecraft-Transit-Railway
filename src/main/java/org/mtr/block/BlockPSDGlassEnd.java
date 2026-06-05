@@ -1,14 +1,14 @@
 package org.mtr.block;
 
-import net.minecraft.block.AbstractBlock;
-import net.minecraft.item.Item;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.level.block.state.BlockBehaviour;
 import org.mtr.registry.Items;
 
 public class BlockPSDGlassEnd extends BlockPSDAPGGlassEndBase {
 
 	private final int style;
 
-	public BlockPSDGlassEnd(AbstractBlock.Settings settings, int style) {
+	public BlockPSDGlassEnd(BlockBehaviour.Properties settings, int style) {
 		super(settings);
 		this.style = style;
 	}

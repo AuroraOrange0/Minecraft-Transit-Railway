@@ -2,9 +2,9 @@ package org.mtr.widget;
 
 import gg.essential.universal.UMatrixStack;
 import kotlin.Pair;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.core.BlockPos;
 import org.jspecify.annotations.Nullable;
 import org.mtr.core.tool.Utilities;
 import org.mtr.libraries.it.unimi.dsi.fastutil.longs.LongAVLTreeSet;
@@ -61,9 +61,9 @@ public final class SignPreviewComponent extends SlotBackgroundComponent {
 
 		matrixStack.push();
 		matrixStack.translate(getLeft() + 1, getTop() + 1, 0);
-		final MinecraftClient minecraftClient = MinecraftClient.getInstance();
-		SignResource.render(UConverters.convert(matrixStack), minecraftClient.getBufferBuilders().getEntityVertexConsumers(), signPos, selectedIds, signIds, getHeight() - 2, 0, true);
-		minecraftClient.getBufferBuilders().getEntityVertexConsumers().draw();
+		final Minecraft minecraftClient = Minecraft.getInstance();
+		SignResource.render(UConverters.convert(matrixStack), minecraftClient.renderBuffers().bufferSource(), signPos, selectedIds, signIds, getHeight() - 2, 0, true);
+		minecraftClient.renderBuffers().bufferSource().endBatch();
 		matrixStack.pop();
 
 		final Pair<Float, Float> mousePosition = getMousePosition();

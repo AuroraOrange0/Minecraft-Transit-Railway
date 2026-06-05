@@ -5,10 +5,10 @@ import gg.essential.elementa.components.UIContainer;
 import gg.essential.elementa.constraints.PixelConstraint;
 import gg.essential.elementa.constraints.RelativeConstraint;
 import gg.essential.elementa.constraints.SiblingConstraint;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.client.world.ClientWorld;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.core.BlockPos;
 import org.mtr.block.BlockSignalBase;
 import org.mtr.core.tool.Utilities;
 import org.mtr.data.IGui;
@@ -40,18 +40,18 @@ public class SignalColorScreen extends SingleTabBackgroundScreenBase implements 
 		this.blockPos = blockPos;
 		final IntAVLTreeSet detectedColors = new IntAVLTreeSet();
 
-		final MinecraftClient minecraftClient = MinecraftClient.getInstance();
-		final ClientWorld clientWorld = minecraftClient.world;
+		final Minecraft minecraftClient = Minecraft.getInstance();
+		final ClientLevel clientWorld = minecraftClient.level;
 		if (clientWorld == null) {
 			signalColors = new IntAVLTreeSet();
 			isBackSide = false;
 		} else {
 			final float angle = BlockSignalBase.getAngle(clientWorld.getBlockState(blockPos));
-			final ClientPlayerEntity clientPlayerEntity = minecraftClient.player;
+			final LocalPlayer clientPlayerEntity = minecraftClient.player;
 			if (clientPlayerEntity == null) {
 				isBackSide = false;
 			} else {
-				isBackSide = blockEntity.isDoubleSided && Math.abs(Utilities.circularDifference(Math.round(clientPlayerEntity.getYaw()), Math.round(angle), 360)) > 90;
+				isBackSide = blockEntity.isDoubleSided && Math.abs(Utilities.circularDifference(Math.round(clientPlayerEntity.getYRot()), Math.round(angle), 360)) > 90;
 			}
 
 			signalColors = new IntAVLTreeSet(blockEntity.getSignalColors(isBackSide));
@@ -117,7 +117,7 @@ public class SignalColorScreen extends SingleTabBackgroundScreenBase implements 
 
 	@Override
 	public void onScreenClose() {
-		new PacketUpdateSignalConfig(blockPos, checkBoxAcceptRedstone.isChecked(), checkBoxOutputRedstone.isChecked(), signalColors, isBackSide).send(MinecraftClient.getInstance().world);
+		new PacketUpdateSignalConfig(blockPos, checkBoxAcceptRedstone.isChecked(), checkBoxOutputRedstone.isChecked(), signalColors, isBackSide).send(Minecraft.getInstance().level);
 		super.onScreenClose();
 	}
 

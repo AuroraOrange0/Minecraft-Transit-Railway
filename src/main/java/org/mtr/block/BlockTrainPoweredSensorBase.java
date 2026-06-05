@@ -1,59 +1,59 @@
 package org.mtr.block;
 
-import net.minecraft.block.AbstractBlock;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.state.StateManager;
-import net.minecraft.state.property.IntProperty;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.random.Random;
-import net.minecraft.world.BlockView;
-import net.minecraft.world.World;
-import net.minecraft.world.tick.OrderedTick;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockBehaviour;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.IntegerProperty;
+import net.minecraft.world.ticks.ScheduledTick;
 
 public abstract class BlockTrainPoweredSensorBase extends BlockTrainSensorBase {
 
-	public static final IntProperty POWERED = IntProperty.of("powered", 0, 2);
+	public static final IntegerProperty POWERED = IntegerProperty.create("powered", 0, 2);
 	private static final int UPDATE_TICKS = 10;
 
-	public BlockTrainPoweredSensorBase(AbstractBlock.Settings settings) {
+	public BlockTrainPoweredSensorBase(BlockBehaviour.Properties settings) {
 		super(settings);
 	}
 
 	@Override
-	public void scheduledTick(BlockState state, ServerWorld world, BlockPos pos, Random random) {
+	public void tick(BlockState state, ServerLevel world, BlockPos pos, RandomSource random) {
 		final int oldPowered = IBlock.getStatePropertySafe(state, POWERED);
 		if (oldPowered > 0) {
-			world.setBlockState(pos, state.with(POWERED, oldPowered - 1));
-			if (!world.getBlockTickScheduler().isQueued(pos, this)) {
-				world.getBlockTickScheduler().scheduleTick(new OrderedTick<>(this, pos, UPDATE_TICKS, 0));
+			world.setBlockAndUpdate(pos, state.setValue(POWERED, oldPowered - 1));
+			if (!world.getBlockTicks().hasScheduledTick(pos, this)) {
+				world.getBlockTicks().schedule(new ScheduledTick<>(this, pos, UPDATE_TICKS, 0));
 			}
 		}
 	}
 
 	@Override
-	public boolean emitsRedstonePower(BlockState blockState) {
+	public boolean isSignalSource(BlockState blockState) {
 		return true;
 	}
 
 	@Override
-	public int getWeakRedstonePower(BlockState state, BlockView world, BlockPos pos, Direction direction) {
+	public int getSignal(BlockState state, BlockGetter world, BlockPos pos, Direction direction) {
 		return IBlock.getStatePropertySafe(state, POWERED) > 0 ? 15 : 0;
 	}
 
 	@Override
-	protected void appendProperties(StateManager.Builder<Block, BlockState> builder) {
+	protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
 		builder.add(POWERED);
 	}
 
-	public void power(World world, BlockState state, BlockPos pos) {
+	public void power(Level world, BlockState state, BlockPos pos) {
 		final int oldPowered = IBlock.getStatePropertySafe(state, POWERED);
 		if (oldPowered < 2) {
-			world.setBlockState(pos, state.with(POWERED, 2));
-			if (oldPowered == 0 && !world.getBlockTickScheduler().isQueued(pos, this)) {
-				world.getBlockTickScheduler().scheduleTick(new OrderedTick<>(this, pos, UPDATE_TICKS, 0));
+			world.setBlockAndUpdate(pos, state.setValue(POWERED, 2));
+			if (oldPowered == 0 && !world.getBlockTicks().hasScheduledTick(pos, this)) {
+				world.getBlockTicks().schedule(new ScheduledTick<>(this, pos, UPDATE_TICKS, 0));
 			}
 		}
 	}

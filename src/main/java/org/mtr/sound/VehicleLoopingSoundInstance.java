@@ -1,19 +1,19 @@
 package org.mtr.sound;
 
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.sound.MovingSoundInstance;
-import net.minecraft.client.sound.SoundManager;
-import net.minecraft.sound.SoundCategory;
-import net.minecraft.sound.SoundEvent;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.random.LocalRandom;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.resources.sounds.AbstractTickableSoundInstance;
+import net.minecraft.client.sounds.SoundManager;
+import net.minecraft.core.BlockPos;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.level.levelgen.SingleThreadedRandomSource;
 
-public class VehicleLoopingSoundInstance extends MovingSoundInstance {
+public class VehicleLoopingSoundInstance extends AbstractTickableSoundInstance {
 
 	public VehicleLoopingSoundInstance(SoundEvent event) {
-		super(event, SoundCategory.BLOCKS, new LocalRandom(0));
-		repeat = true;
-		repeatDelay = 0;
+		super(event, SoundSource.BLOCKS, new SingleThreadedRandomSource(0));
+		looping = true;
+		delay = 0;
 		volume = 0;
 		pitch = 1;
 	}
@@ -25,14 +25,14 @@ public class VehicleLoopingSoundInstance extends MovingSoundInstance {
 		y = blockPos.getY();
 		z = blockPos.getZ();
 
-		final SoundManager soundManager = MinecraftClient.getInstance().getSoundManager();
-		if (soundManager.isPlaying(this)) {
+		final SoundManager soundManager = Minecraft.getInstance().getSoundManager();
+		if (soundManager.isActive(this)) {
 			if (volume <= 0) {
 				soundManager.stop(this);
 			}
 		} else {
 			if (volume > 0) {
-				repeat = true;
+				looping = true;
 				soundManager.play(this);
 			}
 		}
@@ -43,17 +43,17 @@ public class VehicleLoopingSoundInstance extends MovingSoundInstance {
 	}
 
 	@Override
-	public boolean shouldAlwaysPlay() {
+	public boolean canStartSilent() {
 		return true;
 	}
 
 	@Override
-	public boolean canPlay() {
+	public boolean canPlaySound() {
 		return true;
 	}
 
 	public void dispose() {
-		setDone();
-		MinecraftClient.getInstance().getSoundManager().stop(this);
+		stop();
+		Minecraft.getInstance().getSoundManager().stop(this);
 	}
 }

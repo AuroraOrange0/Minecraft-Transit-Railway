@@ -5,8 +5,8 @@ import gg.essential.elementa.components.UIContainer;
 import gg.essential.elementa.components.UIWrappedText;
 import gg.essential.elementa.constraints.*;
 import gg.essential.universal.utils.ReleasedDynamicTexture;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.text.Text;
+import net.minecraft.client.Minecraft;
+import net.minecraft.network.chat.Component;
 import org.jspecify.annotations.Nullable;
 import org.mtr.client.MinecraftClientData;
 import org.mtr.core.data.Siding;
@@ -68,8 +68,8 @@ public final class SidingScreen extends NameColorDataScreenBase<Siding> {
 			.setY(new SiblingConstraint())
 			.setWidth(new PixelConstraint(LEFT_WIDTH));
 
-		selectVehicleButton.setText(Text.translatable("selectWorld.edit").getString());
-		selectVehicleButton.onClick(() -> MinecraftClient.getInstance().setScreen(new VehicleSelectorScreen(siding, this)));
+		selectVehicleButton.setText(Component.translatable("selectWorld.edit").getString());
+		selectVehicleButton.onClick(() -> Minecraft.getInstance().setScreen(new VehicleSelectorScreen(siding, this)));
 
 		if (!siding.getTransportMode().continuousMovement) {
 			GuiHelper.createSpacing(firstTabScrollComponent);
@@ -235,7 +235,7 @@ public final class SidingScreen extends NameColorDataScreenBase<Siding> {
 	}
 
 	@Override
-	protected void onClose() {
+	protected void close() {
 		if (isManualCheckbox != null && unlimitedVehiclesCheckbox != null && maxVehiclesTextInput != null) {
 			if (isManualCheckbox.isChecked()) {
 				data.setIsManual(true);

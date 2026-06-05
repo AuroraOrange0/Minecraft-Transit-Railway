@@ -1,66 +1,71 @@
 package org.mtr.block;
 
 import lombok.Getter;
-import net.minecraft.block.*;
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemPlacementContext;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.state.StateManager;
-import net.minecraft.state.property.Properties;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.hit.BlockHitResult;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.shape.VoxelShape;
-import net.minecraft.util.shape.VoxelShapes;
-import net.minecraft.world.BlockView;
-import net.minecraft.world.World;
+import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.EntityBlock;
+import net.minecraft.world.level.block.RenderShape;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockBehaviour;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.Shapes;
+import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jspecify.annotations.Nullable;
 import org.mtr.packet.PacketOpenBlockEntityScreen;
 import org.mtr.registry.BlockEntityTypes;
 
-public class BlockEyeCandy extends BlockWaterloggable implements BlockEntityProvider {
+public class BlockEyeCandy extends BlockWaterloggable implements EntityBlock {
 
-	public BlockEyeCandy(AbstractBlock.Settings settings) {
-		super(settings.nonOpaque());
+	public BlockEyeCandy(BlockBehaviour.Properties settings) {
+		super(settings.noOcclusion());
 	}
 
 	@Override
-	public BlockState getPlacementState(ItemPlacementContext itemPlacementContext) {
-		return super.getPlacementState(itemPlacementContext).with(Properties.HORIZONTAL_FACING, itemPlacementContext.getHorizontalPlayerFacing());
+	public BlockState getStateForPlacement(BlockPlaceContext itemPlacementContext) {
+		return super.getStateForPlacement(itemPlacementContext).setValue(BlockStateProperties.HORIZONTAL_FACING, itemPlacementContext.getHorizontalDirection());
 	}
 
 	@Override
-	public VoxelShape getCollisionShape(BlockState state, BlockView world, BlockPos pos, ShapeContext context) {
-		return VoxelShapes.empty();
+	public VoxelShape getCollisionShape(BlockState state, BlockGetter world, BlockPos pos, CollisionContext context) {
+		return Shapes.empty();
 	}
 
 	@Override
-	protected VoxelShape getCullingShape(BlockState state) {
+	protected VoxelShape getOcclusionShape(BlockState state) {
 		// Prevents culling optimization mods from culling our fully transparent block
-		return VoxelShapes.empty();
+		return Shapes.empty();
 	}
 
 	@Override
-	protected void appendProperties(StateManager.Builder<Block, BlockState> builder) {
-		super.appendProperties(builder);
-		builder.add(Properties.HORIZONTAL_FACING);
+	protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+		super.createBlockStateDefinition(builder);
+		builder.add(BlockStateProperties.HORIZONTAL_FACING);
 	}
 
 	@Override
-	protected ActionResult onUse(BlockState state, World world, BlockPos pos, PlayerEntity player, BlockHitResult hit) {
-		return IBlock.checkHoldingBrush(world, player, () -> PacketOpenBlockEntityScreen.sendDirectlyToServer((ServerWorld) world, (ServerPlayerEntity) player, pos));
+	protected InteractionResult useWithoutItem(BlockState state, Level world, BlockPos pos, Player player, BlockHitResult hit) {
+		return IBlock.checkHoldingBrush(world, player, () -> PacketOpenBlockEntityScreen.sendDirectlyToServer((ServerLevel) world, (ServerPlayer) player, pos));
 	}
 
 	@Override
-	public BlockRenderType getRenderType(BlockState state) {
-		return BlockRenderType.INVISIBLE;
+	public RenderShape getRenderShape(BlockState state) {
+		return RenderShape.INVISIBLE;
 	}
 
 	@Override
-	public BlockEntity createBlockEntity(BlockPos blockPos, BlockState blockState) {
+	public BlockEntity newBlockEntity(BlockPos blockPos, BlockState blockState) {
 		return new EyeCandyBlockEntity(blockPos, blockState);
 	}
 
@@ -96,7 +101,7 @@ public class BlockEyeCandy extends BlockWaterloggable implements BlockEntityProv
 		}
 
 		@Override
-		protected void readNbt(NbtCompound nbtCompound) {
+		protected void readNbt(CompoundTag nbtCompound) {
 			modelId = nbtCompound.getString(KEY_MODEL_ID);
 			translateX = nbtCompound.getFloat(KEY_TRANSLATE_X);
 			translateY = nbtCompound.getFloat(KEY_TRANSLATE_Y);
@@ -108,7 +113,7 @@ public class BlockEyeCandy extends BlockWaterloggable implements BlockEntityProv
 		}
 
 		@Override
-		protected void writeNbt(NbtCompound nbtCompound) {
+		protected void writeNbt(CompoundTag nbtCompound) {
 			nbtCompound.putString(KEY_MODEL_ID, modelId);
 			nbtCompound.putFloat(KEY_TRANSLATE_X, translateX);
 			nbtCompound.putFloat(KEY_TRANSLATE_Y, translateY);
@@ -128,7 +133,7 @@ public class BlockEyeCandy extends BlockWaterloggable implements BlockEntityProv
 			this.rotateX = rotateX;
 			this.rotateY = rotateY;
 			this.rotateZ = rotateZ;
-			markDirty();
+			setChanged();
 		}
 
 		@Nullable

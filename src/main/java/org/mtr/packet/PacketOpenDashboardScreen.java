@@ -1,7 +1,7 @@
 package org.mtr.packet;
 
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import org.mtr.client.MinecraftClientData;
 import org.mtr.core.data.TransportMode;
 import org.mtr.core.operation.ListDataResponse;
@@ -78,15 +78,15 @@ public final class PacketOpenDashboardScreen extends PacketRequestResponseBase {
 	}
 
 	@Override
-	protected PacketRequestResponseBase.ResponseType responseType() {
-		return PacketRequestResponseBase.ResponseType.PLAYER;
+	protected ResponseType responseType() {
+		return ResponseType.PLAYER;
 	}
 
-	public static void sendDirectlyToServer(ServerWorld serverWorld, ServerPlayerEntity serverPlayerEntity, TransportMode transportMode) {
+	public static void sendDirectlyToServer(ServerLevel serverWorld, ServerPlayer serverPlayerEntity, TransportMode transportMode) {
 		new PacketOpenDashboardScreen(new JsonObject().toString(), transportMode).runServerOutbound(serverWorld, serverPlayerEntity);
 	}
 
-	public static void sendDirectlyToServer(ServerWorld serverWorld, ServerPlayerEntity serverPlayerEntity, TransportMode transportMode, ScreenType screenType, long id) {
+	public static void sendDirectlyToServer(ServerLevel serverWorld, ServerPlayer serverPlayerEntity, TransportMode transportMode, ScreenType screenType, long id) {
 		new PacketOpenDashboardScreen(new JsonObject().toString(), transportMode, screenType, id).runServerOutbound(serverWorld, serverPlayerEntity);
 	}
 

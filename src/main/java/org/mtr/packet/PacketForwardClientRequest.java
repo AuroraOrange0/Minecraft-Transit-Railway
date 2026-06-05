@@ -1,7 +1,7 @@
 package org.mtr.packet;
 
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.server.level.ServerPlayer;
 import org.jspecify.annotations.Nullable;
 import org.mtr.MTR;
 import org.mtr.libraries.it.unimi.dsi.fastutil.longs.Long2ObjectAVLTreeMap;
@@ -50,7 +50,7 @@ public final class PacketForwardClientRequest extends PacketHandler {
 	}
 
 	@Override
-	public void runServer(MinecraftServer minecraftServer, ServerPlayerEntity serverPlayerEntity) {
+	public void runServer(MinecraftServer minecraftServer, ServerPlayer serverPlayerEntity) {
 		MTR.REQUEST_HELPER.sendRequest(
 			String.format("http://localhost:%s%s", MTR.getServerPort(), endpoint),
 			content.isEmpty() ? null : content,

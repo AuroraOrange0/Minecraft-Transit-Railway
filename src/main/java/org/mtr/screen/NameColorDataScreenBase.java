@@ -95,11 +95,11 @@ public abstract class NameColorDataScreenBase<T extends NameColorDataBase> exten
 			data.setColor(colorInputComponent.getSelectedColor().getRGB());
 		}
 
-		onClose();
+		close();
 		super.onScreenClose();
 	}
 
-	protected abstract void onClose();
+	protected abstract void close();
 
 	private void updateTitle() {
 		titleText.setText(nameLabelFormatter.apply(nameTextInput.getText()));

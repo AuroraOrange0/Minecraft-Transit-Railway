@@ -1,8 +1,8 @@
 package org.mtr.model;
 
+import com.mojang.blaze3d.vertex.VertexFormat;
 import de.javagl.obj.*;
-import net.minecraft.client.render.VertexFormat;
-import net.minecraft.util.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.jspecify.annotations.Nullable;
@@ -22,10 +22,10 @@ import java.util.function.Function;
  *
  * <p>Parsing flow:</p>
  * <ol>
- *   <li>{@link #loadModel(String, java.util.function.Function, java.util.function.Function, boolean, boolean)}
+ *   <li>{@link #loadModel(String, Function, Function, boolean, boolean)}
  *       parses the {@code .obj} body and any referenced {@code .mtl} files on the calling
  *       thread, then hands the heavy face → vertex walk to
- *       {@link org.mtr.render.MainRenderer#WORKER_THREAD}'s virtual-thread executor.</li>
+ *       {@link MainRenderer#WORKER_THREAD}'s virtual-thread executor.</li>
  *   <li>{@link ObjSplitting#splitByGroups} produces one group per OBJ group when
  *       {@code splitModel = true} (vehicles); otherwise a single unnamed group is emitted
  *       (rails / decorative objects).</li>
@@ -41,8 +41,8 @@ import java.util.function.Function;
  */
 public final class ObjModelLoader extends ModelLoaderBase {
 
-	public ObjModelLoader(Identifier defaultTexture) {
-		super(defaultTexture, VertexFormat.DrawMode.TRIANGLES);
+	public ObjModelLoader(ResourceLocation defaultTexture) {
+		super(defaultTexture, VertexFormat.Mode.TRIANGLES);
 	}
 
 	/**
@@ -53,7 +53,7 @@ public final class ObjModelLoader extends ModelLoaderBase {
 	 *                        return its contents
 	 * @param textureResolver given a texture path (as it appears in {@code map_Kd} or as
 	 *                        the material group name when no MTL is supplied), return the
-	 *                        Minecraft {@link Identifier} to bind
+	 *                        Minecraft {@link ResourceLocation} to bind
 	 * @param splitModel      {@code true} to emit one group per OBJ {@code g} group
 	 *                        (vehicles); {@code false} to merge all groups into one
 	 *                        (rails / objects)
@@ -61,7 +61,7 @@ public final class ObjModelLoader extends ModelLoaderBase {
 	 *                        emission, for textures authored with the origin in the
 	 *                        opposite corner
 	 */
-	public void loadModel(String objString, Function<String, String> mtlResolver, Function<String, Identifier> textureResolver, boolean splitModel, boolean flipTextureV) {
+	public void loadModel(String objString, Function<String, String> mtlResolver, Function<String, ResourceLocation> textureResolver, boolean splitModel, boolean flipTextureV) {
 		if (canLoadModel()) {
 			parseStarted();
 			MainRenderer.WORKER_THREAD.worker.submit(() -> {
@@ -92,7 +92,7 @@ public final class ObjModelLoader extends ModelLoaderBase {
 		}
 	}
 
-	private NewOptimizedModelGroup loadModel(Obj sourceObj, Object2ObjectOpenHashMap<String, Mtl> materials, Function<String, Identifier> textureResolver, boolean flipTextureV) {
+	private NewOptimizedModelGroup loadModel(Obj sourceObj, Object2ObjectOpenHashMap<String, Mtl> materials, Function<String, ResourceLocation> textureResolver, boolean flipTextureV) {
 		final NewOptimizedModelGroup newOptimizedModelGroup = new NewOptimizedModelGroup();
 
 		ObjSplitting.splitByMaterialGroups(sourceObj).forEach((key, obj) -> {
@@ -100,7 +100,7 @@ public final class ObjModelLoader extends ModelLoaderBase {
 				final Object2ObjectOpenHashMap<String, String> materialOptions = splitMaterialOptions(key);
 				final String materialGroupName = materialOptions.get("");
 				final boolean newFlipTextureV = flipTextureV || materialOptions.getOrDefault("flipv", "0").equals("1");
-				final Identifier texture;
+				final ResourceLocation texture;
 				final Color color;
 
 				if (!materials.isEmpty()) {
@@ -139,7 +139,7 @@ public final class ObjModelLoader extends ModelLoaderBase {
 
 				newOptimizedModelGroup.add(
 					getRenderStage(materialOptions.get("#")),
-					texture == null && color != null ? Identifier.of(MTR.MOD_ID, "textures/block/white.png") : texture == null ? defaultTexture : texture,
+					texture == null && color != null ? ResourceLocation.fromNamespaceAndPath(MTR.MOD_ID, "textures/block/white.png") : texture == null ? defaultTexture : texture,
 					storedVertexDataList -> storedVertexDataList.addAll(modifications),
 					null
 				);

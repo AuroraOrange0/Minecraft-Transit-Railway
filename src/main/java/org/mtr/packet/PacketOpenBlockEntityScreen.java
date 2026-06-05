@@ -1,8 +1,8 @@
 package org.mtr.packet;
 
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import org.mtr.client.MinecraftClientData;
 import org.mtr.core.operation.ListDataResponse;
 import org.mtr.core.serializer.JsonReader;
@@ -18,7 +18,7 @@ public final class PacketOpenBlockEntityScreen extends PacketRequestResponseBase
 
 	public PacketOpenBlockEntityScreen(PacketBufferReceiver packetBufferReceiver) {
 		super(packetBufferReceiver);
-		blockPos = BlockPos.fromLong(packetBufferReceiver.readLong());
+		blockPos = BlockPos.of(packetBufferReceiver.readLong());
 	}
 
 	private PacketOpenBlockEntityScreen(String content, BlockPos blockPos) {
@@ -62,11 +62,11 @@ public final class PacketOpenBlockEntityScreen extends PacketRequestResponseBase
 	}
 
 	@Override
-	protected PacketRequestResponseBase.ResponseType responseType() {
-		return PacketRequestResponseBase.ResponseType.PLAYER;
+	protected ResponseType responseType() {
+		return ResponseType.PLAYER;
 	}
 
-	public static void sendDirectlyToServer(ServerWorld serverWorld, ServerPlayerEntity serverPlayerEntity, BlockPos blockPos) {
+	public static void sendDirectlyToServer(ServerLevel serverWorld, ServerPlayer serverPlayerEntity, BlockPos blockPos) {
 		new PacketOpenBlockEntityScreen(new JsonObject().toString(), blockPos).runServerOutbound(serverWorld, serverPlayerEntity);
 	}
 }

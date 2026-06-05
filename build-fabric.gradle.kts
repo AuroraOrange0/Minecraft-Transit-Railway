@@ -40,11 +40,7 @@ java {
 
 dependencies {
 	minecraft("com.mojang:minecraft:${sc.current.version}")
-	if (sc.current.version == "1.21.4") {
-		mappings("net.fabricmc:yarn:1.21.4+build.8:v2")
-	} else {
-		mappings(loom.officialMojangMappings())
-	}
+	mappings(loom.officialMojangMappings())
 
 	modImplementation("net.fabricmc:fabric-loader:${property("dependency.fabric_loader")}")
 	modImplementation("net.fabricmc.fabric-api:fabric-api:${property("dependency.fabric_api")}")

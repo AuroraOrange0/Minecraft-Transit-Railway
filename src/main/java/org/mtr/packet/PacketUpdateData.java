@@ -1,6 +1,6 @@
 package org.mtr.packet;
 
-import net.minecraft.server.world.ServerWorld;
+import net.minecraft.server.level.ServerLevel;
 import org.mtr.client.DynamicTextureCache;
 import org.mtr.client.MinecraftClientData;
 import org.mtr.core.data.PathData;
@@ -49,20 +49,20 @@ public final class PacketUpdateData extends PacketRequestResponseBase {
 	}
 
 	@Override
-	protected PacketRequestResponseBase.ResponseType responseType() {
-		return PacketRequestResponseBase.ResponseType.ALL;
+	protected ResponseType responseType() {
+		return ResponseType.ALL;
 	}
 
-	public static void sendDirectlyToServerRail(ServerWorld serverWorld, Rail rail) {
+	public static void sendDirectlyToServerRail(ServerLevel serverWorld, Rail rail) {
 		new PacketUpdateData(new UpdateDataRequest(new MinecraftClientData()).addRail(rail)).runServerOutbound(serverWorld, null);
 	}
 
-	public static void sendDirectlyToServerSignalModification(ServerWorld serverWorld, SignalModification signalModification) {
+	public static void sendDirectlyToServerSignalModification(ServerLevel serverWorld, SignalModification signalModification) {
 		new PacketUpdateData(new UpdateDataRequest(new MinecraftClientData()).addSignalModification(signalModification)).runServerOutbound(serverWorld, null);
 	}
 
-	public static void sendDirectlyToClientDepotUpdate(ServerWorld serverWorld, UpdateDataResponse updateDataResponse) {
-		serverWorld.getPlayers().forEach(serverPlayerEntityNew -> RegistryServer.sendPacketToClient(serverPlayerEntityNew, new PacketUpdateData(Utilities.getJsonObjectFromData(updateDataResponse).toString())));
+	public static void sendDirectlyToClientDepotUpdate(ServerLevel serverWorld, UpdateDataResponse updateDataResponse) {
+		serverWorld.players().forEach(serverPlayerEntityNew -> RegistryServer.sendPacketToClient(serverPlayerEntityNew, new PacketUpdateData(Utilities.getJsonObjectFromData(updateDataResponse).toString())));
 	}
 
 	private static void update(JsonReader jsonReader) {

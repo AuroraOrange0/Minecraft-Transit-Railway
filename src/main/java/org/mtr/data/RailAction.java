@@ -1,14 +1,14 @@
 package org.mtr.data;
 
-import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
-import net.minecraft.block.SlabBlock;
-import net.minecraft.block.enums.SlabType;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.text.Text;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.SlabBlock;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.SlabType;
 import org.jspecify.annotations.Nullable;
 import org.mtr.block.BlockNode;
 import org.mtr.core.data.Rail;
@@ -28,7 +28,7 @@ public class RailAction {
 	private double distance;
 
 	public final long id;
-	private final ServerWorld serverWorld;
+	private final ServerLevel serverWorld;
 	private final UUID uuid;
 	private final String playerName;
 	private final RailActionType railActionType;
@@ -43,10 +43,10 @@ public class RailAction {
 
 	private static final double INCREMENT = 0.1;
 
-	public RailAction(ServerWorld serverWorld, ServerPlayerEntity serverPlayerEntity, RailActionType railActionType, Rail rail, int radius, int height, @Nullable BlockState state) {
+	public RailAction(ServerLevel serverWorld, ServerPlayer serverPlayerEntity, RailActionType railActionType, Rail rail, int radius, int height, @Nullable BlockState state) {
 		id = new Random().nextLong();
 		this.serverWorld = serverWorld;
-		uuid = serverPlayerEntity.getUuid();
+		uuid = serverPlayerEntity.getUUID();
 		playerName = serverPlayerEntity.getName().getString();
 		this.railActionType = railActionType;
 		this.rail = rail;
@@ -72,7 +72,7 @@ public class RailAction {
 	}
 
 	public String getDescription() {
-		return railActionType.nameTranslation.getString(playerName, Utilities.round(length, 1), state == null ? "" : Text.translatable(state.getBlock().getTranslationKey()).getString());
+		return railActionType.nameTranslation.getString(playerName, Utilities.round(length, 1), state == null ? "" : Component.translatable(state.getBlock().getDescriptionId()).getString());
 	}
 
 	public int getColor() {
@@ -83,7 +83,7 @@ public class RailAction {
 		return create(true, vector -> {
 			final BlockPos blockPos = fromVector(vector);
 			if (!blacklistedPositions.contains(blockPos) && canPlace(serverWorld, blockPos)) {
-				serverWorld.setBlockState(blockPos, Blocks.AIR.getDefaultState());
+				serverWorld.setBlockAndUpdate(blockPos, Blocks.AIR.defaultBlockState());
 				blacklistedPositions.add(blockPos);
 			}
 		});
@@ -93,7 +93,7 @@ public class RailAction {
 		return create(false, vector -> {
 			final BlockPos blockPos = fromVector(vector);
 			if (!blacklistedPositions.contains(blockPos) && canPlace(serverWorld, blockPos)) {
-				serverWorld.setBlockState(blockPos, state);
+				serverWorld.setBlockAndUpdate(blockPos, state);
 				blacklistedPositions.add(blockPos);
 			}
 		});
@@ -110,11 +110,11 @@ public class RailAction {
 
 			if (isSlab && isTopHalf) {
 				placePos = blockPos;
-				placeState = state == null ? null : state.with(SlabBlock.TYPE, SlabType.BOTTOM);
+				placeState = state == null ? null : state.setValue(SlabBlock.TYPE, SlabType.BOTTOM);
 				placeHalf = false;
 			} else {
-				placePos = blockPos.down();
-				placeState = isSlab && state != null ? state.with(SlabBlock.TYPE, SlabType.TOP) : state;
+				placePos = blockPos.below();
+				placeState = isSlab && state != null ? state.setValue(SlabBlock.TYPE, SlabType.TOP) : state;
 				placeHalf = true;
 			}
 
@@ -124,10 +124,10 @@ public class RailAction {
 			}
 
 			if (placePos != blockPos && canPlace(serverWorld, blockPos)) {
-				serverWorld.setBlockState(blockPos, Blocks.AIR.getDefaultState());
+				serverWorld.setBlockAndUpdate(blockPos, Blocks.AIR.defaultBlockState());
 			}
 			if (canPlace(serverWorld, placePos)) {
-				serverWorld.setBlockState(placePos, placeState);
+				serverWorld.setBlockAndUpdate(placePos, placeState);
 				blacklistedPositions.add(halfPos);
 			}
 		});
@@ -139,10 +139,10 @@ public class RailAction {
 			final Vector pos1 = rail.railMath.getPosition(distance, false);
 			distance += INCREMENT;
 			final Vector pos2 = rail.railMath.getPosition(distance, false);
-			final Vector Vec3d = new Vector(pos2.x() - pos1.x(), 0, pos2.z() - pos1.z()).normalize().rotateY((float) Math.PI / 2);
+			final Vector Vec3 = new Vector(pos2.x() - pos1.x(), 0, pos2.z() - pos1.z()).normalize().rotateY((float) Math.PI / 2);
 
 			for (double x = -radius; x <= radius; x += INCREMENT) {
-				final Vector editPos = pos1.add(Vec3d.multiply(x, 0, x));
+				final Vector editPos = pos1.add(Vec3.multiply(x, 0, x));
 				final boolean wholeNumber = Math.floor(editPos.y()) == Math.ceil(editPos.y());
 				if (includeMiddle || Math.abs(x) > radius - INCREMENT || radius == 0) {
 					for (int y = 0; y <= height; y++) {
@@ -166,13 +166,13 @@ public class RailAction {
 	}
 
 	private void sendProgressMessage(float percentage) {
-		final PlayerEntity playerEntity = serverWorld.getPlayerByUuid(uuid);
+		final Player playerEntity = serverWorld.getPlayerByUUID(uuid);
 		if (playerEntity != null) {
-			playerEntity.sendMessage(railActionType.progressTranslation.getText(percentage), true);
+			playerEntity.displayClientMessage(railActionType.progressTranslation.getText(percentage), true);
 		}
 	}
 
-	private static boolean canPlace(ServerWorld serverWorld, BlockPos pos) {
+	private static boolean canPlace(ServerLevel serverWorld, BlockPos pos) {
 		return serverWorld.getBlockEntity(pos) == null && !(serverWorld.getBlockState(pos).getBlock() instanceof BlockNode);
 	}
 
@@ -181,6 +181,6 @@ public class RailAction {
 	}
 
 	private static BlockPos fromVector(Vector vector) {
-		return BlockPos.ofFloored(vector.x(), vector.y(), vector.z());
+		return BlockPos.containing(vector.x(), vector.y(), vector.z());
 	}
 }

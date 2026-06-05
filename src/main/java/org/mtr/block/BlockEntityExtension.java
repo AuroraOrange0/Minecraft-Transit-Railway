@@ -1,14 +1,14 @@
 package org.mtr.block;
 
-import net.minecraft.block.BlockState;
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.block.entity.BlockEntityType;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.network.listener.ClientPlayPacketListener;
-import net.minecraft.network.packet.Packet;
-import net.minecraft.network.packet.s2c.play.BlockEntityUpdateS2CPacket;
-import net.minecraft.registry.RegistryWrapper;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.protocol.Packet;
+import net.minecraft.network.protocol.game.ClientGamePacketListener;
+import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.state.BlockState;
 
 public abstract class BlockEntityExtension extends BlockEntity {
 
@@ -17,30 +17,30 @@ public abstract class BlockEntityExtension extends BlockEntity {
 	}
 
 	@Override
-	public final Packet<ClientPlayPacketListener> toUpdatePacket() {
-		return BlockEntityUpdateS2CPacket.create(this);
+	public final Packet<ClientGamePacketListener> getUpdatePacket() {
+		return ClientboundBlockEntityDataPacket.create(this);
 	}
 
 	@Override
-	public final NbtCompound toInitialChunkDataNbt(RegistryWrapper.WrapperLookup registries) {
-		return createNbt(registries);
+	public final CompoundTag getUpdateTag(HolderLookup.Provider registries) {
+		return saveWithoutMetadata(registries);
 	}
 
 	@Override
-	protected final void readNbt(NbtCompound nbtCompound, RegistryWrapper.WrapperLookup registries) {
-		super.readNbt(nbtCompound, registries);
+	protected final void loadAdditional(CompoundTag nbtCompound, HolderLookup.Provider registries) {
+		super.loadAdditional(nbtCompound, registries);
 		readNbt(nbtCompound);
 	}
 
 	@Override
-	protected final void writeNbt(NbtCompound nbtCompound, RegistryWrapper.WrapperLookup registries) {
-		super.writeNbt(nbtCompound, registries);
+	protected final void saveAdditional(CompoundTag nbtCompound, HolderLookup.Provider registries) {
+		super.saveAdditional(nbtCompound, registries);
 		writeNbt(nbtCompound);
 	}
 
-	protected void readNbt(NbtCompound nbtCompound) {
+	protected void readNbt(CompoundTag nbtCompound) {
 	}
 
-	protected void writeNbt(NbtCompound nbtCompound) {
+	protected void writeNbt(CompoundTag nbtCompound) {
 	}
 }

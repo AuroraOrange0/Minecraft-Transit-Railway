@@ -1,11 +1,11 @@
 package org.mtr.tool;
 
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.render.OverlayTexture;
-import net.minecraft.client.render.RenderLayer;
-import net.minecraft.client.render.VertexConsumer;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.util.math.RotationAxis;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.math.Axis;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.texture.OverlayTexture;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.jspecify.annotations.Nullable;
@@ -46,7 +46,7 @@ public final class Drawing {
 	@Nullable
 	private final Matrix4f matrix4f;
 	@Nullable
-	private final MatrixStack matrixStack;
+	private final PoseStack matrixStack;
 	private final VertexConsumer vertexConsumer;
 
 	public Drawing(VertexConsumer vertexConsumer) {
@@ -61,14 +61,14 @@ public final class Drawing {
 		this.vertexConsumer = vertexConsumer;
 	}
 
-	public Drawing(MatrixStack matrixStack, VertexConsumer vertexConsumer) {
+	public Drawing(PoseStack matrixStack, VertexConsumer vertexConsumer) {
 		matrix4f = null;
 		this.matrixStack = matrixStack;
 		this.vertexConsumer = vertexConsumer;
 	}
 
-	public Drawing(MatrixStack matrixStack, RenderLayer renderLayer) {
-		this(matrixStack, MinecraftClient.getInstance().getBufferBuilders().getEntityVertexConsumers().getBuffer(renderLayer));
+	public Drawing(PoseStack matrixStack, RenderType renderLayer) {
+		this(matrixStack, Minecraft.getInstance().renderBuffers().bufferSource().getBuffer(renderLayer));
 	}
 
 	// Vertices
@@ -212,7 +212,7 @@ public final class Drawing {
 			newY4 = (float) y4;
 			newZ4 = (float) z4;
 		} else {
-			final Matrix4f newMatrix4f = matrix4f == null ? matrixStack.peek().getPositionMatrix() : matrix4f;
+			final Matrix4f newMatrix4f = matrix4f == null ? matrixStack.last().pose() : matrix4f;
 			final Vector3f vector3f1 = transform(newMatrix4f, x1, y1, z1);
 			final Vector3f vector3f2 = transform(newMatrix4f, x2, y2, z2);
 			final Vector3f vector3f3 = transform(newMatrix4f, x3, y3, z3);
@@ -248,37 +248,37 @@ public final class Drawing {
 
 	// Utilities
 
-	public static void rotateXRadians(MatrixStack matrixStack, float angle) {
-		matrixStack.multiply(RotationAxis.POSITIVE_X.rotation(angle));
+	public static void rotateXRadians(PoseStack matrixStack, float angle) {
+		matrixStack.mulPose(Axis.XP.rotation(angle));
 	}
 
-	public static void rotateYRadians(MatrixStack matrixStack, float angle) {
-		matrixStack.multiply(RotationAxis.POSITIVE_Y.rotation(angle));
+	public static void rotateYRadians(PoseStack matrixStack, float angle) {
+		matrixStack.mulPose(Axis.YP.rotation(angle));
 	}
 
-	public static void rotateZRadians(MatrixStack matrixStack, float angle) {
-		matrixStack.multiply(RotationAxis.POSITIVE_Z.rotation(angle));
+	public static void rotateZRadians(PoseStack matrixStack, float angle) {
+		matrixStack.mulPose(Axis.ZP.rotation(angle));
 	}
 
-	public static void rotateXDegrees(MatrixStack matrixStack, float angle) {
-		matrixStack.multiply(RotationAxis.POSITIVE_X.rotationDegrees(angle));
+	public static void rotateXDegrees(PoseStack matrixStack, float angle) {
+		matrixStack.mulPose(Axis.XP.rotationDegrees(angle));
 	}
 
-	public static void rotateYDegrees(MatrixStack matrixStack, float angle) {
-		matrixStack.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(angle));
+	public static void rotateYDegrees(PoseStack matrixStack, float angle) {
+		matrixStack.mulPose(Axis.YP.rotationDegrees(angle));
 	}
 
-	public static void rotateZDegrees(MatrixStack matrixStack, float angle) {
-		matrixStack.multiply(RotationAxis.POSITIVE_Z.rotationDegrees(angle));
+	public static void rotateZDegrees(PoseStack matrixStack, float angle) {
+		matrixStack.mulPose(Axis.ZP.rotationDegrees(angle));
 	}
 
 	private static void vertex(VertexConsumer vertexConsumer, float x, float y, float z, int color, int light, float u, float v, boolean hasLightAndNormal, boolean hasUvAndOverlay) {
-		VertexConsumer vertexConsumerNew = vertexConsumer.vertex(x, y, z).color(color);
+		VertexConsumer vertexConsumerNew = vertexConsumer.addVertex(x, y, z).setColor(color);
 		if (hasLightAndNormal) {
-			vertexConsumerNew = vertexConsumerNew.light(light).normal(0, 1, 0);
+			vertexConsumerNew = vertexConsumerNew.setLight(light).setNormal(0, 1, 0);
 		}
 		if (hasUvAndOverlay) {
-			vertexConsumerNew.texture(u, v).overlay(OverlayTexture.DEFAULT_UV);
+			vertexConsumerNew.setUv(u, v).setOverlay(OverlayTexture.NO_OVERLAY);
 		}
 	}
 

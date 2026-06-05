@@ -1,18 +1,18 @@
 package org.mtr.block;
 
-import net.minecraft.block.AbstractBlock;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.ShapeContext;
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.tooltip.TooltipType;
-import net.minecraft.state.property.Properties;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.shape.VoxelShape;
-import net.minecraft.world.BlockView;
+import net.minecraft.ChatFormatting;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockBehaviour;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.VoxelShape;
 import org.mtr.generated.lang.TranslationProvider;
 import org.mtr.registry.BlockEntityTypes;
 
@@ -22,22 +22,22 @@ public class BlockPIDSVerticalSingleArrival1 extends BlockPIDSVerticalBase {
 
 	private static final int MAX_ARRIVALS = 16;
 
-	public BlockPIDSVerticalSingleArrival1(AbstractBlock.Settings settings) {
+	public BlockPIDSVerticalSingleArrival1(BlockBehaviour.Properties settings) {
 		super(settings, MAX_ARRIVALS);
 	}
 
 	@Override
-	public VoxelShape getOutlineShape(BlockState state, BlockView world, BlockPos pos, ShapeContext context) {
-		return IBlock.getVoxelShapeByDirection(0, 0, 0, 16, 16, 1, IBlock.getStatePropertySafe(state, Properties.HORIZONTAL_FACING));
+	public VoxelShape getShape(BlockState state, BlockGetter world, BlockPos pos, CollisionContext context) {
+		return IBlock.getVoxelShapeByDirection(0, 0, 0, 16, 16, 1, IBlock.getStatePropertySafe(state, BlockStateProperties.HORIZONTAL_FACING));
 	}
 
 	@Override
-	public void appendTooltip(ItemStack stack, Item.TooltipContext context, List<Text> tooltip, TooltipType options) {
-		tooltip.add(TranslationProvider.TOOLTIP_MTR_ARRIVALS.getMutableText(1).formatted(Formatting.GRAY));
+	public void appendHoverText(ItemStack stack, Item.TooltipContext context, List<Component> tooltip, TooltipFlag options) {
+		tooltip.add(TranslationProvider.TOOLTIP_MTR_ARRIVALS.getMutableText(1).withStyle(ChatFormatting.GRAY));
 	}
 
 	@Override
-	public BlockEntity createBlockEntity(BlockPos blockPos, BlockState blockState) {
+	public BlockEntity newBlockEntity(BlockPos blockPos, BlockState blockState) {
 		return new PIDSVerticalSingleArrival1BlockEntity(blockPos, blockState);
 	}
 

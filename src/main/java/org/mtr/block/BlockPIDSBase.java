@@ -1,25 +1,25 @@
 package org.mtr.block;
 
 import lombok.Getter;
-import net.minecraft.block.AbstractBlock;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockEntityProvider;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.block.entity.BlockEntityType;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.tooltip.TooltipType;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.text.Text;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.hit.BlockHitResult;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
+import net.minecraft.ChatFormatting;
+import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.EntityBlock;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.state.BlockBehaviour;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.BlockHitResult;
 import org.jspecify.annotations.Nullable;
 import org.mtr.generated.lang.TranslationProvider;
 import org.mtr.libraries.it.unimi.dsi.fastutil.longs.LongAVLTreeSet;
@@ -30,40 +30,40 @@ import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.BiPredicate;
 
-public abstract class BlockPIDSBase extends Block implements BlockEntityProvider {
+public abstract class BlockPIDSBase extends Block implements EntityBlock {
 
 	public final int maxArrivals;
-	public final BiPredicate<World, BlockPos> canStoreData;
-	public final BiFunction<World, BlockPos, BlockPos> getBlockPosWithData;
+	public final BiPredicate<Level, BlockPos> canStoreData;
+	public final BiFunction<Level, BlockPos, BlockPos> getBlockPosWithData;
 
-	public BlockPIDSBase(AbstractBlock.Settings settings, int maxArrivals, BiPredicate<World, BlockPos> canStoreData, BiFunction<World, BlockPos, BlockPos> getBlockPosWithData) {
-		super(settings.luminance(blockState -> 5).nonOpaque());
+	public BlockPIDSBase(BlockBehaviour.Properties settings, int maxArrivals, BiPredicate<Level, BlockPos> canStoreData, BiFunction<Level, BlockPos, BlockPos> getBlockPosWithData) {
+		super(settings.lightLevel(blockState -> 5).noOcclusion());
 		this.maxArrivals = maxArrivals;
 		this.canStoreData = canStoreData;
 		this.getBlockPosWithData = getBlockPosWithData;
 	}
 
 	@Override
-	protected ActionResult onUse(BlockState state, World world, BlockPos pos, PlayerEntity player, BlockHitResult hit) {
+	protected InteractionResult useWithoutItem(BlockState state, Level world, BlockPos pos, Player player, BlockHitResult hit) {
 		return IBlock.checkHoldingBrush(world, player, () -> {
 			final BlockPos newBlockPos = getBlockPosWithData.apply(world, pos);
 			final BlockEntity entity = world.getBlockEntity(newBlockPos);
 			if (entity instanceof BlockEntityBase) {
-				PacketOpenBlockEntityScreen.sendDirectlyToServer((ServerWorld) world, (ServerPlayerEntity) player, newBlockPos);
+				PacketOpenBlockEntityScreen.sendDirectlyToServer((ServerLevel) world, (ServerPlayer) player, newBlockPos);
 			}
 		});
 	}
 
 	@Override
-	public void appendTooltip(ItemStack stack, Item.TooltipContext context, List<Text> tooltip, TooltipType options) {
-		tooltip.add(TranslationProvider.TOOLTIP_MTR_ARRIVALS.getMutableText(maxArrivals).formatted(Formatting.GRAY));
+	public void appendHoverText(ItemStack stack, Item.TooltipContext context, List<Component> tooltip, TooltipFlag options) {
+		tooltip.add(TranslationProvider.TOOLTIP_MTR_ARRIVALS.getMutableText(maxArrivals).withStyle(ChatFormatting.GRAY));
 	}
 
 	public static abstract class BlockEntityBase extends BlockEntityExtension {
 
 		public final int maxArrivals;
-		public final BiPredicate<World, BlockPos> canStoreData;
-		public final BiFunction<World, BlockPos, BlockPos> getBlockPosWithData;
+		public final BiPredicate<Level, BlockPos> canStoreData;
+		public final BiFunction<Level, BlockPos, BlockPos> getBlockPosWithData;
 
 		private final @Nullable String[] messages;
 		private final boolean[] hideArrivalArray;
@@ -76,7 +76,7 @@ public abstract class BlockPIDSBase extends Block implements BlockEntityProvider
 		private static final String KEY_PLATFORM_IDS = "platform_ids";
 		private static final String KEY_DISPLAY_PAGE = "display_page";
 
-		public BlockEntityBase(int maxArrivals, BiPredicate<World, BlockPos> canStoreData, BiFunction<World, BlockPos, BlockPos> getBlockPosWithData, BlockEntityType<?> type, BlockPos pos, BlockState state) {
+		public BlockEntityBase(int maxArrivals, BiPredicate<Level, BlockPos> canStoreData, BiFunction<Level, BlockPos, BlockPos> getBlockPosWithData, BlockEntityType<?> type, BlockPos pos, BlockState state) {
 			super(type, pos, state);
 			this.maxArrivals = maxArrivals;
 			this.canStoreData = canStoreData;
@@ -89,7 +89,7 @@ public abstract class BlockPIDSBase extends Block implements BlockEntityProvider
 		}
 
 		@Override
-		protected void readNbt(NbtCompound nbtCompound) {
+		protected void readNbt(CompoundTag nbtCompound) {
 			for (int i = 0; i < maxArrivals; i++) {
 				messages[i] = nbtCompound.getString(KEY_MESSAGE + i);
 				hideArrivalArray[i] = nbtCompound.getBoolean(KEY_HIDE_ARRIVAL + i);
@@ -105,7 +105,7 @@ public abstract class BlockPIDSBase extends Block implements BlockEntityProvider
 		}
 
 		@Override
-		protected void writeNbt(NbtCompound nbtCompound) {
+		protected void writeNbt(CompoundTag nbtCompound) {
 			for (int i = 0; i < maxArrivals; i++) {
 				nbtCompound.putString(KEY_MESSAGE + i, messages[i] == null ? "" : messages[i]);
 				nbtCompound.putBoolean(KEY_HIDE_ARRIVAL + i, hideArrivalArray[i]);
@@ -121,7 +121,7 @@ public abstract class BlockPIDSBase extends Block implements BlockEntityProvider
 			this.platformIds.clear();
 			this.platformIds.addAll(platformIdsCopy);
 			this.displayPage = displayPage;
-			markDirty();
+			setChanged();
 		}
 
 		public String getMessage(int index) {

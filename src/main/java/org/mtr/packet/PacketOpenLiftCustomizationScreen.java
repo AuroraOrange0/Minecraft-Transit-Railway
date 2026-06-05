@@ -1,13 +1,13 @@
 package org.mtr.packet;
 
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.core.BlockPos;
 
 public final class PacketOpenLiftCustomizationScreen extends PacketHandler {
 
 	private final BlockPos blockPos;
 
 	public PacketOpenLiftCustomizationScreen(PacketBufferReceiver packetBufferReceiver) {
-		blockPos = BlockPos.fromLong(packetBufferReceiver.readLong());
+		blockPos = BlockPos.of(packetBufferReceiver.readLong());
 	}
 
 	public PacketOpenLiftCustomizationScreen(BlockPos blockPos) {

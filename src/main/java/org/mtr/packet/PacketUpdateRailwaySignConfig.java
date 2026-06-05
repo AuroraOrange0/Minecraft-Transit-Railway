@@ -1,8 +1,8 @@
 package org.mtr.packet;
 
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import org.jspecify.annotations.Nullable;
 import org.mtr.MTR;
 import org.mtr.block.BlockRailwaySign;
@@ -16,7 +16,7 @@ public final class PacketUpdateRailwaySignConfig extends BlockEntityPacketHandle
 	private final @Nullable String[] signIds;
 
 	public PacketUpdateRailwaySignConfig(PacketBufferReceiver packetBufferReceiver) {
-		blockPos = BlockPos.fromLong(packetBufferReceiver.readLong());
+		blockPos = BlockPos.of(packetBufferReceiver.readLong());
 
 		final int selectedIdsLength = packetBufferReceiver.readInt();
 		selectedIds = new LongAVLTreeSet[selectedIdsLength];
@@ -60,7 +60,7 @@ public final class PacketUpdateRailwaySignConfig extends BlockEntityPacketHandle
 	}
 
 	@Override
-	protected void setData(@Nullable World world) {
+	protected void setData(@Nullable Level world) {
 		if (world == null || !MTR.isChunkLoaded(world, blockPos)) {
 			return;
 		}
@@ -72,7 +72,7 @@ public final class PacketUpdateRailwaySignConfig extends BlockEntityPacketHandle
 			} else if (entity instanceof BlockRouteSignBase.BlockEntityBase) {
 				final long platformId = selectedIds.length == 0 || selectedIds[0].isEmpty() ? 0 : (long) selectedIds[0].getFirst();
 				((BlockRouteSignBase.BlockEntityBase) entity).setPlatformId(platformId);
-				final BlockEntity entityAbove = world.getBlockEntity(blockPos.up());
+				final BlockEntity entityAbove = world.getBlockEntity(blockPos.above());
 				if (entityAbove instanceof BlockRouteSignBase.BlockEntityBase) {
 					((BlockRouteSignBase.BlockEntityBase) entityAbove).setPlatformId(platformId);
 				}

@@ -1,22 +1,22 @@
 package org.mtr.render;
 
-import net.minecraft.client.render.RenderLayer;
-import net.minecraft.util.Identifier;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.resources.ResourceLocation;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 
 import java.util.function.Supplier;
 
 public class MoreRenderLayers {
 
-	private static final Object2ObjectOpenHashMap<Identifier, RenderLayer> LIGHT_CACHE = new Object2ObjectOpenHashMap<>();
-	private static final Object2ObjectOpenHashMap<Identifier, RenderLayer> LIGHT_TRANSLUCENT_CACHE = new Object2ObjectOpenHashMap<>();
-	private static final Object2ObjectOpenHashMap<Identifier, RenderLayer> LIGHT_2_CACHE = new Object2ObjectOpenHashMap<>();
-	private static final Object2ObjectOpenHashMap<Identifier, RenderLayer> INTERIOR_CACHE = new Object2ObjectOpenHashMap<>();
-	private static final Object2ObjectOpenHashMap<Identifier, RenderLayer> INTERIOR_TRANSLUCENT_CACHE = new Object2ObjectOpenHashMap<>();
-	private static final Object2ObjectOpenHashMap<Identifier, RenderLayer> EXTERIOR_CACHE = new Object2ObjectOpenHashMap<>();
-	private static final Object2ObjectOpenHashMap<Identifier, RenderLayer> EXTERIOR_TRANSLUCENT_CACHE = new Object2ObjectOpenHashMap<>();
+	private static final Object2ObjectOpenHashMap<ResourceLocation, RenderType> LIGHT_CACHE = new Object2ObjectOpenHashMap<>();
+	private static final Object2ObjectOpenHashMap<ResourceLocation, RenderType> LIGHT_TRANSLUCENT_CACHE = new Object2ObjectOpenHashMap<>();
+	private static final Object2ObjectOpenHashMap<ResourceLocation, RenderType> LIGHT_2_CACHE = new Object2ObjectOpenHashMap<>();
+	private static final Object2ObjectOpenHashMap<ResourceLocation, RenderType> INTERIOR_CACHE = new Object2ObjectOpenHashMap<>();
+	private static final Object2ObjectOpenHashMap<ResourceLocation, RenderType> INTERIOR_TRANSLUCENT_CACHE = new Object2ObjectOpenHashMap<>();
+	private static final Object2ObjectOpenHashMap<ResourceLocation, RenderType> EXTERIOR_CACHE = new Object2ObjectOpenHashMap<>();
+	private static final Object2ObjectOpenHashMap<ResourceLocation, RenderType> EXTERIOR_TRANSLUCENT_CACHE = new Object2ObjectOpenHashMap<>();
 
-	public static void removeFromCache(Identifier identifier) {
+	public static void removeFromCache(ResourceLocation identifier) {
 		LIGHT_CACHE.remove(identifier);
 		LIGHT_TRANSLUCENT_CACHE.remove(identifier);
 		LIGHT_2_CACHE.remove(identifier);
@@ -26,35 +26,35 @@ public class MoreRenderLayers {
 		EXTERIOR_TRANSLUCENT_CACHE.remove(identifier);
 	}
 
-	public static RenderLayer getLight(Identifier texture, boolean isTranslucent) {
-		return checkCache(texture, () -> RenderLayer.getBeaconBeam(texture, isTranslucent), isTranslucent ? LIGHT_TRANSLUCENT_CACHE : LIGHT_CACHE);
+	public static RenderType getLight(ResourceLocation texture, boolean isTranslucent) {
+		return checkCache(texture, () -> RenderType.beaconBeam(texture, isTranslucent), isTranslucent ? LIGHT_TRANSLUCENT_CACHE : LIGHT_CACHE);
 	}
 
-	public static RenderLayer getLight2(Identifier texture) {
-		return checkCache(texture, () -> RenderLayer.getText(texture), LIGHT_2_CACHE);
+	public static RenderType getLight2(ResourceLocation texture) {
+		return checkCache(texture, () -> RenderType.text(texture), LIGHT_2_CACHE);
 	}
 
-	public static RenderLayer getInterior(Identifier texture) {
-		return checkCache(texture, () -> RenderLayer.getEntityCutout(texture), INTERIOR_CACHE);
+	public static RenderType getInterior(ResourceLocation texture) {
+		return checkCache(texture, () -> RenderType.entityCutout(texture), INTERIOR_CACHE);
 	}
 
-	public static RenderLayer getInteriorTranslucent(Identifier texture) {
-		return checkCache(texture, () -> RenderLayer.getEntityTranslucent(texture), INTERIOR_TRANSLUCENT_CACHE);
+	public static RenderType getInteriorTranslucent(ResourceLocation texture) {
+		return checkCache(texture, () -> RenderType.entityTranslucent(texture), INTERIOR_TRANSLUCENT_CACHE);
 	}
 
-	public static RenderLayer getExterior(Identifier texture) {
-		return checkCache(texture, () -> RenderLayer.getEntityCutout(texture), EXTERIOR_CACHE);
+	public static RenderType getExterior(ResourceLocation texture) {
+		return checkCache(texture, () -> RenderType.entityCutout(texture), EXTERIOR_CACHE);
 	}
 
-	public static RenderLayer getExteriorTranslucent(Identifier texture) {
-		return checkCache(texture, () -> RenderLayer.getEntityTranslucent(texture), EXTERIOR_TRANSLUCENT_CACHE);
+	public static RenderType getExteriorTranslucent(ResourceLocation texture) {
+		return checkCache(texture, () -> RenderType.entityTranslucent(texture), EXTERIOR_TRANSLUCENT_CACHE);
 	}
 
-	private static RenderLayer checkCache(Identifier identifier, Supplier<RenderLayer> supplier, Object2ObjectOpenHashMap<Identifier, RenderLayer> cache) {
+	private static RenderType checkCache(ResourceLocation identifier, Supplier<RenderType> supplier, Object2ObjectOpenHashMap<ResourceLocation, RenderType> cache) {
 		if (cache.containsKey(identifier)) {
 			return cache.get(identifier);
 		} else {
-			final RenderLayer renderLayer = supplier.get();
+			final RenderType renderLayer = supplier.get();
 			cache.put(identifier, renderLayer);
 			return renderLayer;
 		}

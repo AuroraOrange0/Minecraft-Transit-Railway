@@ -1,10 +1,10 @@
 package org.mtr.block;
 
-import net.minecraft.block.AbstractBlock;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.item.Item;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockBehaviour;
+import net.minecraft.world.level.block.state.BlockState;
 import org.mtr.registry.BlockEntityTypes;
 import org.mtr.registry.Items;
 
@@ -12,13 +12,13 @@ public class BlockPSDDoor extends BlockPSDAPGDoorBase {
 
 	private final int style;
 
-	public BlockPSDDoor(AbstractBlock.Settings settings, int style) {
+	public BlockPSDDoor(BlockBehaviour.Properties settings, int style) {
 		super(settings);
 		this.style = style;
 	}
 
 	@Override
-	public BlockEntity createBlockEntity(BlockPos blockPos, BlockState blockState) {
+	public BlockEntity newBlockEntity(BlockPos blockPos, BlockState blockState) {
 		return new PSDDoorBlockEntity(style, blockPos, blockState);
 	}
 

@@ -3,8 +3,8 @@ package org.mtr.screen;
 import gg.essential.elementa.constraints.PixelConstraint;
 import gg.essential.elementa.constraints.RelativeConstraint;
 import gg.essential.elementa.constraints.SiblingConstraint;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.client.Minecraft;
+import net.minecraft.core.BlockPos;
 import org.mtr.block.BlockTrainAnnouncer;
 import org.mtr.generated.lang.TranslationProvider;
 import org.mtr.libraries.it.unimi.dsi.fastutil.longs.LongAVLTreeSet;
@@ -58,6 +58,6 @@ public class TrainAnnouncerScreen extends TrainSensorScreenBase<BlockTrainAnnoun
 
 	@Override
 	protected void sendUpdate(BlockPos blockPos, LongAVLTreeSet filterRouteIds, boolean stoppedOnly, boolean movingOnly) {
-		new PacketUpdateTrainAnnouncerConfig(blockPos, filterRouteIds, stoppedOnly, movingOnly, messageTextInput.getText(), soundIdTextInput.getText(), (int) delayNumberInput.getValue()).send(MinecraftClient.getInstance().world);
+		new PacketUpdateTrainAnnouncerConfig(blockPos, filterRouteIds, stoppedOnly, movingOnly, messageTextInput.getText(), soundIdTextInput.getText(), (int) delayNumberInput.getValue()).send(Minecraft.getInstance().level);
 	}
 }

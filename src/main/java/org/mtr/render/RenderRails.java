@@ -1,23 +1,23 @@
 package org.mtr.render;
 
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.font.TextRenderer;
-import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.client.render.LightmapTextureManager;
-import net.minecraft.client.render.OverlayTexture;
-import net.minecraft.client.render.VertexConsumerProvider;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.client.world.ClientWorld;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.hit.HitResult;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.LightType;
+import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.client.renderer.LightTexture;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.LightLayer;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.phys.Vec3;
 import org.jspecify.annotations.Nullable;
 import org.mtr.MTR;
 import org.mtr.MTRClient;
@@ -57,19 +57,19 @@ import java.util.function.BooleanSupplier;
 
 public final class RenderRails implements IGui {
 
-	private static final Identifier IRON_BLOCK_TEXTURE = Identifier.of("textures/block/iron_block.png");
-	private static final Identifier METAL_TEXTURE = Identifier.of(MTR.MOD_ID, "textures/block/metal.png");
-	private static final Identifier RAIL_PREVIEW_TEXTURE = Identifier.of(MTR.MOD_ID, "textures/block/rail_preview.png");
-	private static final Identifier RAIL_TEXTURE = Identifier.of("textures/block/rail.png");
-	private static final Identifier WOOL_TEXTURE = Identifier.of("textures/block/white_wool.png");
-	private static final Identifier ONE_WAY_RAIL_ARROW_TEXTURE = Identifier.of(MTR.MOD_ID, "textures/block/one_way_rail_arrow.png");
+	private static final ResourceLocation IRON_BLOCK_TEXTURE = ResourceLocation.parse("textures/block/iron_block.png");
+	private static final ResourceLocation METAL_TEXTURE = ResourceLocation.fromNamespaceAndPath(MTR.MOD_ID, "textures/block/metal.png");
+	private static final ResourceLocation RAIL_PREVIEW_TEXTURE = ResourceLocation.fromNamespaceAndPath(MTR.MOD_ID, "textures/block/rail_preview.png");
+	private static final ResourceLocation RAIL_TEXTURE = ResourceLocation.parse("textures/block/rail.png");
+	private static final ResourceLocation WOOL_TEXTURE = ResourceLocation.parse("textures/block/white_wool.png");
+	private static final ResourceLocation ONE_WAY_RAIL_ARROW_TEXTURE = ResourceLocation.fromNamespaceAndPath(MTR.MOD_ID, "textures/block/one_way_rail_arrow.png");
 	private static final int INVALID_NODE_CHECK_RADIUS = 16;
 	private static final double LIGHT_REFERENCE_OFFSET = 0.1;
 
-	public static void render(MatrixStack matrixStack, VertexConsumerProvider vertexConsumerProvider, Vec3d offset) {
-		final MinecraftClient minecraftClient = MinecraftClient.getInstance();
-		final ClientWorld clientWorld = minecraftClient.world;
-		final ClientPlayerEntity clientPlayerEntity = minecraftClient.player;
+	public static void render(PoseStack matrixStack, MultiBufferSource vertexConsumerProvider, Vec3 offset) {
+		final Minecraft minecraftClient = Minecraft.getInstance();
+		final ClientLevel clientWorld = minecraftClient.level;
+		final LocalPlayer clientPlayerEntity = minecraftClient.player;
 
 		if (clientWorld == null || clientPlayerEntity == null) {
 			return;
@@ -87,7 +87,7 @@ public final class RenderRails implements IGui {
 		//   2. We skip the railMath walk entirely for off-screen rails, dropping the
 		//      per-segment matrix maths and StoredMatrixTransformations allocations.
 		// See docs/PERFORMANCE.md §3.10 for the analysis.
-		final double renderDistance = minecraftClient.worldRenderer.getViewDistance() * 16;
+		final double renderDistance = minecraftClient.levelRenderer.getLastViewDistance() * 16;
 		final ObjectArrayList<Rail> railsToRender = new ObjectArrayList<>();
 		MinecraftClientData.getInstance().railWrapperList.values().forEach(railWrapper -> {
 			final Rail rail = railWrapper.getRail();
@@ -103,9 +103,9 @@ public final class RenderRails implements IGui {
 			if (railAndBlockPos != null) {
 				final Rail rail = railAndBlockPos.left();
 				final BlockPos blockPos = railAndBlockPos.right();
-				if (clientPlayerEntity.isSneaking()) {
-					if (PacketUpdateLastRailStyles.CLIENT_CACHE.canApplyStylesToRail(clientPlayerEntity.getUuid(), rail, false)) {
-						final Rail newRail = PacketUpdateLastRailStyles.CLIENT_CACHE.getRailWithLastStyles(clientPlayerEntity.getUuid(), rail);
+				if (clientPlayerEntity.isShiftKeyDown()) {
+					if (PacketUpdateLastRailStyles.CLIENT_CACHE.canApplyStylesToRail(clientPlayerEntity.getUUID(), rail, false)) {
+						final Rail newRail = PacketUpdateLastRailStyles.CLIENT_CACHE.getRailWithLastStyles(clientPlayerEntity.getUUID(), rail);
 						hoverRails.add(newRail);
 						railsToRender.remove(rail);
 						railsToRender.add(newRail);
@@ -124,10 +124,10 @@ public final class RenderRails implements IGui {
 		final ItemStack itemStack = getStackInHand();
 		final Item item = itemStack.getItem();
 		if (item instanceof ItemRailModifier) {
-			final HitResult hitResult = minecraftClient.crosshairTarget;
+			final HitResult hitResult = minecraftClient.hitResult;
 			if (hitResult != null) {
-				final Vec3d hitPos = hitResult.getPos();
-				final BlockPos posStart = BlockPos.ofFloored(hitPos.x, hitPos.y, hitPos.z);
+				final Vec3 hitPos = hitResult.getLocation();
+				final BlockPos posStart = BlockPos.containing(hitPos.x, hitPos.y, hitPos.z);
 				final BlockPos posEnd = itemStack.get(DataComponentTypes.START_POS.get());
 
 				if (posEnd != null) {
@@ -137,13 +137,13 @@ public final class RenderRails implements IGui {
 						final BlockState blockStateStart = clientWorld.getBlockState(posStart);
 						final float angleEnd = BlockNode.getAngle(blockStateEnd);
 						final ObjectObjectImmutablePair<Angle, Angle> angles = Rail.getAngles(
-							MTR.blockPosToPosition(posStart), blockStateStart.getBlock() instanceof BlockNode ? BlockNode.getAngle(blockStateStart) : (blockStateEnd.getBlock() instanceof BlockNode.BlockContinuousMovementNode ? angleEnd : clientPlayerEntity.getYaw() + 90),
+							MTR.blockPosToPosition(posStart), blockStateStart.getBlock() instanceof BlockNode ? BlockNode.getAngle(blockStateStart) : (blockStateEnd.getBlock() instanceof BlockNode.BlockContinuousMovementNode ? angleEnd : clientPlayerEntity.getYRot() + 90),
 							MTR.blockPosToPosition(posEnd), angleEnd
 						);
 
-						final Rail rail = ((ItemRailModifier) item).createRail(clientPlayerEntity.getUuid(), ItemNodeModifierBase.getTransportMode(itemStack), blockStateStart, blockStateEnd, posStart, posEnd, angles.left(), angles.right());
+						final Rail rail = ((ItemRailModifier) item).createRail(clientPlayerEntity.getUUID(), ItemNodeModifierBase.getTransportMode(itemStack), blockStateStart, blockStateEnd, posStart, posEnd, angles.left(), angles.right());
 						if (rail != null) {
-							final Rail newRail = PacketUpdateLastRailStyles.CLIENT_CACHE.getRailWithLastStyles(clientPlayerEntity.getUuid(), rail);
+							final Rail newRail = PacketUpdateLastRailStyles.CLIENT_CACHE.getRailWithLastStyles(clientPlayerEntity.getUUID(), rail);
 							railsToRender.add(newRail);
 							hoverRails.add(newRail);
 							final double railLength = newRail.railMath.getLength();
@@ -213,23 +213,23 @@ public final class RenderRails implements IGui {
 			for (int x = -INVALID_NODE_CHECK_RADIUS; x <= INVALID_NODE_CHECK_RADIUS; x++) {
 				for (int y = -INVALID_NODE_CHECK_RADIUS; y <= INVALID_NODE_CHECK_RADIUS; y++) {
 					for (int z = -INVALID_NODE_CHECK_RADIUS; z <= INVALID_NODE_CHECK_RADIUS; z++) {
-						final BlockPos blockPos = clientPlayerEntity.getBlockPos().add(x, y, z);
+						final BlockPos blockPos = clientPlayerEntity.blockPosition().offset(x, y, z);
 						final BlockState blockState = clientWorld.getBlockState(blockPos);
-						renderNode(blockState, blockPos, () -> blockState.get(BlockNode.IS_CONNECTED) && !MinecraftClientData.getInstance().positionsToRail.containsKey(MTR.blockPosToPosition(blockPos)), MainRenderer.getFlashingLight());
+						renderNode(blockState, blockPos, () -> blockState.getValue(BlockNode.IS_CONNECTED) && !MinecraftClientData.getInstance().positionsToRail.containsKey(MTR.blockPosToPosition(blockPos)), MainRenderer.getFlashingLight());
 					}
 				}
 			}
 		}
 	}
 
-	public static boolean isHoldingRailRelated(ClientPlayerEntity clientPlayerEntity) {
+	public static boolean isHoldingRailRelated(LocalPlayer clientPlayerEntity) {
 		return clientPlayerEntity.isHolding(itemStack -> {
 			final Item item = itemStack.getItem();
 			return item instanceof ItemNodeModifierBase || item instanceof ItemBrush ||
-				Block.getBlockFromItem(item) instanceof BlockSignalLightBase ||
-				Block.getBlockFromItem(item) instanceof BlockNode ||
-				Block.getBlockFromItem(item) instanceof BlockSignalSemaphoreBase ||
-				Block.getBlockFromItem(item) instanceof PlatformHelper;
+				Block.byItem(item) instanceof BlockSignalLightBase ||
+				Block.byItem(item) instanceof BlockNode ||
+				Block.byItem(item) instanceof BlockSignalSemaphoreBase ||
+				Block.byItem(item) instanceof PlatformHelper;
 		});
 	}
 
@@ -246,11 +246,11 @@ public final class RenderRails implements IGui {
 		}
 	}
 
-	private static void renderRailStandard(ClientWorld clientWorld, Rail rail, RenderState renderState, float railWidth) {
+	private static void renderRailStandard(ClientLevel clientWorld, Rail rail, RenderState renderState, float railWidth) {
 		renderRailStandard(clientWorld, rail, 0.065625F, renderState, railWidth, renderState.hasColor ? RAIL_PREVIEW_TEXTURE : RAIL_TEXTURE, -1, -1, -1, -1);
 	}
 
-	private static void renderRailStandard(ClientWorld clientWorld, Rail rail, float yOffset, RenderState renderState, float railWidth, Identifier defaultTexture, float u1, float v1, float u2, float v2) {
+	private static void renderRailStandard(ClientLevel clientWorld, Rail rail, float yOffset, RenderState renderState, float railWidth, ResourceLocation defaultTexture, float u1, float v1, float u2, float v2) {
 		// Render rail models
 		final boolean[] renderType = {false, false}; // render default rail, rendered something
 		for (final String style : rail.getStyles()) {
@@ -266,7 +266,7 @@ public final class RenderRails implements IGui {
 			} else {
 				final boolean flip = newStyle.endsWith("_2");
 				CustomResourceLoader.getRailById(RailResource.getIdWithoutDirection(newStyle), railResource -> renderWithinRenderDistance(rail, (blockPos, x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4, tiltAngle) -> {
-					final int light = clientWorld.getLightLevel(blockPos);
+					final int light = clientWorld.getMaxLocalRawBrightness(blockPos);
 					final double differenceX = x3 - x1;
 					final double differenceZ = z3 - z1;
 					final double yaw = Math.atan2(differenceZ, differenceX);
@@ -287,10 +287,10 @@ public final class RenderRails implements IGui {
 		if (renderType[0] || renderState.hasColor) {
 			final int color = renderState.hasColor ? renderState == RenderState.FLASHING ? MainRenderer.getFlashingColor(RailType.getRailColor(rail), 1) : RailType.getRailColor(rail) : ARGB_WHITE;
 
-			final Identifier texture = renderType[1] && !renderType[0] ? IRON_BLOCK_TEXTURE : defaultTexture;
+			final ResourceLocation texture = renderType[1] && !renderType[0] ? IRON_BLOCK_TEXTURE : defaultTexture;
 			renderWithinRenderDistance(rail, (blockPos, x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4, tiltAngle) -> {
 				final float textureOffset = (((int) (x1 + z1)) % 4) * 0.25F;
-				final int light = renderState == RenderState.FLASHING || renderState == RenderState.COLORED ? DEFAULT_LIGHT : LightmapTextureManager.pack(clientWorld.getLightLevel(LightType.BLOCK, blockPos), clientWorld.getLightLevel(LightType.SKY, blockPos));
+				final int light = renderState == RenderState.FLASHING || renderState == RenderState.COLORED ? DEFAULT_LIGHT : LightTexture.pack(clientWorld.getBrightness(LightLayer.BLOCK, blockPos), clientWorld.getBrightness(LightLayer.SKY, blockPos));
 				MainRenderer.scheduleRender(texture, false, QueuedRenderLayer.EXTERIOR, (matrixStack, vertexConsumer, offset) -> {
 					IDrawing.drawTexture(matrixStack, vertexConsumer, x4, y4 + yOffset + SMALL_OFFSET, z4, x1, y1 + yOffset, z1, x2, y2 + yOffset + SMALL_OFFSET, z2, x3, y3 + yOffset, z3, offset, u1 < 0 ? 0 : u1, v1 < 0 ? 0.1875F + textureOffset : v1, u2 < 0 ? 1 : u2, v2 < 0 ? 0.3125F + textureOffset : v2, Direction.UP, color, light);
 					IDrawing.drawTexture(matrixStack, vertexConsumer, x3, y3 + yOffset, z3, x2, y2 + yOffset + SMALL_OFFSET, z2, x1, y1 + yOffset, z1, x4, y4 + yOffset + SMALL_OFFSET, z4, offset, u1 < 0 ? 0 : u1, v1 < 0 ? 0.1875F + textureOffset : v1, u2 < 0 ? 1 : u2, v2 < 0 ? 0.3125F + textureOffset : v2, Direction.UP, color, light);
@@ -299,7 +299,7 @@ public final class RenderRails implements IGui {
 		}
 	}
 
-	private static void renderSignalsStandard(ClientWorld clientWorld, Rail rail) {
+	private static void renderSignalsStandard(ClientLevel clientWorld, Rail rail) {
 		final IntArrayList colors = new IntArrayList(rail.getSignalColors());
 		Collections.sort(colors);
 		final float width = 1F / 16;
@@ -316,7 +316,7 @@ public final class RenderRails implements IGui {
 			final float u2 = u1 + width;
 
 			renderWithinRenderDistance(rail, (blockPos, x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4, tiltAngle) -> {
-				final int light = shouldFlash ? DEFAULT_LIGHT : LightmapTextureManager.pack(clientWorld.getLightLevel(LightType.BLOCK, blockPos), clientWorld.getLightLevel(LightType.SKY, blockPos));
+				final int light = shouldFlash ? DEFAULT_LIGHT : LightTexture.pack(clientWorld.getBrightness(LightLayer.BLOCK, blockPos), clientWorld.getBrightness(LightLayer.SKY, blockPos));
 				MainRenderer.scheduleRender(WOOL_TEXTURE, false, shouldFlash ? QueuedRenderLayer.EXTERIOR : QueuedRenderLayer.LIGHT, (matrixStack, vertexConsumer, offset) -> {
 					IDrawing.drawTexture(matrixStack, vertexConsumer, x4, y4 + 0.125 + SMALL_OFFSET, z4, x1, y1 + 0.125, z1, x2, y2 + 0.125 + SMALL_OFFSET, z2, x3, y3 + 0.125, z3, offset, u1, 0, u2, 1, Direction.UP, color, light);
 					IDrawing.drawTexture(matrixStack, vertexConsumer, x1, y1 + 0.125, z1, x4, y4 + 0.125 + SMALL_OFFSET, z4, x3, y3 + 0.125, z3, x2, y2 + 0.125 + SMALL_OFFSET, z2, offset, u1, 0, u2, 1, Direction.UP, color, light);
@@ -336,7 +336,7 @@ public final class RenderRails implements IGui {
 	 */
 	private static void renderWithinRenderDistance(Rail rail, RenderRailWithBlockPos callback, double interval, float offsetRadius1, float offsetRadius2) {
 		rail.railMath.render((x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4, tiltAngle) -> callback.renderRail(
-			BlockPos.ofFloored(x1, y1 + LIGHT_REFERENCE_OFFSET, z1),
+			BlockPos.containing(x1, y1 + LIGHT_REFERENCE_OFFSET, z1),
 			x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4, tiltAngle
 		), interval, offsetRadius1, offsetRadius2);
 	}
@@ -345,19 +345,19 @@ public final class RenderRails implements IGui {
 		if (blockState.getBlock() instanceof BlockNode && shouldRender.getAsBoolean()) {
 			final StoredMatrixTransformations storedMatrixTransformations = new StoredMatrixTransformations(blockPos.getX() + 0.5, blockPos.getY(), blockPos.getZ() + 0.5);
 			storedMatrixTransformations.add(matrixStack -> {
-				Drawing.rotateYDegrees(matrixStack, (blockState.get(BlockNode.FACING) ? -90 : 0) + (blockState.get(BlockNode.IS_45) ? -45 : 0) + (blockState.get(BlockNode.IS_22_5) ? -22.5F : 0));
+				Drawing.rotateYDegrees(matrixStack, (blockState.getValue(BlockNode.FACING) ? -90 : 0) + (blockState.getValue(BlockNode.IS_45) ? -45 : 0) + (blockState.getValue(BlockNode.IS_22_5) ? -22.5F : 0));
 				matrixStack.scale(4, 0.5F, 0.5F);
 				matrixStack.translate(-0.5, 0, -0.5);
 			});
-			MainRenderer.scheduleRender(Identifier.of(MTR.MOD_ID, "textures/block/white.png"), false, QueuedRenderLayer.LIGHT, (matrixStack, vertexConsumer, offset) -> {
+			MainRenderer.scheduleRender(ResourceLocation.fromNamespaceAndPath(MTR.MOD_ID, "textures/block/white.png"), false, QueuedRenderLayer.LIGHT, (matrixStack, vertexConsumer, offset) -> {
 				storedMatrixTransformations.transform(matrixStack, offset);
-				RenderPSDAPGDoor.MODEL_SMALL_CUBE.render(matrixStack, vertexConsumer, light, OverlayTexture.DEFAULT_UV);
-				matrixStack.pop();
+				RenderPSDAPGDoor.MODEL_SMALL_CUBE.render(matrixStack, vertexConsumer, light, OverlayTexture.NO_OVERLAY);
+				matrixStack.popPose();
 			});
 		}
 	}
 
-	private static void renderRailStats(MatrixStack matrixStack, VertexConsumerProvider vertexConsumerProvider, Vec3d offset, BlockPos renderPos, @Nullable BlockPos otherPos, double railLength, double closerRadius, double otherRadius) {
+	private static void renderRailStats(PoseStack matrixStack, MultiBufferSource vertexConsumerProvider, Vec3 offset, BlockPos renderPos, @Nullable BlockPos otherPos, double railLength, double closerRadius, double otherRadius) {
 		if (railLength > 0) {
 			final String textXYZOffsetLabel = otherPos == null ? null : TranslationProvider.GUI_MTR_RAIL_XYZ_OFFSET.getString();
 			final String textXYZOffset = otherPos == null ? null : String.format("(%s, %s, %s)", renderPos.getX() - otherPos.getX(), renderPos.getY() - otherPos.getY(), renderPos.getZ() - otherPos.getZ());
@@ -384,7 +384,7 @@ public final class RenderRails implements IGui {
 
 			final double textOffset = otherPos == null ? 0.5 : 1;
 
-			matrixStack.push();
+			matrixStack.pushPose();
 			matrixStack.translate(renderPos.getX() - offset.x + 0.5, renderPos.getY() - offset.y + textOffset, renderPos.getZ() - offset.z + 0.5);
 			MTRClient.transformToFacePlayer(matrixStack, renderPos.getX() + 0.5, renderPos.getY() + textOffset, renderPos.getZ() + 0.5);
 			Drawing.rotateZDegrees(matrixStack, 180);
@@ -397,27 +397,27 @@ public final class RenderRails implements IGui {
 				line = renderRailStat(matrixStack, vertexConsumerProvider, textXZRadiusLabel, textXZRadius, line);
 			}
 			renderRailStat(matrixStack, vertexConsumerProvider, textLengthLabel, textLength, line);
-			matrixStack.pop();
+			matrixStack.popPose();
 		}
 	}
 
-	private static int renderRailStat(MatrixStack matrixStack, VertexConsumerProvider vertexConsumerProvider, String title, String data, int line) {
+	private static int renderRailStat(PoseStack matrixStack, MultiBufferSource vertexConsumerProvider, String title, String data, int line) {
 		int newLine = line - 9;
-		final TextRenderer textRenderer = MinecraftClient.getInstance().textRenderer;
-		textRenderer.draw(data, -textRenderer.getWidth(data) / 2F, newLine, ARGB_WHITE, true, matrixStack.peek().getPositionMatrix(), vertexConsumerProvider, TextRenderer.TextLayerType.NORMAL, 0, DEFAULT_LIGHT);
-		matrixStack.push();
+		final Font textRenderer = Minecraft.getInstance().font;
+		textRenderer.drawInBatch(data, -textRenderer.width(data) / 2F, newLine, ARGB_WHITE, true, matrixStack.last().pose(), vertexConsumerProvider, Font.DisplayMode.NORMAL, 0, DEFAULT_LIGHT);
+		matrixStack.pushPose();
 		matrixStack.scale(0.5F, 0.5F, 0.5F);
 		newLine -= 5;
-		textRenderer.draw(title, -textRenderer.getWidth(title) / 2F, newLine * 2, ARGB_WHITE, true, matrixStack.peek().getPositionMatrix(), vertexConsumerProvider, TextRenderer.TextLayerType.NORMAL, 0, DEFAULT_LIGHT);
-		matrixStack.pop();
+		textRenderer.drawInBatch(title, -textRenderer.width(title) / 2F, newLine * 2, ARGB_WHITE, true, matrixStack.last().pose(), vertexConsumerProvider, Font.DisplayMode.NORMAL, 0, DEFAULT_LIGHT);
+		matrixStack.popPose();
 		return newLine - 1;
 	}
 
 	private static ItemStack getStackInHand() {
-		final ClientPlayerEntity clientPlayerEntity = MinecraftClient.getInstance().player;
+		final LocalPlayer clientPlayerEntity = Minecraft.getInstance().player;
 		if (clientPlayerEntity != null) {
 			try {
-				return clientPlayerEntity.getStackInHand(clientPlayerEntity.getActiveHand());
+				return clientPlayerEntity.getItemInHand(clientPlayerEntity.getUsedItemHand());
 			} catch (Exception ignored) {
 			}
 		}

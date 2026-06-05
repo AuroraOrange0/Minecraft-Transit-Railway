@@ -1,9 +1,9 @@
 package org.mtr.render;
 
-import net.minecraft.block.BlockState;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.world.World;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.state.BlockState;
 import org.mtr.block.BlockAPGGlass;
 import org.mtr.block.IBlock;
 import org.mtr.client.DynamicTextureCache;
@@ -19,7 +19,7 @@ public class RenderAPGGlass extends RenderRouteBase<BlockAPGGlass.APGGlassBlockE
 	}
 
 	@Override
-	protected RenderType getRenderType(World world, BlockPos pos, BlockState state) {
+	protected RenderType getRenderType(Level world, BlockPos pos, BlockState state) {
 		if (IBlock.getStatePropertySafe(state, HALF) == DoubleBlockHalf.LOWER) {
 			return RenderType.NONE;
 		} else if ((Math.floorMod(pos.getX(), 8) < 4) == (Math.floorMod(pos.getZ(), 8) < 4)) {
@@ -38,7 +38,7 @@ public class RenderAPGGlass extends RenderRouteBase<BlockAPGGlass.APGGlassBlockE
 				storedMatrixTransformations.transform(matrixStack, offset);
 				IDrawing.drawTexture(matrixStack, vertexConsumer, isLeft ? sidePadding : 0, COLOR_STRIP_START, 0, isRight ? 1 - sidePadding : 1, COLOR_STRIP_END, 0, facing, color, light);
 				IDrawing.drawTexture(matrixStack, vertexConsumer, isRight ? 1 - sidePadding : 1, COLOR_STRIP_START, 0.125F, isLeft ? sidePadding : 0, COLOR_STRIP_END, 0.125F, facing, color, light);
-				matrixStack.pop();
+				matrixStack.popPose();
 			});
 
 			final float width = leftBlocks + rightBlocks + 1 - sidePadding * 2;
@@ -46,7 +46,7 @@ public class RenderAPGGlass extends RenderRouteBase<BlockAPGGlass.APGGlassBlockE
 			MainRenderer.scheduleRender(DynamicTextureCache.instance.getSingleRowStationName(platformId, width / height).identifier, false, QueuedRenderLayer.EXTERIOR, (matrixStack, vertexConsumer, offset) -> {
 				storedMatrixTransformations.transform(matrixStack, offset);
 				IDrawing.drawTexture(matrixStack, vertexConsumer, 1 - (rightBlocks == 0 ? sidePadding : 0), topPadding, 0.125F, leftBlocks == 0 ? sidePadding : 0, 1 - bottomPadding, 0.125F, (rightBlocks - (rightBlocks == 0 ? 0 : sidePadding)) / width, 0, (width - leftBlocks + (leftBlocks == 0 ? 0 : sidePadding)) / width, 1, facing, color, light);
-				matrixStack.pop();
+				matrixStack.popPose();
 			});
 		}
 	}

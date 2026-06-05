@@ -3,10 +3,10 @@ package org.mtr.screen;
 import gg.essential.elementa.components.ScrollComponent;
 import gg.essential.elementa.components.UIWrappedText;
 import gg.essential.elementa.constraints.*;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.entity.player.PlayerInventory;
-import net.minecraft.item.Items;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.item.Items;
 import org.mtr.generated.lang.TranslationProvider;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectImmutableList;
 import org.mtr.packet.PacketAddBalance;
@@ -79,9 +79,9 @@ public final class TicketMachineScreen extends WindowBase {
 	}
 
 	private int getEmeraldCount() {
-		final ClientPlayerEntity clientPlayerEntity = MinecraftClient.getInstance().player;
-		final PlayerInventory playerInventory = clientPlayerEntity == null ? null : clientPlayerEntity.getInventory();
-		return playerInventory == null ? 0 : playerInventory.count(Items.EMERALD);
+		final LocalPlayer clientPlayerEntity = Minecraft.getInstance().player;
+		final Inventory playerInventory = clientPlayerEntity == null ? null : clientPlayerEntity.getInventory();
+		return playerInventory == null ? 0 : playerInventory.countItem(Items.EMERALD);
 	}
 
 	private void updateButtons() {

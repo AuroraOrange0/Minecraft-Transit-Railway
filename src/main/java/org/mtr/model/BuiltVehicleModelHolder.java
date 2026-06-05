@@ -1,6 +1,6 @@
 package org.mtr.model;
 
-import net.minecraft.util.math.Box;
+import net.minecraft.world.phys.AABB;
 import org.jspecify.annotations.Nullable;
 import org.mtr.data.VehicleExtension;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
@@ -15,16 +15,16 @@ public final class BuiltVehicleModelHolder {
 	private final Object2ObjectOpenHashMap<PartCondition, Object2ObjectOpenHashMap<RenderStage, ObjectArrayList<NewOptimizedModel>>> builtModels;
 	private final ObjectArrayList<BuiltDoorModelDetails> builtDoorModelDetailsList;
 	private final Object2ObjectOpenHashMap<PartCondition, ObjectArrayList<ModelDisplayPart>> displays;
-	public final ObjectArrayList<Box> floors;
-	public final ObjectArrayList<Box> doorways;
+	public final ObjectArrayList<AABB> floors;
+	public final ObjectArrayList<AABB> doorways;
 
 	public BuiltVehicleModelHolder(
 		ModelProperties modelProperties,
 		Object2ObjectOpenHashMap<PartCondition, Object2ObjectOpenHashMap<RenderStage, ObjectArrayList<NewOptimizedModel>>> builtModels,
 		ObjectArrayList<BuiltDoorModelDetails> builtDoorModelDetailsList,
 		Object2ObjectOpenHashMap<PartCondition, ObjectArrayList<ModelDisplayPart>> displays,
-		ObjectArrayList<Box> floors,
-		ObjectArrayList<Box> doorways
+		ObjectArrayList<AABB> floors,
+		ObjectArrayList<AABB> doorways
 	) {
 		this.modelProperties = modelProperties;
 		this.builtModels = builtModels;
@@ -34,7 +34,7 @@ public final class BuiltVehicleModelHolder {
 		this.doorways = doorways;
 	}
 
-	public void render(StoredMatrixTransformations storedMatrixTransformations, VehicleExtension vehicle, int carNumber, boolean isWithinHalfRenderDistance, int[] scrollingDisplayIndexTracker, int light, ObjectArrayList<Box> openDoorways, boolean fromResourcePackCreator) {
+	public void render(StoredMatrixTransformations storedMatrixTransformations, VehicleExtension vehicle, int carNumber, boolean isWithinHalfRenderDistance, int[] scrollingDisplayIndexTracker, int light, ObjectArrayList<AABB> openDoorways, boolean fromResourcePackCreator) {
 		final boolean noOpenDoorways = openDoorways.isEmpty();
 
 		builtModels.forEach((partCondition, models) -> {
@@ -151,7 +151,7 @@ public final class BuiltVehicleModelHolder {
 	public record BuiltDoorModelDetails(
 		Object2ObjectOpenHashMap<PartCondition, Object2ObjectOpenHashMap<RenderStage, ObjectArrayList<NewOptimizedModel>>> models,
 		ModelPropertiesPart modelPropertiesPart,
-		@Nullable Box box,
+		@Nullable AABB box,
 		boolean flipped
 	) {
 	}

@@ -6,6 +6,7 @@ import org.mtr.core.WebserverSetup
 plugins {
 	id("net.neoforged.moddev")
 	id("dev.kikugie.fletching-table.neoforge") version "+"
+	id("io.freefair.lombok") version "+"
 }
 
 base.archivesName = property("mod.id") as String
@@ -15,6 +16,7 @@ repositories {
 	mavenCentral()
 	maven { url = uri("https://repo.codemc.org/repository/maven-public") } // Occlusion Culling
 	maven { url = uri("https://repo.essential.gg/repository/maven-public") } // Elementa and UniversalCraft
+	maven { url = uri("https://maven.fabricmc.net/") } // Fabric Language Kotlin
 	maven {
 		url = uri("https://maven.pkg.github.com/Minecraft-Transit-Railway/Transport-Simulation-Core")
 		credentials {
@@ -42,6 +44,7 @@ dependencies {
 	implementation("gg.essential:elementa:${property("dependency.elementa")}")
 	implementation("gg.essential:universalcraft-${property("dependency.universal_craft_minecraft")}-neoforge:${property("dependency.universal_craft")}")
 	implementation("org.jspecify:jspecify:+")
+	implementation("net.fabricmc:fabric-language-kotlin:+")
 
 	testImplementation("org.junit.jupiter:junit-jupiter-api:5.+")
 	testImplementation("org.junit.platform:junit-platform-launcher:1.+")

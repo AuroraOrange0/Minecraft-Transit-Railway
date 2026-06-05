@@ -1,9 +1,9 @@
 package org.mtr.resource;
 
-import net.minecraft.util.Identifier;
+import net.minecraft.resources.ResourceLocation;
 
 @FunctionalInterface
 public interface ResourceProvider {
 
-	String get(Identifier identifier);
+	String get(ResourceLocation identifier);
 }

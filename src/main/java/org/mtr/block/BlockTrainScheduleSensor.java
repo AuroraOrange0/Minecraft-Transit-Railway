@@ -1,14 +1,14 @@
 package org.mtr.block;
 
 import lombok.Getter;
-import net.minecraft.block.AbstractBlock;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.block.entity.BlockEntityTicker;
-import net.minecraft.block.entity.BlockEntityType;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
+import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityTicker;
+import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.state.BlockBehaviour;
+import net.minecraft.world.level.block.state.BlockState;
 import org.jspecify.annotations.Nullable;
 import org.mtr.MTRClient;
 import org.mtr.core.operation.ArrivalResponse;
@@ -22,19 +22,19 @@ import org.mtr.registry.RegistryClient;
 
 public class BlockTrainScheduleSensor extends BlockTrainPoweredSensorBase {
 
-	public BlockTrainScheduleSensor(AbstractBlock.Settings settings) {
+	public BlockTrainScheduleSensor(BlockBehaviour.Properties settings) {
 		super(settings);
 	}
 
 	@Override
-	public BlockEntity createBlockEntity(BlockPos blockPos, BlockState blockState) {
+	public BlockEntity newBlockEntity(BlockPos blockPos, BlockState blockState) {
 		return new TrainScheduleSensorBlockEntity(blockPos, blockState);
 	}
 
 	@Nullable
 	@Override
-	public <T extends BlockEntity> BlockEntityTicker<T> getTicker(World world, BlockState state, BlockEntityType<T> type) {
-		return type == BlockEntityTypes.TRAIN_SCHEDULE_SENSOR.get() && world.isClient ? (world1, pos, state1, blockEntity) -> MTRClient.findClosePlatform(pos.up(), 5, platform -> {
+	public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level world, BlockState state, BlockEntityType<T> type) {
+		return type == BlockEntityTypes.TRAIN_SCHEDULE_SENSOR.get() && world.isClientSide ? (world1, pos, state1, blockEntity) -> MTRClient.findClosePlatform(pos.above(), 5, platform -> {
 			final ObjectArrayList<ArrivalResponse> arrivalResponseList = ArrivalsCacheClient.INSTANCE.requestArrivals(LongArrayList.of(platform.getId()));
 			for (final ArrivalResponse arrival : arrivalResponseList) {
 				if ((!((TrainScheduleSensorBlockEntity) blockEntity).realtimeOnly || arrival.getRealtime()) && BlockTrainSensorBase.matchesFilter(world1, pos, arrival.getRouteId(), 1) && (arrival.getArrival() - ArrivalsCacheClient.INSTANCE.getMillisOffset() - System.currentTimeMillis()) / 1000 == ((TrainScheduleSensorBlockEntity) blockEntity).seconds) {
@@ -58,13 +58,13 @@ public class BlockTrainScheduleSensor extends BlockTrainPoweredSensorBase {
 		}
 
 		@Override
-		protected void readNbt(NbtCompound nbtCompound) {
+		protected void readNbt(CompoundTag nbtCompound) {
 			seconds = nbtCompound.getInt(KEY_SECONDS);
 			realtimeOnly = nbtCompound.getBoolean(KEY_REALTIME_ONLY);
 		}
 
 		@Override
-		protected void writeNbt(NbtCompound nbtCompound) {
+		protected void writeNbt(CompoundTag nbtCompound) {
 			nbtCompound.putInt(KEY_SECONDS, seconds);
 			nbtCompound.putBoolean(KEY_REALTIME_ONLY, realtimeOnly);
 		}

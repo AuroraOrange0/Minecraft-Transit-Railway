@@ -1,6 +1,6 @@
 package org.mtr.resource;
 
-import net.minecraft.util.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import org.jspecify.annotations.Nullable;
 import org.mtr.core.serializer.ReaderBase;
 import org.mtr.generated.resource.ModelPropertiesSchema;
@@ -12,29 +12,29 @@ import java.util.function.Consumer;
 public final class ModelProperties extends ModelPropertiesSchema {
 
 	@Nullable
-	public final Identifier gangwayInnerSideTexture;
+	public final ResourceLocation gangwayInnerSideTexture;
 	@Nullable
-	public final Identifier gangwayInnerTopTexture;
+	public final ResourceLocation gangwayInnerTopTexture;
 	@Nullable
-	public final Identifier gangwayInnerBottomTexture;
+	public final ResourceLocation gangwayInnerBottomTexture;
 	@Nullable
-	public final Identifier gangwayOuterSideTexture;
+	public final ResourceLocation gangwayOuterSideTexture;
 	@Nullable
-	public final Identifier gangwayOuterTopTexture;
+	public final ResourceLocation gangwayOuterTopTexture;
 	@Nullable
-	public final Identifier gangwayOuterBottomTexture;
+	public final ResourceLocation gangwayOuterBottomTexture;
 	@Nullable
-	public final Identifier barrierInnerSideTexture;
+	public final ResourceLocation barrierInnerSideTexture;
 	@Nullable
-	public final Identifier barrierInnerTopTexture;
+	public final ResourceLocation barrierInnerTopTexture;
 	@Nullable
-	public final Identifier barrierInnerBottomTexture;
+	public final ResourceLocation barrierInnerBottomTexture;
 	@Nullable
-	public final Identifier barrierOuterSideTexture;
+	public final ResourceLocation barrierOuterSideTexture;
 	@Nullable
-	public final Identifier barrierOuterTopTexture;
+	public final ResourceLocation barrierOuterTopTexture;
 	@Nullable
-	public final Identifier barrierOuterBottomTexture;
+	public final ResourceLocation barrierOuterBottomTexture;
 
 	public ModelProperties(ReaderBase readerBase) {
 		super(readerBase);

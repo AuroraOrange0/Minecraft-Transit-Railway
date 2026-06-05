@@ -36,7 +36,7 @@ public final class PacketPressLiftButton extends PacketRequestResponseBase {
 	}
 
 	@Override
-	protected PacketRequestResponseBase.ResponseType responseType() {
-		return PacketRequestResponseBase.ResponseType.NONE;
+	protected ResponseType responseType() {
+		return ResponseType.NONE;
 	}
 }

@@ -1,12 +1,12 @@
 package org.mtr.widget;
 
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.font.TextRenderer;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.widget.TextFieldWidget;
-import net.minecraft.client.render.RenderLayer;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.text.Text;
+import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.network.chat.Component;
 import org.jspecify.annotations.Nullable;
 import org.mtr.mixin.TextFieldSelectionEndAccessor;
 import org.mtr.screen.TextCase;
@@ -29,7 +29,7 @@ public final class BetterTextFieldWidget extends ClickableWidgetBase {
 	private final int fixedWidth;
 	@Nullable
 	private final Consumer<String> callback;
-	private final TextFieldWidget textFieldWidget = new TextFieldWidget(MinecraftClient.getInstance().textRenderer, 0, 0, 0, 0, Text.empty());
+	private final EditBox textFieldWidget = new EditBox(Minecraft.getInstance().font, 0, 0, 0, 0, Component.empty());
 
 	private final GuiAnimation guiAnimationLabelY = new GuiAnimation();
 	private final GuiAnimation guiAnimationLabelScale = new GuiAnimation();
@@ -57,12 +57,12 @@ public final class BetterTextFieldWidget extends ClickableWidgetBase {
 	}
 
 	@Override
-	public void renderWidget(DrawContext context, int mouseX, int mouseY, float delta) {
+	public void renderWidget(GuiGraphics context, int mouseX, int mouseY, float delta) {
 		setDimensions();
-		final MinecraftClient minecraftClient = MinecraftClient.getInstance();
-		final TextRenderer textRenderer = minecraftClient.textRenderer;
-		final MatrixStack matrixStack = context.getMatrices();
-		final Drawing drawing = new Drawing(matrixStack, RenderLayer.getGui());
+		final Minecraft minecraftClient = Minecraft.getInstance();
+		final Font textRenderer = minecraftClient.font;
+		final PoseStack matrixStack = context.pose();
+		final Drawing drawing = new Drawing(matrixStack, RenderType.gui());
 
 		// Draw background
 		drawing.setVerticesWH(getX(), getY(), width, height).setColor(GuiHelper.BLACK_COLOR).draw();
@@ -74,10 +74,10 @@ public final class BetterTextFieldWidget extends ClickableWidgetBase {
 		}
 
 		final String text = getText();
-		final int cursorPosition = textFieldWidget.getCursor();
+		final int cursorPosition = textFieldWidget.getCursorPosition();
 		final long currentTime = System.currentTimeMillis();
-		final int cursorPixel = textRenderer.getWidth(text.substring(0, Math.min(text.length(), cursorPosition)));
-		final double pixelWidth = 1 / minecraftClient.getWindow().getScaleFactor();
+		final int cursorPixel = textRenderer.width(text.substring(0, Math.min(text.length(), cursorPosition)));
+		final double pixelWidth = 1 / minecraftClient.getWindow().getGuiScale();
 
 		// Track cursor movement
 		if (cursorPosition != lastCursorPosition) {
@@ -86,7 +86,7 @@ public final class BetterTextFieldWidget extends ClickableWidgetBase {
 		}
 
 		// Draw text selection
-		final int selectionEndPixel = textRenderer.getWidth(text.substring(0, Math.min(text.length(), ((TextFieldSelectionEndAccessor) textFieldWidget).getSelectionEnd())));
+		final int selectionEndPixel = textRenderer.width(text.substring(0, Math.min(text.length(), ((TextFieldSelectionEndAccessor) textFieldWidget).getHighlightPos())));
 		drawing.setVerticesWH(
 			getX() + GuiHelper.DEFAULT_PADDING + Math.min(cursorPixel, selectionEndPixel),
 			getY() + CURSOR_START,
@@ -116,18 +116,18 @@ public final class BetterTextFieldWidget extends ClickableWidgetBase {
 		}
 
 		// Draw label
-		matrixStack.push();
+		matrixStack.pushPose();
 		matrixStack.translate(getX() + GuiHelper.DEFAULT_PADDING, getY() + LABEL_TEXT_START + guiAnimationLabelY.getCurrentValue(), 0);
 		final float scale = (float) guiAnimationLabelScale.getCurrentValue() + 0.5F;
 		if (scale != 1) {
 			matrixStack.scale(scale, scale, 1);
 		}
-		context.drawText(textRenderer, label, 0, 0, GuiHelper.LIGHT_GRAY_COLOR, false);
-		matrixStack.pop();
+		context.drawString(textRenderer, label, 0, 0, GuiHelper.LIGHT_GRAY_COLOR, false);
+		matrixStack.popPose();
 
 		// Draw text
 		if (!text.isEmpty()) {
-			context.drawText(textRenderer, text, getX() + GuiHelper.DEFAULT_PADDING, getY() + MAIN_TEXT_START, GuiHelper.WHITE_COLOR, false);
+			context.drawString(textRenderer, text, getX() + GuiHelper.DEFAULT_PADDING, getY() + MAIN_TEXT_START, GuiHelper.WHITE_COLOR, false);
 		}
 	}
 
@@ -189,7 +189,7 @@ public final class BetterTextFieldWidget extends ClickableWidgetBase {
 	}
 
 	public String getText() {
-		return textFieldWidget.getText();
+		return textFieldWidget.getValue();
 	}
 
 	public void setText(String text) {
@@ -208,7 +208,7 @@ public final class BetterTextFieldWidget extends ClickableWidgetBase {
 
 		if (!tempText.equals(newText)) {
 			refreshTextFieldWidget();
-			textFieldWidget.setText(newText);
+			textFieldWidget.setValue(newText);
 		}
 
 		if (sendCallback && !oldText.equals(newText) && callback != null) {
@@ -222,7 +222,7 @@ public final class BetterTextFieldWidget extends ClickableWidgetBase {
 
 	private void refreshTextFieldWidget() {
 		textFieldWidget.setMaxLength(Integer.MAX_VALUE);
-		textFieldWidget.setDrawsBackground(false);
+		textFieldWidget.setBordered(false);
 		textFieldWidget.setX(getX());
 		textFieldWidget.setY(getY());
 		textFieldWidget.setWidth(width);
@@ -233,6 +233,6 @@ public final class BetterTextFieldWidget extends ClickableWidgetBase {
 	}
 
 	private void setDimensions() {
-		setDimensions(fixedWidth, GuiHelper.DEFAULT_LINE_SIZE);
+		setSize(fixedWidth, GuiHelper.DEFAULT_LINE_SIZE);
 	}
 }

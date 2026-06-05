@@ -1,10 +1,10 @@
 package org.mtr.item;
 
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.tooltip.TooltipType;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
 import org.mtr.core.data.Depot;
 import org.mtr.core.tool.Utilities;
 import org.mtr.generated.lang.TranslationProvider;
@@ -15,22 +15,22 @@ import java.util.Objects;
 
 public final class ItemDepotDriverKey extends ItemDriverKey {
 
-	public ItemDepotDriverKey(Item.Settings settings, boolean canDrive, boolean canOpenDoors, boolean canBoardAnyVehicle, int color) {
+	public ItemDepotDriverKey(Item.Properties settings, boolean canDrive, boolean canOpenDoors, boolean canBoardAnyVehicle, int color) {
 		super(settings, canDrive, canOpenDoors, canBoardAnyVehicle, color);
 	}
 
 	@Override
-	public void appendTooltip(ItemStack stack, TooltipContext context, List<Text> tooltip, TooltipType type) {
+	public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltip, TooltipFlag type) {
 		if (isUsable(stack)) {
 			final long timeout = (getExpiryTime(stack) - System.currentTimeMillis()) / Utilities.MILLIS_PER_SECOND;
 			final long hours = timeout / 3600;
 			final long minutes = (timeout % 3600) / 60;
 			final long seconds = timeout % 60;
-			tooltip.add(TranslationProvider.TOOLTIP_MTR_EXPIRES_IN.getMutableText(hours == 0 ? String.format("%02d:%02d", minutes, seconds) : String.format("%d:%02d:%02d", hours, minutes, seconds)).formatted(Formatting.GOLD));
+			tooltip.add(TranslationProvider.TOOLTIP_MTR_EXPIRES_IN.getMutableText(hours == 0 ? String.format("%02d:%02d", minutes, seconds) : String.format("%d:%02d:%02d", hours, minutes, seconds)).withStyle(ChatFormatting.GOLD));
 		} else {
-			tooltip.add(TranslationProvider.TOOLTIP_MTR_EXPIRED.getMutableText().formatted(Formatting.RED));
+			tooltip.add(TranslationProvider.TOOLTIP_MTR_EXPIRED.getMutableText().withStyle(ChatFormatting.RED));
 		}
-		super.appendTooltip(stack, context, tooltip, type);
+		super.appendHoverText(stack, context, tooltip, type);
 	}
 
 	public static void setData(ItemStack itemStack, Depot depot, long timeout) {

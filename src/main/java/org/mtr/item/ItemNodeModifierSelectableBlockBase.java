@@ -1,19 +1,19 @@
 package org.mtr.item;
 
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.ItemUsageContext;
-import net.minecraft.item.tooltip.TooltipType;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.text.Text;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
+import net.minecraft.ChatFormatting;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.context.UseOnContext;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
 import org.jspecify.annotations.Nullable;
 import org.mtr.MTRClient;
 import org.mtr.block.BlockNode;
@@ -34,7 +34,7 @@ public abstract class ItemNodeModifierSelectableBlockBase extends ItemNodeModifi
 
 	private static final String TAG_BLOCK_ID = "block_id";
 
-	public ItemNodeModifierSelectableBlockBase(boolean canSaveBlock, int height, int width, Item.Settings settings) {
+	public ItemNodeModifierSelectableBlockBase(boolean canSaveBlock, int height, int width, Item.Properties settings) {
 		super(true, false, false, true, settings);
 		this.canSaveBlock = canSaveBlock;
 		this.height = height;
@@ -43,63 +43,63 @@ public abstract class ItemNodeModifierSelectableBlockBase extends ItemNodeModifi
 	}
 
 	@Override
-	public ActionResult useOnBlock(ItemUsageContext context) {
+	public InteractionResult useOn(UseOnContext context) {
 		if (canSaveBlock) {
-			final World world = context.getWorld();
-			if (!world.isClient()) {
-				final PlayerEntity playerEntity = context.getPlayer();
-				if (playerEntity != null && playerEntity.isSneaking()) {
-					final BlockState state = world.getBlockState(context.getBlockPos());
+			final Level world = context.getLevel();
+			if (!world.isClientSide()) {
+				final Player playerEntity = context.getPlayer();
+				if (playerEntity != null && playerEntity.isShiftKeyDown()) {
+					final BlockState state = world.getBlockState(context.getClickedPos());
 					final BlockState neighborState;
 					if (state.getBlock() instanceof BlockNode) {
-						neighborState = Blocks.AIR.getDefaultState();
+						neighborState = Blocks.AIR.defaultBlockState();
 					} else {
 						neighborState = state;
 					}
-					playerEntity.sendMessage(TranslationProvider.TOOLTIP_MTR_SELECTED_MATERIAL.getText(Text.translatable(neighborState.getBlock().getTranslationKey()).getString()), true);
-					context.getStack().set(DataComponentTypes.BLOCK_ID.get(), Block.getRawIdFromState(neighborState));
-					return ActionResult.SUCCESS;
+					playerEntity.displayClientMessage(TranslationProvider.TOOLTIP_MTR_SELECTED_MATERIAL.getText(Component.translatable(neighborState.getBlock().getDescriptionId()).getString()), true);
+					context.getItemInHand().set(DataComponentTypes.BLOCK_ID.get(), Block.getId(neighborState));
+					return InteractionResult.SUCCESS;
 				}
 			}
 		}
 
-		return super.useOnBlock(context);
+		return super.useOn(context);
 	}
 
 	@Override
-	public void appendTooltip(ItemStack stack, TooltipContext context, List<Text> tooltip, TooltipType type) {
+	public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltip, TooltipFlag type) {
 		if (height > 0) {
-			tooltip.add(TranslationProvider.TOOLTIP_MTR_RAIL_ACTION_HEIGHT.getMutableText(height).formatted(Formatting.GRAY));
+			tooltip.add(TranslationProvider.TOOLTIP_MTR_RAIL_ACTION_HEIGHT.getMutableText(height).withStyle(ChatFormatting.GRAY));
 		}
-		tooltip.add(TranslationProvider.TOOLTIP_MTR_RAIL_ACTION_WIDTH.getMutableText(width).formatted(Formatting.GRAY));
+		tooltip.add(TranslationProvider.TOOLTIP_MTR_RAIL_ACTION_WIDTH.getMutableText(width).withStyle(ChatFormatting.GRAY));
 
 		if (canSaveBlock) {
 			final BlockState state = getSavedState(stack);
-			final String[] textSplit = (state.isAir() ? TranslationProvider.TOOLTIP_MTR_SHIFT_RIGHT_CLICK_TO_SELECT_MATERIAL : TranslationProvider.TOOLTIP_MTR_SHIFT_RIGHT_CLICK_TO_CLEAR).getString(MTRClient.getShiftText(), Text.translatable(org.mtr.registry.Blocks.RAIL_NODE.get().getTranslationKey())).split("\\|");
+			final String[] textSplit = (state.isAir() ? TranslationProvider.TOOLTIP_MTR_SHIFT_RIGHT_CLICK_TO_SELECT_MATERIAL : TranslationProvider.TOOLTIP_MTR_SHIFT_RIGHT_CLICK_TO_CLEAR).getString(MTRClient.getShiftText(), Component.translatable(org.mtr.registry.Blocks.RAIL_NODE.get().getDescriptionId())).split("\\|");
 			for (String text : textSplit) {
-				tooltip.add(Text.literal(text).formatted(Formatting.GRAY).formatted(Formatting.ITALIC));
+				tooltip.add(Component.literal(text).withStyle(ChatFormatting.GRAY).withStyle(ChatFormatting.ITALIC));
 			}
-			tooltip.add(TranslationProvider.TOOLTIP_MTR_SELECTED_MATERIAL.getMutableText(Text.translatable(state.getBlock().getTranslationKey()).getString()).formatted(Formatting.GREEN));
+			tooltip.add(TranslationProvider.TOOLTIP_MTR_SELECTED_MATERIAL.getMutableText(Component.translatable(state.getBlock().getDescriptionId()).getString()).withStyle(ChatFormatting.GREEN));
 		}
 
-		super.appendTooltip(stack, context, tooltip, type);
+		super.appendHoverText(stack, context, tooltip, type);
 	}
 
 	@Override
-	protected final void onConnect(World world, ItemStack itemStack, TransportMode transportMode, BlockState stateStart, BlockState stateEnd, BlockPos posStart, BlockPos posEnd, Angle facingStart, Angle facingEnd, @Nullable ServerPlayerEntity serverPlayerEntity) {
+	protected final void onConnect(Level world, ItemStack itemStack, TransportMode transportMode, BlockState stateStart, BlockState stateEnd, BlockPos posStart, BlockPos posEnd, Angle facingStart, Angle facingEnd, @Nullable ServerPlayer serverPlayerEntity) {
 		if (serverPlayerEntity != null) {
 			getRail(world, posStart, posEnd, serverPlayerEntity, rail -> onConnect(rail, serverPlayerEntity, itemStack, radius, height));
 		}
 	}
 
 	@Override
-	protected final void onRemove(World world, BlockPos posStart, BlockPos posEnd, @Nullable ServerPlayerEntity serverPlayerEntity) {
+	protected final void onRemove(Level world, BlockPos posStart, BlockPos posEnd, @Nullable ServerPlayer serverPlayerEntity) {
 	}
 
 	protected BlockState getSavedState(ItemStack stack) {
 		final Integer blockId = stack.get(DataComponentTypes.BLOCK_ID.get());
-		return blockId == null ? Blocks.AIR.getDefaultState() : Block.getStateFromRawId(blockId);
+		return blockId == null ? Blocks.AIR.defaultBlockState() : Block.stateById(blockId);
 	}
 
-	protected abstract void onConnect(Rail rail, ServerPlayerEntity serverPlayerEntity, ItemStack itemStack, int radius, int height);
+	protected abstract void onConnect(Rail rail, ServerPlayer serverPlayerEntity, ItemStack itemStack, int radius, int height);
 }

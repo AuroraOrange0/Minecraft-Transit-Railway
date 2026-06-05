@@ -1,13 +1,13 @@
 package org.mtr.screen;
 
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.font.TextRenderer;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.text.MutableText;
-import net.minecraft.text.OrderedText;
-import net.minecraft.text.Text;
-import net.minecraft.util.math.ColorHelper;
+import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.util.ARGB;
+import net.minecraft.util.FormattedCharSequence;
 import org.jspecify.annotations.Nullable;
 import org.mtr.MTR;
 import org.mtr.client.CustomResourceLoader;
@@ -56,10 +56,10 @@ public final class VehicleSelectorScreen extends ScreenBase {
 		super(previousScreen);
 		this.siding = siding;
 
-		final TextRenderer textRenderer = MinecraftClient.getInstance().textRenderer;
-		filtersTextWidth = textRenderer.getWidth(FILTERS_TEXT);
-		availableTextWidth = textRenderer.getWidth(AVAILABLE_TEXT);
-		selectedTextWidth = textRenderer.getWidth(SELECTED_TEXT);
+		final Font textRenderer = Minecraft.getInstance().font;
+		filtersTextWidth = textRenderer.width(FILTERS_TEXT);
+		availableTextWidth = textRenderer.width(AVAILABLE_TEXT);
+		selectedTextWidth = textRenderer.width(SELECTED_TEXT);
 	}
 
 	@Override
@@ -83,20 +83,20 @@ public final class VehicleSelectorScreen extends ScreenBase {
 		selectedVehicleCars.addAll(siding.getVehicleCars());
 		updateListWidgets();
 
-		addDrawableChild(textFieldSearch);
-		addDrawableChild(filtersListWidget);
-		addDrawableChild(availableVehiclesListWidget);
-		addDrawableChild(selectedVehiclesListWidget);
+		addRenderableWidget(textFieldSearch);
+		addRenderableWidget(filtersListWidget);
+		addRenderableWidget(availableVehiclesListWidget);
+		addRenderableWidget(selectedVehiclesListWidget);
 	}
 
 	@Override
-	public void render(DrawContext context, int mouseX, int mouseY, float delta) {
+	public void render(GuiGraphics context, int mouseX, int mouseY, float delta) {
 		super.render(context, mouseX, mouseY, delta);
 		final int columnWidth = width / 3;
 
-		context.drawText(textRenderer, FILTERS_TEXT, (columnWidth - filtersTextWidth) / 2, GuiHelper.DEFAULT_PADDING, GuiHelper.WHITE_COLOR, false);
-		context.drawText(textRenderer, AVAILABLE_TEXT, (columnWidth * 3 - availableTextWidth) / 2, GuiHelper.DEFAULT_PADDING, GuiHelper.WHITE_COLOR, false);
-		context.drawText(textRenderer, SELECTED_TEXT, (columnWidth * 5 - selectedTextWidth) / 2, GuiHelper.DEFAULT_PADDING, GuiHelper.WHITE_COLOR, false);
+		context.drawString(font, FILTERS_TEXT, (columnWidth - filtersTextWidth) / 2, GuiHelper.DEFAULT_PADDING, GuiHelper.WHITE_COLOR, false);
+		context.drawString(font, AVAILABLE_TEXT, (columnWidth * 3 - availableTextWidth) / 2, GuiHelper.DEFAULT_PADDING, GuiHelper.WHITE_COLOR, false);
+		context.drawString(font, SELECTED_TEXT, (columnWidth * 5 - selectedTextWidth) / 2, GuiHelper.DEFAULT_PADDING, GuiHelper.WHITE_COLOR, false);
 
 		final VehicleResource hoverVehicleResource = availableVehiclesListWidget.getHoverData();
 		if (hoverVehicleResource != null) {
@@ -107,7 +107,7 @@ public final class VehicleSelectorScreen extends ScreenBase {
 			final String description = hoverVehicleResource.getDescription().getString();
 			if (!description.isEmpty()) {
 				for (final String text : description.split("[|\n]")) {
-					y = drawWrappedText(context, Text.literal(text), y, GuiHelper.LIGHT_GRAY_COLOR);
+					y = drawWrappedText(context, Component.literal(text), y, GuiHelper.LIGHT_GRAY_COLOR);
 				}
 			}
 
@@ -115,21 +115,21 @@ public final class VehicleSelectorScreen extends ScreenBase {
 			if (!wikipediaArticle.isEmpty()) {
 				final String fullText = fetchWikipediaArticle(wikipediaArticle);
 				for (final String text : fullText.split("\n")) {
-					y = drawWrappedText(context, Text.literal(text), y, GuiHelper.LIGHT_GRAY_COLOR);
+					y = drawWrappedText(context, Component.literal(text), y, GuiHelper.LIGHT_GRAY_COLOR);
 				}
 			}
 		}
 	}
 
 	@Override
-	public void renderBackground(DrawContext context, int mouseX, int mouseY, float delta) {
+	public void renderBackground(GuiGraphics context, int mouseX, int mouseY, float delta) {
 		context.fill(0, 0, width, height, GuiHelper.BACKGROUND_COLOR);
 	}
 
 	@Override
-	public void close() {
+	public void onClose() {
 		siding.setVehicleCars(selectedVehicleCars);
-		super.close();
+		super.onClose();
 	}
 
 	private boolean canAddCar(ObjectArrayList<VehicleCar> vehicleCars, VehicleResource vehicleResource) {
@@ -300,15 +300,15 @@ public final class VehicleSelectorScreen extends ScreenBase {
 		selectedVehiclesListWidget.setData(selectedVehicleListItems);
 	}
 
-	private int drawWrappedText(DrawContext context, MutableText component, int y, int color) {
+	private int drawWrappedText(GuiGraphics context, MutableComponent component, int y, int color) {
 		int newY = y;
-		for (final OrderedText orderedText : textRenderer.wrapLines(component, Math.max(0, width / 3 - GuiHelper.DEFAULT_PADDING))) {
+		for (final FormattedCharSequence orderedText : font.split(component, Math.max(0, width / 3 - GuiHelper.DEFAULT_PADDING))) {
 			final int nextY = newY + GuiHelper.MINECRAFT_TEXT_LINE_HEIGHT;
 			if (nextY > height - GuiHelper.DEFAULT_PADDING - GuiHelper.MINECRAFT_FONT_SIZE) {
-				context.drawText(textRenderer, "...", GuiHelper.DEFAULT_PADDING, newY, color, false);
+				context.drawString(font, "...", GuiHelper.DEFAULT_PADDING, newY, color, false);
 				return height;
 			} else {
-				context.drawText(textRenderer, orderedText, GuiHelper.DEFAULT_PADDING, newY, color, false);
+				context.drawString(font, orderedText, GuiHelper.DEFAULT_PADDING, newY, color, false);
 			}
 			newY = nextY;
 		}
@@ -321,16 +321,16 @@ public final class VehicleSelectorScreen extends ScreenBase {
 
 	private static void drawVehicleIcon(Drawing drawing, int x, double y, boolean canAddCar, boolean smallIcon, int color) {
 		if (smallIcon) {
-			drawing.setVerticesWH(x + GuiHelper.DEFAULT_PADDING * 3 / 2F, y + GuiHelper.DEFAULT_PADDING * 3 / 2F, GuiHelper.DEFAULT_PADDING, GuiHelper.DEFAULT_PADDING).setColor(ColorHelper.fullAlpha(color)).draw();
+			drawing.setVerticesWH(x + GuiHelper.DEFAULT_PADDING * 3 / 2F, y + GuiHelper.DEFAULT_PADDING * 3 / 2F, GuiHelper.DEFAULT_PADDING, GuiHelper.DEFAULT_PADDING).setColor(ARGB.opaque(color)).draw();
 		} else {
-			drawing.setVerticesWH(x + GuiHelper.DEFAULT_PADDING, y + GuiHelper.DEFAULT_PADDING, GuiHelper.MINECRAFT_FONT_SIZE, GuiHelper.MINECRAFT_FONT_SIZE).setColor(ColorHelper.fullAlpha(color)).draw();
+			drawing.setVerticesWH(x + GuiHelper.DEFAULT_PADDING, y + GuiHelper.DEFAULT_PADDING, GuiHelper.MINECRAFT_FONT_SIZE, GuiHelper.MINECRAFT_FONT_SIZE).setColor(ARGB.opaque(color)).draw();
 		}
 		if (!canAddCar) {
 			drawing.setVerticesWH(x + GuiHelper.DEFAULT_PADDING + 1, y + GuiHelper.DEFAULT_PADDING + 1, GuiHelper.MINECRAFT_FONT_SIZE - 2, GuiHelper.MINECRAFT_FONT_SIZE - 2).setColor(GuiHelper.BACKGROUND_COLOR).draw();
 		}
 	}
 
-	private static void drawVehicleIcon(MatrixStack matrixStack, int x, double y, boolean canAddCar) {
+	private static void drawVehicleIcon(PoseStack matrixStack, int x, double y, boolean canAddCar) {
 		if (!canAddCar) {
 			FontRenderHelper.render(matrixStack, "!", FontRenderOptions.builder()
 				.color(Color.WHITE)

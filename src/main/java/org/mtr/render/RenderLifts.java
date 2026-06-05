@@ -1,17 +1,16 @@
 package org.mtr.render;
 
 import com.logisticscraft.occlusionculling.OcclusionCullingInstance;
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.client.render.OverlayTexture;
-import net.minecraft.client.world.ClientWorld;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Box;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.World;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 import org.jspecify.annotations.Nullable;
 import org.mtr.MTR;
 import org.mtr.block.BlockLiftTrackFloor;
@@ -45,16 +44,16 @@ public class RenderLifts implements IGui {
 	private static final float LIFT_DOOR_VALUE = 0.75F;
 	private static final float LIFT_FLOOR_PADDING = 0.25F;
 
-	public static void render(long millisElapsed, Vec3d cameraShakeOffset) {
-		final MinecraftClient minecraftClient = MinecraftClient.getInstance();
-		final ClientWorld clientWorld = minecraftClient.world;
-		final ClientPlayerEntity clientPlayerEntity = minecraftClient.player;
+	public static void render(long millisElapsed, Vec3 cameraShakeOffset) {
+		final Minecraft minecraftClient = Minecraft.getInstance();
+		final ClientLevel clientWorld = minecraftClient.level;
+		final LocalPlayer clientPlayerEntity = minecraftClient.player;
 		if (clientWorld == null || clientPlayerEntity == null) {
 			return;
 		}
 
 		final ObjectArrayList<Function<OcclusionCullingInstance, Runnable>> cullingTasks = new ObjectArrayList<>();
-		final Vec3d cameraPosition = minecraftClient.gameRenderer.getCamera().getPos();
+		final Vec3 cameraPosition = minecraftClient.gameRenderer.getMainCamera().getPosition();
 		final com.logisticscraft.occlusionculling.util.Vec3d camera = new com.logisticscraft.occlusionculling.util.Vec3d(cameraPosition.x, cameraPosition.y, cameraPosition.z);
 
 		final boolean canRide = !clientPlayerEntity.isSpectator();
@@ -69,10 +68,10 @@ public class RenderLifts implements IGui {
 				lift.iterateFloors(liftFloor -> {
 					final Position position = liftFloor.getPosition();
 					final StoredMatrixTransformations storedMatrixTransformations = new StoredMatrixTransformations(position.getX(), position.getY(), position.getZ());
-					MainRenderer.scheduleRender(Identifier.of("textures/block/redstone_block.png"), false, QueuedRenderLayer.LIGHT, (matrixStack, vertexConsumer, offset) -> {
+					MainRenderer.scheduleRender(ResourceLocation.parse("textures/block/redstone_block.png"), false, QueuedRenderLayer.LIGHT, (matrixStack, vertexConsumer, offset) -> {
 						storedMatrixTransformations.transform(matrixStack, offset);
-						RenderPSDAPGDoor.MODEL_SMALL_CUBE.render(matrixStack, vertexConsumer, DEFAULT_LIGHT, OverlayTexture.DEFAULT_UV);
-						matrixStack.pop();
+						RenderPSDAPGDoor.MODEL_SMALL_CUBE.render(matrixStack, vertexConsumer, DEFAULT_LIGHT, OverlayTexture.NO_OVERLAY);
+						matrixStack.popPose();
 					});
 
 					if (previousLiftFloor[0] != null) {
@@ -118,9 +117,9 @@ public class RenderLifts implements IGui {
 
 			if (liftWrapper.shouldRender) {
 				// Riding offset
-				final IntObjectImmutablePair<ObjectObjectImmutablePair<@Nullable Vec3d, @Nullable Double>> ridingVehicleCarNumberAndOffset = VehicleRidingMovement.getRidingVehicleCarNumberAndOffset(lift.getId());
+				final IntObjectImmutablePair<ObjectObjectImmutablePair<@Nullable Vec3, @Nullable Double>> ridingVehicleCarNumberAndOffset = VehicleRidingMovement.getRidingVehicleCarNumberAndOffset(lift.getId());
 				final PositionAndRotation ridingCarPositionAndRotation;
-				final Vec3d offsetVector;
+				final Vec3 offsetVector;
 				final Double offsetRotation;
 				if (ridingVehicleCarNumberAndOffset == null) {
 					ridingCarPositionAndRotation = null;
@@ -135,12 +134,12 @@ public class RenderLifts implements IGui {
 				final PositionAndRotation renderingPositionAndRotation = RenderVehicles.getRenderPositionAndRotation(offsetVector, offsetRotation, ridingCarPositionAndRotation, absolutePositionAndRotation, cameraShakeOffset);
 
 				// A temporary list to store all floors and doorways
-				final ObjectArrayList<ObjectBooleanImmutablePair<Box>> floorsAndDoorways = new ObjectArrayList<>();
+				final ObjectArrayList<ObjectBooleanImmutablePair<AABB>> floorsAndDoorways = new ObjectArrayList<>();
 				// Find open doorways (close to platform blocks, unlocked platform screen doors, or unlocked automatic platform gates)
-				final ObjectArrayList<Box> openDoorways = new ObjectArrayList<>();
+				final ObjectArrayList<AABB> openDoorways = new ObjectArrayList<>();
 
-				final Box doorway1 = new Box(-LIFT_DOOR_VALUE, 0, -lift.getDepth() / 2 + LIFT_FLOOR_PADDING, LIFT_DOOR_VALUE, 0, -lift.getDepth() / 2);
-				final Box doorway2 = new Box(-LIFT_DOOR_VALUE, 0, lift.getDepth() / 2 - LIFT_FLOOR_PADDING, LIFT_DOOR_VALUE, 0, lift.getDepth() / 2);
+				final AABB doorway1 = new AABB(-LIFT_DOOR_VALUE, 0, -lift.getDepth() / 2 + LIFT_FLOOR_PADDING, LIFT_DOOR_VALUE, 0, -lift.getDepth() / 2);
+				final AABB doorway2 = new AABB(-LIFT_DOOR_VALUE, 0, lift.getDepth() / 2 - LIFT_FLOOR_PADDING, LIFT_DOOR_VALUE, 0, lift.getDepth() / 2);
 				final boolean doorway1Open;
 				final boolean doorway2Open;
 				if (lift.hasCoolDown()) {
@@ -159,11 +158,11 @@ public class RenderLifts implements IGui {
 
 				if (canRide) {
 					// Player position relative to the car
-					final Vec3d playerPosition = absolutePositionAndRotation.transformBackwards(clientPlayerEntity.getPos(), Vec3d::rotateX, Vec3d::rotateY, Vec3d::rotateZ, Vec3d::add);
+					final Vec3 playerPosition = absolutePositionAndRotation.transformBackwards(clientPlayerEntity.position(), Vec3::xRot, Vec3::yRot, Vec3::zRot, Vec3::add);
 					// Check and mount player
 					VehicleRidingMovement.startRiding(openDoorways, 0, 0, lift.getId(), 0, playerPosition.x, playerPosition.y, playerPosition.z, absolutePositionAndRotation.yaw);
 
-					final Box floor = new Box(-lift.getWidth() / 2 + LIFT_FLOOR_PADDING, 0, -lift.getDepth() / 2 + LIFT_FLOOR_PADDING, lift.getWidth() / 2 - LIFT_FLOOR_PADDING, 0, lift.getDepth() / 2 - LIFT_FLOOR_PADDING);
+					final AABB floor = new AABB(-lift.getWidth() / 2 + LIFT_FLOOR_PADDING, 0, -lift.getDepth() / 2 + LIFT_FLOOR_PADDING, lift.getWidth() / 2 - LIFT_FLOOR_PADDING, 0, lift.getDepth() / 2 - LIFT_FLOOR_PADDING);
 					floorsAndDoorways.add(new ObjectBooleanImmutablePair<>(floor, true));
 					RenderVehicleHelper.renderFloorOrDoorway(floor, ARGB_WHITE, playerPosition, renderingPositionAndRotation, offsetVector == null);
 
@@ -216,7 +215,7 @@ public class RenderLifts implements IGui {
 		});
 	}
 
-	public static void renderLiftDisplay(StoredMatrixTransformations storedMatrixTransformations, World world, Lift lift, float width, float height) {
+	public static void renderLiftDisplay(StoredMatrixTransformations storedMatrixTransformations, ClientLevel world, Lift lift, float width, float height) {
 		final ObjectObjectImmutablePair<LiftDirection, ObjectObjectImmutablePair<String, String>> liftDetails = getLiftDetails(world, lift, MTR.positionToBlockPos(lift.getCurrentFloor().getPosition()));
 		final LiftDirection liftDirection = liftDetails.left();
 
@@ -236,19 +235,19 @@ public class RenderLifts implements IGui {
 					.textOverflow(FontRenderOptions.TextOverflow.COMPRESS)
 					.build()
 			);
-			matrixStack.pop();
+			matrixStack.popPose();
 		});
 
 		if (liftDirection != LiftDirection.NONE) {
-			MainRenderer.scheduleRender(Identifier.of(MTR.MOD_ID, "textures/block/sign/lift_arrow.png"), false, QueuedRenderLayer.LIGHT_TRANSLUCENT, (matrixStack, vertexConsumer, offset) -> {
+			MainRenderer.scheduleRender(ResourceLocation.fromNamespaceAndPath(MTR.MOD_ID, "textures/block/sign/lift_arrow.png"), false, QueuedRenderLayer.LIGHT_TRANSLUCENT, (matrixStack, vertexConsumer, offset) -> {
 				storedMatrixTransformations.transform(matrixStack, offset);
 				IDrawing.drawTexture(matrixStack, vertexConsumer, -width / 6, 0, width / 3, width / 3, 0, liftDirection == LiftDirection.UP ? 0 : 1, 1, liftDirection == LiftDirection.UP ? 1 : 0, Direction.UP, LIFT_DISPLAY_COLOR, DEFAULT_LIGHT);
-				matrixStack.pop();
+				matrixStack.popPose();
 			});
 		}
 	}
 
-	public static ObjectObjectImmutablePair<LiftDirection, ObjectObjectImmutablePair<String, String>> getLiftDetails(World world, Lift lift, BlockPos blockPos) {
+	public static ObjectObjectImmutablePair<LiftDirection, ObjectObjectImmutablePair<String, String>> getLiftDetails(ClientLevel world, Lift lift, BlockPos blockPos) {
 		final LiftFloor liftFloor = lift.getCurrentFloor();
 		final BlockEntity floorEntity = world.getBlockEntity(blockPos);
 		final String floorNumber;
@@ -279,7 +278,7 @@ public class RenderLifts implements IGui {
 		return liftResource == null ? CustomResourceLoader.getLifts().getFirst() : liftResource;
 	}
 
-	private static PositionAndRotation getLiftPositionAndRotation(ClientWorld clientWorld, Lift lift) {
+	private static PositionAndRotation getLiftPositionAndRotation(ClientLevel clientWorld, Lift lift) {
 		final Vector position = lift.getPosition((floorPosition1, floorPosition2) -> ItemLiftRefresher.findPath(clientWorld, floorPosition1, floorPosition2));
 		return new PositionAndRotation(new Vector(
 			position.x() + lift.getOffsetX(),

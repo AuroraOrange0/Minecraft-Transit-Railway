@@ -1,6 +1,6 @@
 package org.mtr.screen;
 
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.core.BlockPos;
 import org.mtr.block.BlockTrainSensorBase;
 import org.mtr.generated.lang.TranslationProvider;
 

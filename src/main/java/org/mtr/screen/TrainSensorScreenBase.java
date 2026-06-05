@@ -5,9 +5,9 @@ import gg.essential.elementa.constraints.PixelConstraint;
 import gg.essential.elementa.constraints.RelativeConstraint;
 import gg.essential.elementa.constraints.SiblingConstraint;
 import gg.essential.universal.UMinecraft;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.text.Text;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.client.Minecraft;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
 import org.jspecify.annotations.Nullable;
 import org.mtr.block.BlockTrainSensorBase;
 import org.mtr.client.MinecraftClientData;
@@ -86,7 +86,7 @@ public abstract class TrainSensorScreenBase<T extends BlockTrainSensorBase.Block
 			.setY(new SiblingConstraint())
 			.setWidth(new PixelConstraint(LEFT_WIDTH));
 
-		filterButton.setText(Text.translatable("selectWorld.edit").getString());
+		filterButton.setText(Component.translatable("selectWorld.edit").getString());
 		filterButton.onClick(() -> UMinecraft.setCurrentScreenObj(createRouteListSelectorScreen()));
 
 		GuiHelper.createSpacing(contentContainer);
@@ -133,7 +133,7 @@ public abstract class TrainSensorScreenBase<T extends BlockTrainSensorBase.Block
 	}
 
 	protected void sendUpdate(BlockPos blockPos, LongAVLTreeSet filterRouteIds, boolean stoppedOnly, boolean movingOnly) {
-		new PacketUpdateTrainSensorConfig(blockPos, filterRouteIds, stoppedOnly, movingOnly).send(MinecraftClient.getInstance().world);
+		new PacketUpdateTrainSensorConfig(blockPos, filterRouteIds, stoppedOnly, movingOnly).send(Minecraft.getInstance().level);
 	}
 
 	private void setStoppedOnly(boolean checked) {

@@ -1,8 +1,8 @@
 package org.mtr.resource;
 
-import net.minecraft.text.MutableText;
-import net.minecraft.text.Text;
-import net.minecraft.util.math.Box;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.world.phys.AABB;
 import org.jspecify.annotations.Nullable;
 import org.mtr.MTR;
 import org.mtr.config.Config;
@@ -204,8 +204,8 @@ public final class VehicleResource extends VehicleResourceSchema {
 		return id;
 	}
 
-	public MutableText getName() {
-		return Text.translatable(name);
+	public MutableComponent getName() {
+		return Component.translatable(name);
 	}
 
 	public int getColor() {
@@ -240,8 +240,8 @@ public final class VehicleResource extends VehicleResourceSchema {
 		return couplingPadding2;
 	}
 
-	public MutableText getDescription() {
-		return Text.translatable(description);
+	public MutableComponent getDescription() {
+		return Component.translatable(description);
 	}
 
 	public String getWikipediaArticle() {
@@ -249,7 +249,7 @@ public final class VehicleResource extends VehicleResourceSchema {
 	}
 
 	public VehicleResourceWrapper toVehicleResourceWrapper() {
-		final int carNumber = id.endsWith("trailer") ? 1 : id.endsWith("cab_2") ? 2 : 0;
+		final int carNumber = id.endsWith("trailer") ? 1 : (id.endsWith("cab_2") ? 2 : 0);
 		final int totalCars = id.endsWith("cab_3") ? 1 : 3;
 		getCachedVehicleResource(carNumber, totalCars);
 		return new VehicleResourceWrapper(
@@ -349,8 +349,8 @@ public final class VehicleResource extends VehicleResourceSchema {
 		});
 
 		final ObjectArrayList<BuiltVehicleModelHolder> builtModels = new ObjectArrayList<>();
-		final ObjectArrayList<Box> floors = new ObjectArrayList<>();
-		final ObjectArrayList<Box> doorways = new ObjectArrayList<>();
+		final ObjectArrayList<AABB> floors = new ObjectArrayList<>();
+		final ObjectArrayList<AABB> doorways = new ObjectArrayList<>();
 		for (final VehicleModel vehicleModel : allModelsList) {
 			final BuiltVehicleModelHolder builtVehicleModelHolder = vehicleModel.builtVehicleModelHolderSupplier.get();
 			if (builtVehicleModelHolder == null) {
@@ -389,10 +389,10 @@ public final class VehicleResource extends VehicleResourceSchema {
 			final double x2 = width / 2 + 0.5;
 			final double y = 1 + legacyRiderOffset;
 			final double z = length / 2 - 0.5;
-			builtModels.getFirst().floors.add(new Box(-x1, y, -z, x1, y, z));
+			builtModels.getFirst().floors.add(new AABB(-x1, y, -z, x1, y, z));
 			for (double j = -z; j <= z + 0.001; j++) {
-				builtModels.getFirst().doorways.add(new Box(-x1, y, j, -x2, y, j + 1));
-				builtModels.getFirst().doorways.add(new Box(x1, y, j, x2, y, j + 1));
+				builtModels.getFirst().doorways.add(new AABB(-x1, y, j, -x2, y, j + 1));
+				builtModels.getFirst().doorways.add(new AABB(x1, y, j, x2, y, j + 1));
 			}
 		}
 

@@ -2,8 +2,8 @@ package org.mtr.servlet;
 
 import gg.essential.universal.UMinecraft;
 import lombok.Getter;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.network.ClientPlayerEntity;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.player.LocalPlayer;
 import org.jspecify.annotations.Nullable;
 import org.mtr.MTR;
 import org.mtr.client.CustomResourceLoader;
@@ -40,7 +40,7 @@ public final class ResourcePackCreatorOperationServlet extends AbstractResourceP
 		final AsyncContext asyncContext = httpServletRequest.startAsync();
 		asyncContext.setTimeout(0);
 		setEncoding(httpServletRequest, httpServletResponse);
-		final MinecraftClient minecraftClient = MinecraftClient.getInstance();
+		final Minecraft minecraftClient = Minecraft.getInstance();
 
 		switch (httpServletRequest.getPathInfo()) {
 			case "/refresh":
@@ -92,7 +92,7 @@ public final class ResourcePackCreatorOperationServlet extends AbstractResourceP
 			vehicleSoundBase = null;
 		}
 		if (vehicleSoundBase != null) {
-			final ClientPlayerEntity clientPlayerEntity = MinecraftClient.getInstance().player;
+			final LocalPlayer clientPlayerEntity = Minecraft.getInstance().player;
 			if (clientPlayerEntity != null) {
 				final float oldSpeed = speed;
 				final float speedChange = millisElapsed * acceleration;
@@ -101,7 +101,7 @@ public final class ResourcePackCreatorOperationServlet extends AbstractResourceP
 				} else if (targetSpeed < speed) {
 					speed = Math.max(targetSpeed, speed - speedChange);
 				}
-				vehicleSoundBase.playMotorSound(clientPlayerEntity.getBlockPos(), speed, speed - oldSpeed, acceleration, true);
+				vehicleSoundBase.playMotorSound(clientPlayerEntity.blockPosition(), speed, speed - oldSpeed, acceleration, true);
 			}
 		}
 	}
@@ -132,9 +132,9 @@ public final class ResourcePackCreatorOperationServlet extends AbstractResourceP
 			return;
 		}
 
-		final MinecraftClient minecraftClient = MinecraftClient.getInstance();
+		final Minecraft minecraftClient = Minecraft.getInstance();
 		minecraftClient.execute(() -> {
-			final ClientPlayerEntity clientPlayerEntity = minecraftClient.player;
+			final LocalPlayer clientPlayerEntity = minecraftClient.player;
 			if (clientPlayerEntity != null) {
 				final VehicleSoundBase tempVehicleSoundBase = switch (type.toLowerCase(Locale.ENGLISH)) {
 					case "bve" -> new BveVehicleSound(new BveVehicleSoundConfig(id));
@@ -152,10 +152,10 @@ public final class ResourcePackCreatorOperationServlet extends AbstractResourceP
 							acceleration = Math.abs(targetSpeed - speed) / 200;
 							break;
 						case "door-open":
-							tempVehicleSoundBase.playDoorSound(clientPlayerEntity.getBlockPos(), 1, 0);
+							tempVehicleSoundBase.playDoorSound(clientPlayerEntity.blockPosition(), 1, 0);
 							break;
 						case "door-close":
-							tempVehicleSoundBase.playDoorSound(clientPlayerEntity.getBlockPos(), 0, 1);
+							tempVehicleSoundBase.playDoorSound(clientPlayerEntity.blockPosition(), 0, 1);
 							break;
 					}
 				}

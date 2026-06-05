@@ -1,15 +1,15 @@
 package org.mtr.render;
 
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.font.TextRenderer;
-import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.client.render.VertexConsumerProvider;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.client.world.ClientWorld;
-import net.minecraft.state.property.Properties;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.Vec3d;
+import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.phys.Vec3;
 import org.mtr.MTRClient;
 import org.mtr.block.*;
 import org.mtr.client.MinecraftClientData;
@@ -55,13 +55,13 @@ public class RenderPIDS<T extends BlockPIDSBase.BlockEntityBase> extends BlockEn
 	}
 
 	@Override
-	public final void render(T blockEntity, MatrixStack matrixStack, VertexConsumerProvider vertexConsumerProvider, ClientWorld world, ClientPlayerEntity player, float tickDelta, int light, int overlay) {
-		final BlockPos blockPos = blockEntity.getPos();
+	public final void render(T blockEntity, PoseStack matrixStack, MultiBufferSource vertexConsumerProvider, ClientLevel world, LocalPlayer player, float tickDelta, int light, int overlay) {
+		final BlockPos blockPos = blockEntity.getBlockPos();
 		if (!blockEntity.canStoreData.test(world, blockPos)) {
 			return;
 		}
 
-		final Direction facing = IBlock.getStatePropertySafe(world, blockPos, Properties.HORIZONTAL_FACING);
+		final Direction facing = IBlock.getStatePropertySafe(world, blockPos, BlockStateProperties.HORIZONTAL_FACING);
 
 		if (blockEntity.getPlatformIds().isEmpty()) {
 			final LongArrayList platformIds = new LongArrayList();
@@ -71,7 +71,7 @@ public class RenderPIDS<T extends BlockPIDSBase.BlockEntityBase> extends BlockEn
 					station.savedRails.forEach(platform -> platformIds.add(platform.getId()));
 				}
 			} else {
-				MTRClient.findClosePlatform(blockEntity.getPos().down(4), 5, platform -> platformIds.add(platform.getId()));
+				MTRClient.findClosePlatform(blockEntity.getBlockPos().below(4), 5, platform -> platformIds.add(platform.getId()));
 			}
 			getArrivalsAndRender(blockEntity, blockPos, facing, platformIds);
 		} else {
@@ -79,7 +79,7 @@ public class RenderPIDS<T extends BlockPIDSBase.BlockEntityBase> extends BlockEn
 		}
 	}
 
-	public void renderText(MatrixStack matrixStack, String text, int x, int y, Color color) {
+	public void renderText(PoseStack matrixStack, String text, int x, int y, Color color) {
 		FontRenderHelper.render(matrixStack, text, FontRenderOptions.builder().offsetX(x).offsetY(y).color(color).build());
 	}
 
@@ -98,12 +98,12 @@ public class RenderPIDS<T extends BlockPIDSBase.BlockEntityBase> extends BlockEn
 		MainRenderer.scheduleTextRender((matrixStack, offset) -> {
 			render(entity, blockPos, facing, arrivalResponseList, matrixStack, offset);
 			if (entity instanceof BlockPIDSHorizontalBase.BlockEntityHorizontalBase) {
-				render(entity, blockPos.offset(facing), facing.getOpposite(), arrivalResponseList, matrixStack, offset);
+				render(entity, blockPos.relative(facing), facing.getOpposite(), arrivalResponseList, matrixStack, offset);
 			}
 		});
 	}
 
-	private void render(T entity, BlockPos blockPos, Direction facing, ObjectArrayList<ArrivalResponse> arrivalResponseList, MatrixStack matrixStack, Vec3d offset) {
+	private void render(T entity, BlockPos blockPos, Direction facing, ObjectArrayList<ArrivalResponse> arrivalResponseList, PoseStack matrixStack, Vec3 offset) {
 		final float scale = 160 * entity.maxArrivals / maxHeight * textPadding;
 		final boolean hasDifferentCarLengths = hasDifferentCarLengths(arrivalResponseList);
 		final boolean isSingleArrival = entity instanceof BlockPIDSVerticalSingleArrival1.PIDSVerticalSingleArrival1BlockEntity;
@@ -166,9 +166,9 @@ public class RenderPIDS<T extends BlockPIDSBase.BlockEntityBase> extends BlockEn
 				}
 			}
 
-			matrixStack.push();
+			matrixStack.pushPose();
 			matrixStack.translate(blockPos.getX() - offset.x + 0.5, blockPos.getY() - offset.y, blockPos.getZ() - offset.z + 0.5);
-			Drawing.rotateYDegrees(matrixStack, (rotate90 ? 90 : 0) - facing.getPositiveHorizontalDegrees());
+			Drawing.rotateYDegrees(matrixStack, (rotate90 ? 90 : 0) - facing.toYRot());
 			Drawing.rotateZDegrees(matrixStack, 180);
 			matrixStack.translate((startX - 8) / 16, -startY / 16 + i * maxHeight / entity.maxArrivals / 16, (startZ - 8) / 16 - SMALL_OFFSET * 2);
 			matrixStack.scale(1 / scale, 1 / scale, 1 / scale);
@@ -268,19 +268,19 @@ public class RenderPIDS<T extends BlockPIDSBase.BlockEntityBase> extends BlockEn
 				}
 			}
 
-			matrixStack.pop();
+			matrixStack.popPose();
 		}
 	}
 
-	private void renderText(MatrixStack matrixStack, String text, Color color, float availableWidth, HorizontalAlignment horizontalAlignment) {
-		matrixStack.push();
-		final TextRenderer textRenderer = MinecraftClient.getInstance().textRenderer;
-		final int textWidth = textRenderer.getWidth(text);
+	private void renderText(PoseStack matrixStack, String text, Color color, float availableWidth, HorizontalAlignment horizontalAlignment) {
+		matrixStack.pushPose();
+		final Font textRenderer = Minecraft.getInstance().font;
+		final int textWidth = textRenderer.width(text);
 		if (availableWidth < textWidth) {
 			matrixStack.scale(textWidth == 0 ? 1 : availableWidth / textWidth, 1, 1);
 		}
 		renderText(matrixStack, text, (int) horizontalAlignment.getOffset(0, textWidth - availableWidth), 0, color);
-		matrixStack.pop();
+		matrixStack.popPose();
 	}
 
 	private static boolean hasDifferentCarLengths(ObjectArrayList<ArrivalResponse> arrivalResponseList) {
@@ -296,14 +296,14 @@ public class RenderPIDS<T extends BlockPIDSBase.BlockEntityBase> extends BlockEn
 	}
 
 	private static ObjectArrayList<String> wrapLines(String text, float availableWidth) {
-		final TextRenderer textRenderer = MinecraftClient.getInstance().textRenderer;
+		final Font textRenderer = Minecraft.getInstance().font;
 		final ObjectArrayList<String> lines = new ObjectArrayList<>();
 		final String[] textSplit = text.split("\\s");
 		String tempText = "";
 
 		for (final String textPart : textSplit) {
 			final String newText = tempText + " " + textPart;
-			if (!tempText.isEmpty() && textRenderer.getWidth(newText) > availableWidth) {
+			if (!tempText.isEmpty() && textRenderer.width(newText) > availableWidth) {
 				lines.add(tempText);
 				tempText = textPart;
 			} else {

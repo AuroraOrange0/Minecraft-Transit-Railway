@@ -1,8 +1,8 @@
 package org.mtr.render;
 
-import net.minecraft.client.world.ClientWorld;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.Direction;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.core.Direction;
+import net.minecraft.resources.ResourceLocation;
 import org.mtr.MTR;
 import org.mtr.block.BlockSignalSemaphoreBase;
 import org.mtr.client.IDrawing;
@@ -18,21 +18,21 @@ public class RenderSignalSemaphore<T extends BlockSignalSemaphoreBase.BlockEntit
 	}
 
 	@Override
-	protected void render(StoredMatrixTransformations storedMatrixTransformations, T entity, ClientWorld world, float tickDelta, int light, int occupiedAspect, boolean isBackSide) {
+	protected void render(StoredMatrixTransformations storedMatrixTransformations, T entity, ClientLevel world, float tickDelta, int light, int occupiedAspect, boolean isBackSide) {
 		final float angle = isBackSide ? entity.angle2 : entity.angle1;
-		MainRenderer.scheduleRender(Identifier.of(MTR.MOD_ID, "textures/block/white.png"), false, QueuedRenderLayer.LIGHT, (matrixStack, vertexConsumer, offset) -> {
+		MainRenderer.scheduleRender(ResourceLocation.fromNamespaceAndPath(MTR.MOD_ID, "textures/block/white.png"), false, QueuedRenderLayer.LIGHT, (matrixStack, vertexConsumer, offset) -> {
 			storedMatrixTransformations.transform(matrixStack, offset);
 			IDrawing.drawTexture(matrixStack, vertexConsumer, -0.0625F, 0.296875F, -0.190625F, 0.0625F, 0.453125F, -0.190625F, Direction.UP, angle < ANGLE / 2F ? 0xFFFF0000 : 0xFF00FF00, DEFAULT_LIGHT);
-			matrixStack.pop();
+			matrixStack.popPose();
 		});
 
-		MainRenderer.scheduleRender(Identifier.of(MTR.MOD_ID, "textures/block/semaphore.png"), false, QueuedRenderLayer.EXTERIOR, (matrixStack, vertexConsumer, offset) -> {
+		MainRenderer.scheduleRender(ResourceLocation.fromNamespaceAndPath(MTR.MOD_ID, "textures/block/semaphore.png"), false, QueuedRenderLayer.EXTERIOR, (matrixStack, vertexConsumer, offset) -> {
 			storedMatrixTransformations.transform(matrixStack, offset);
 			matrixStack.translate(0.1875, 0.375, 0);
 			Drawing.rotateZDegrees(matrixStack, -180 - angle);
 			IDrawing.drawTexture(matrixStack, vertexConsumer, -0.705F, -0.5F, -0.19375F, 0.295F, 0.5F, -0.19375F, Direction.UP, ARGB_WHITE, light);
 			IDrawing.drawTexture(matrixStack, vertexConsumer, 0.295F, -0.5F, -0.19375F, -0.705F, 0.5F, -0.19375F, 1, 0, 0, 1, Direction.UP, ARGB_WHITE, light);
-			matrixStack.pop();
+			matrixStack.popPose();
 		});
 
 		final float newAngle;

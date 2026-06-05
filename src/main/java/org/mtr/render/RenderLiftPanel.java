@@ -1,17 +1,17 @@
 package org.mtr.render;
 
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.client.render.VertexConsumerProvider;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.client.world.ClientWorld;
-import net.minecraft.item.Item;
-import net.minecraft.state.property.Properties;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.Vec3d;
+import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.phys.Vec3;
 import org.mtr.MTR;
 import org.mtr.MTRClient;
 import org.mtr.block.BlockLiftButtons;
@@ -37,7 +37,7 @@ public class RenderLiftPanel<T extends BlockLiftPanelBase.BlockEntityBase> exten
 	private final boolean isOdd;
 	private final boolean isFlat;
 
-	private static final Identifier ARROW_TEXTURE = Identifier.of(MTR.MOD_ID, "textures/block/lift_arrow.png");
+	private static final ResourceLocation ARROW_TEXTURE = ResourceLocation.fromNamespaceAndPath(MTR.MOD_ID, "textures/block/lift_arrow.png");
 	private static final float ARROW_SPEED = 0.04F;
 	private static final int SLIDE_TIME = 5;
 	private static final int SLIDE_INTERVAL = 50;
@@ -49,28 +49,28 @@ public class RenderLiftPanel<T extends BlockLiftPanelBase.BlockEntityBase> exten
 	}
 
 	@Override
-	public void render(T blockEntity, MatrixStack matrixStack2, VertexConsumerProvider vertexConsumerProvider, ClientWorld world, ClientPlayerEntity player, float tickDelta, int light, int overlay) {
+	public void render(T blockEntity, PoseStack matrixStack2, MultiBufferSource vertexConsumerProvider, ClientLevel world, LocalPlayer player, float tickDelta, int light, int overlay) {
 		final BlockPos trackPosition = blockEntity.getTrackPosition();
 		if (trackPosition == null || !(world.getBlockState(trackPosition).getBlock() instanceof BlockLiftTrackFloor)) {
 			return;
 		}
 
-		final BlockPos blockPos = blockEntity.getPos();
+		final BlockPos blockPos = blockEntity.getBlockPos();
 		final BlockState blockState = world.getBlockState(blockPos);
-		final Direction facing = IBlock.getStatePropertySafe(blockState, Properties.HORIZONTAL_FACING);
+		final Direction facing = IBlock.getStatePropertySafe(blockState, BlockStateProperties.HORIZONTAL_FACING);
 		final boolean holdingLinker = player.isHolding(itemStack -> {
 			final Item item = itemStack.getItem();
-			return item instanceof ItemLiftButtonsLinkModifier || Block.getBlockFromItem(item) instanceof BlockLiftButtons;
+			return item instanceof ItemLiftButtonsLinkModifier || Block.byItem(item) instanceof BlockLiftButtons;
 		});
 
 		final StoredMatrixTransformations storedMatrixTransformations1 = new StoredMatrixTransformations(blockPos.getX() + 0.5, blockPos.getY(), blockPos.getZ() + 0.5);
 
 		// Render track link if holding linker item
-		final Direction trackFacing = IBlock.getStatePropertySafe(world, trackPosition, Properties.HORIZONTAL_FACING);
+		final Direction trackFacing = IBlock.getStatePropertySafe(world, trackPosition, BlockStateProperties.HORIZONTAL_FACING);
 		RenderLiftButtons.renderLiftObjectLink(
 			storedMatrixTransformations1,
-			new Vec3d(facing.getOffsetX() / 2F + facing.rotateYClockwise().getOffsetX() * (isOdd ? 1 : 0.5), 0.5, facing.getOffsetZ() / 2F + facing.rotateYClockwise().getOffsetZ() * (isOdd ? 1 : 0.5)),
-			new Vec3d(trackPosition.getX() - blockPos.getX() + trackFacing.getOffsetX() / 2F, trackPosition.getY() - blockPos.getY() + 0.5, trackPosition.getZ() - blockPos.getZ() + trackFacing.getOffsetZ() / 2F),
+			new Vec3(facing.getStepX() / 2F + facing.getClockWise().getStepX() * (isOdd ? 1 : 0.5), 0.5, facing.getStepZ() / 2F + facing.getClockWise().getStepZ() * (isOdd ? 1 : 0.5)),
+			new Vec3(trackPosition.getX() - blockPos.getX() + trackFacing.getStepX() / 2F, trackPosition.getY() - blockPos.getY() + 0.5, trackPosition.getZ() - blockPos.getZ() + trackFacing.getStepZ() / 2F),
 			holdingLinker
 		);
 
@@ -88,7 +88,7 @@ public class RenderLiftPanel<T extends BlockLiftPanelBase.BlockEntityBase> exten
 
 			final StoredMatrixTransformations storedMatrixTransformations2 = storedMatrixTransformations1.copy();
 			storedMatrixTransformations2.add(matrixStack -> {
-				Drawing.rotateYDegrees(matrixStack, -facing.getPositiveHorizontalDegrees());
+				Drawing.rotateYDegrees(matrixStack, -facing.toYRot());
 				matrixStack.translate(isOdd ? -1 : -0.5, 0, 0);
 				Drawing.rotateZDegrees(matrixStack, 180);
 				matrixStack.translate(0, 0, (isFlat ? 0.4375F : 0.25F) - SMALL_OFFSET * 2);
@@ -111,7 +111,7 @@ public class RenderLiftPanel<T extends BlockLiftPanelBase.BlockEntityBase> exten
 						.textOverflow(FontRenderOptions.TextOverflow.COMPRESS)
 						.build()
 				);
-				matrixStack.pop();
+				matrixStack.popPose();
 			});
 
 			renderLiftDisplay(storedMatrixTransformations2, liftDetails);
@@ -139,7 +139,7 @@ public class RenderLiftPanel<T extends BlockLiftPanelBase.BlockEntityBase> exten
 				storedMatrixTransformations.transform(matrixStack, offset);
 				IDrawing.drawTexture(matrixStack, vertexConsumer, -PANEL_WIDTH / 2 - arrowSize, y, arrowSize, arrowSize, 0, (goingUp ? 0 : 1) + uv, 1, (goingUp ? 1 : 0) + uv, Direction.UP, color, DEFAULT_LIGHT);
 				IDrawing.drawTexture(matrixStack, vertexConsumer, PANEL_WIDTH / 2, y, arrowSize, arrowSize, 0, (goingUp ? 0 : 1) + uv, 1, (goingUp ? 1 : 0) + uv, Direction.UP, color, DEFAULT_LIGHT);
-				matrixStack.pop();
+				matrixStack.popPose();
 			});
 		}
 
@@ -157,7 +157,7 @@ public class RenderLiftPanel<T extends BlockLiftPanelBase.BlockEntityBase> exten
 			MainRenderer.scheduleRender(DynamicTextureCache.instance.getLiftPanelDisplay(text, 0xFFAA00).identifier, false, QueuedRenderLayer.LIGHT_TRANSLUCENT, (matrixStack, vertexConsumer, offset) -> {
 				storedMatrixTransformations.transform(matrixStack, offset);
 				IDrawing.drawTexture(matrixStack, vertexConsumer, -PANEL_WIDTH / 2, y, PANEL_WIDTH, arrowSize, 0, uv, 1, lineHeight + uv, Direction.UP, ARGB_WHITE, DEFAULT_LIGHT);
-				matrixStack.pop();
+				matrixStack.popPose();
 			});
 		}
 	}

@@ -1,25 +1,25 @@
 package org.mtr.block;
 
-import net.minecraft.block.AbstractBlock;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.ShapeContext;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.state.StateManager;
-import net.minecraft.state.property.EnumProperty;
-import net.minecraft.state.property.Properties;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.StringIdentifiable;
-import net.minecraft.util.hit.BlockHitResult;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.random.Random;
-import net.minecraft.util.shape.VoxelShape;
-import net.minecraft.util.shape.VoxelShapes;
-import net.minecraft.world.BlockView;
-import net.minecraft.world.World;
-import net.minecraft.world.tick.OrderedTick;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.RandomSource;
+import net.minecraft.util.StringRepresentable;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockBehaviour;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.state.properties.EnumProperty;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.Shapes;
+import net.minecraft.world.phys.shapes.VoxelShape;
+import net.minecraft.world.ticks.ScheduledTick;
 import org.mtr.data.TicketSystem;
 import org.mtr.registry.SoundEvents;
 
@@ -29,18 +29,18 @@ public class BlockTicketProcessor extends BlockDirectionalDoubleBlockBase {
 	public final boolean canEnter;
 	public final boolean canExit;
 
-	public static final EnumProperty<EnumTicketProcessorLights> LIGHTS = EnumProperty.of("lights", EnumTicketProcessorLights.class);
+	public static final EnumProperty<EnumTicketProcessorLights> LIGHTS = EnumProperty.create("lights", EnumTicketProcessorLights.class);
 
-	public BlockTicketProcessor(AbstractBlock.Settings settings, boolean hasLight, boolean canEnter, boolean canExit) {
-		super(settings.luminance(blockState -> 5));
+	public BlockTicketProcessor(BlockBehaviour.Properties settings, boolean hasLight, boolean canEnter, boolean canExit) {
+		super(settings.lightLevel(blockState -> 5));
 		this.hasLight = hasLight;
 		this.canEnter = canEnter;
 		this.canExit = canExit;
 	}
 
 	@Override
-	public ActionResult onUse(BlockState state, World world, BlockPos blockPos, PlayerEntity player, BlockHitResult hit) {
-		if (!world.isClient() && IBlock.getStatePropertySafe(state, HALF) == DoubleBlockHalf.UPPER) {
+	public InteractionResult useWithoutItem(BlockState state, Level world, BlockPos blockPos, Player player, BlockHitResult hit) {
+		if (!world.isClientSide() && IBlock.getStatePropertySafe(state, HALF) == DoubleBlockHalf.UPPER) {
 			final BlockPos blockPosCopy = new BlockPos(blockPos.getX(), blockPos.getY(), blockPos.getZ());
 			TicketSystem.passThrough(
 				world, blockPosCopy, player,
@@ -49,38 +49,38 @@ public class BlockTicketProcessor extends BlockDirectionalDoubleBlockBase {
 				SoundEvents.TICKET_PROCESSOR_EXIT.get(), SoundEvents.TICKET_PROCESSOR_EXIT_CONCESSIONARY.get(),
 				SoundEvents.TICKET_PROCESSOR_FAIL.get(),
 				true,
-				open -> world.setBlockState(blockPosCopy, state.with(LIGHTS, open == TicketSystem.EnumTicketBarrierOpen.CLOSED ? EnumTicketProcessorLights.RED : EnumTicketProcessorLights.GREEN))
+				open -> world.setBlockAndUpdate(blockPosCopy, state.setValue(LIGHTS, open == TicketSystem.EnumTicketBarrierOpen.CLOSED ? EnumTicketProcessorLights.RED : EnumTicketProcessorLights.GREEN))
 			);
-			world.getBlockTickScheduler().scheduleTick(new OrderedTick<>(this, blockPosCopy, 20, 0));
+			world.getBlockTicks().schedule(new ScheduledTick<>(this, blockPosCopy, 20, 0));
 		}
-		return ActionResult.SUCCESS;
+		return InteractionResult.SUCCESS;
 	}
 
 	@Override
-	public void scheduledTick(BlockState state, ServerWorld world, BlockPos pos, Random random) {
+	public void tick(BlockState state, ServerLevel world, BlockPos pos, RandomSource random) {
 		if (hasLight) {
-			world.setBlockState(pos, state.with(LIGHTS, EnumTicketProcessorLights.NONE));
+			world.setBlockAndUpdate(pos, state.setValue(LIGHTS, EnumTicketProcessorLights.NONE));
 		}
 	}
 
 	@Override
-	public VoxelShape getOutlineShape(BlockState state, BlockView world, BlockPos pos, ShapeContext context) {
-		final Direction facing = IBlock.getStatePropertySafe(state, Properties.HORIZONTAL_FACING);
+	public VoxelShape getShape(BlockState state, BlockGetter world, BlockPos pos, CollisionContext context) {
+		final Direction facing = IBlock.getStatePropertySafe(state, BlockStateProperties.HORIZONTAL_FACING);
 		if (IBlock.getStatePropertySafe(state, HALF) == DoubleBlockHalf.UPPER) {
-			return VoxelShapes.union(IBlock.getVoxelShapeByDirection(4.75, 1, 0, 11.25, 13, 8, facing), IBlock.getVoxelShapeByDirection(7, 0, 2, 9, 1, 4, facing));
+			return Shapes.or(IBlock.getVoxelShapeByDirection(4.75, 1, 0, 11.25, 13, 8, facing), IBlock.getVoxelShapeByDirection(7, 0, 2, 9, 1, 4, facing));
 		} else {
-			return VoxelShapes.union(IBlock.getVoxelShapeByDirection(5, 0, 0, 11, 1, 6, facing), IBlock.getVoxelShapeByDirection(7, 1, 2, 9, 16, 4, facing));
+			return Shapes.or(IBlock.getVoxelShapeByDirection(5, 0, 0, 11, 1, 6, facing), IBlock.getVoxelShapeByDirection(7, 1, 2, 9, 16, 4, facing));
 		}
 	}
 
 	@Override
-	protected void appendProperties(StateManager.Builder<Block, BlockState> builder) {
-		builder.add(Properties.HORIZONTAL_FACING);
+	protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+		builder.add(BlockStateProperties.HORIZONTAL_FACING);
 		builder.add(HALF);
 		builder.add(LIGHTS);
 	}
 
-	public enum EnumTicketProcessorLights implements StringIdentifiable {
+	public enum EnumTicketProcessorLights implements StringRepresentable {
 
 		NONE("none"), RED("red"), YELLOW_GREEN("yellow_green"), GREEN("green");
 		private final String name;
@@ -90,7 +90,7 @@ public class BlockTicketProcessor extends BlockDirectionalDoubleBlockBase {
 		}
 
 		@Override
-		public String asString() {
+		public String getSerializedName() {
 			return name;
 		}
 	}

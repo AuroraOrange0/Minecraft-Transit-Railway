@@ -1,54 +1,54 @@
 package org.mtr.block;
 
 import lombok.Getter;
-import net.minecraft.block.AbstractBlock;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockEntityProvider;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.block.entity.BlockEntityType;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.state.StateManager;
-import net.minecraft.state.property.IntProperty;
-import net.minecraft.state.property.Properties;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.hit.BlockHitResult;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.world.World;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.EntityBlock;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.state.BlockBehaviour;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.state.properties.IntegerProperty;
+import net.minecraft.world.phys.BlockHitResult;
 import org.mtr.packet.PacketOpenBlockEntityScreen;
 
-public abstract class BlockRouteSignBase extends BlockDirectionalDoubleBlockBase implements IBlock, BlockEntityProvider {
+public abstract class BlockRouteSignBase extends BlockDirectionalDoubleBlockBase implements IBlock, EntityBlock {
 
-	public static final IntProperty ARROW_DIRECTION = IntProperty.of("propagate_property", 0, 3);
+	public static final IntegerProperty ARROW_DIRECTION = IntegerProperty.create("propagate_property", 0, 3);
 
-	public BlockRouteSignBase(AbstractBlock.Settings settings) {
-		super(settings.luminance(blockState -> 15));
+	public BlockRouteSignBase(BlockBehaviour.Properties settings) {
+		super(settings.lightLevel(blockState -> 15));
 	}
 
 	@Override
-	protected ActionResult onUse(BlockState state, World world, BlockPos pos, PlayerEntity player, BlockHitResult hit) {
-		final double y = hit.getPos().y;
+	protected InteractionResult useWithoutItem(BlockState state, Level world, BlockPos pos, Player player, BlockHitResult hit) {
+		final double y = hit.getLocation().y;
 		final boolean isUpper = IBlock.getStatePropertySafe(state, HALF) == DoubleBlockHalf.UPPER;
 		return IBlock.checkHoldingBrush(world, player, () -> {
 			if (isUpper && y - Math.floor(y) > 0.8125) {
-				world.setBlockState(pos, state.cycle(ARROW_DIRECTION));
+				world.setBlockAndUpdate(pos, state.cycle(ARROW_DIRECTION));
 				propagate(world, pos, Direction.DOWN, ARROW_DIRECTION, 1);
 			} else {
-				final BlockEntity entity = world.getBlockEntity(pos.down(isUpper ? 1 : 0));
+				final BlockEntity entity = world.getBlockEntity(pos.below(isUpper ? 1 : 0));
 				if (entity instanceof BlockEntityBase) {
-					PacketOpenBlockEntityScreen.sendDirectlyToServer((ServerWorld) world, (ServerPlayerEntity) player, entity.getPos());
+					PacketOpenBlockEntityScreen.sendDirectlyToServer((ServerLevel) world, (ServerPlayer) player, entity.getBlockPos());
 				}
 			}
 		});
 	}
 
 	@Override
-	protected void appendProperties(StateManager.Builder<Block, BlockState> builder) {
-		builder.add(Properties.HORIZONTAL_FACING);
+	protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+		builder.add(BlockStateProperties.HORIZONTAL_FACING);
 		builder.add(HALF);
 		builder.add(ARROW_DIRECTION);
 	}
@@ -64,18 +64,18 @@ public abstract class BlockRouteSignBase extends BlockDirectionalDoubleBlockBase
 		}
 
 		@Override
-		protected void readNbt(NbtCompound nbtCompound) {
+		protected void readNbt(CompoundTag nbtCompound) {
 			platformId = nbtCompound.getLong(KEY_PLATFORM_ID);
 		}
 
 		@Override
-		protected void writeNbt(NbtCompound nbtCompound) {
+		protected void writeNbt(CompoundTag nbtCompound) {
 			nbtCompound.putLong(KEY_PLATFORM_ID, platformId);
 		}
 
 		public void setPlatformId(long platformId) {
 			this.platformId = platformId;
-			markDirty();
+			setChanged();
 		}
 	}
 }

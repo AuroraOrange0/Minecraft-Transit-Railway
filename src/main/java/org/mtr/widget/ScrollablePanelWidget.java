@@ -1,28 +1,28 @@
 package org.mtr.widget;
 
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.narration.NarrationMessageBuilder;
-import net.minecraft.client.gui.widget.ScrollableWidget;
-import net.minecraft.text.Text;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.AbstractScrollArea;
+import net.minecraft.client.gui.narration.NarrationElementOutput;
+import net.minecraft.network.chat.Component;
 import org.mtr.core.tool.Utilities;
 import org.mtr.tool.GuiHelper;
 
-public abstract class ScrollablePanelWidget extends ScrollableWidget {
+public abstract class ScrollablePanelWidget extends AbstractScrollArea {
 
 	public ScrollablePanelWidget() {
-		super(0, 0, 0, 0, Text.empty());
+		super(0, 0, 0, 0, Component.empty());
 	}
 
 	@Override
 	public final void onClick(double mouseX, double mouseY) {
-		if (!checkScrollbarDragged(mouseX, mouseY, 0)) {
+		if (!updateScrolling(mouseX, mouseY, 0)) {
 			onClickNew(mouseX, mouseY);
 		}
 	}
 
 	@Override
-	protected final void renderWidget(DrawContext context, int mouseX, int mouseY, float delta) {
-		setScrollY(Math.clamp(getScrollY(), 0, Math.max(0, getContentsHeightWithPadding() - height)));
+	protected final void renderWidget(GuiGraphics context, int mouseX, int mouseY, float delta) {
+		setScrollAmount(Math.clamp(scrollAmount(), 0, Math.max(0, contentHeight() - height)));
 		context.enableScissor(getX(), getY(), getX() + width, getY() + height);
 		render(context, active ? mouseX : -1, active ? mouseY : -1);
 		context.disableScissor();
@@ -35,12 +35,12 @@ public abstract class ScrollablePanelWidget extends ScrollableWidget {
 	}
 
 	@Override
-	protected final double getDeltaYPerScroll() {
+	protected final double scrollRate() {
 		return GuiHelper.DEFAULT_LINE_SIZE;
 	}
 
 	@Override
-	protected void appendClickableNarrations(NarrationMessageBuilder builder) {
+	protected void updateWidgetNarration(NarrationElementOutput builder) {
 	}
 
 	/**
@@ -51,20 +51,20 @@ public abstract class ScrollablePanelWidget extends ScrollableWidget {
 	}
 
 	protected final int getScrollbarWidth() {
-		return overflows() ? SCROLLBAR_WIDTH : 0;
+		return scrollbarVisible() ? SCROLLBAR_WIDTH : 0;
 	}
 
 	/**
 	 * Do not call this directly! Use {@link ScrollablePanelWidget#renderWidget} instead.
 	 */
-	protected abstract void render(DrawContext context, int mouseX, int mouseY);
+	protected abstract void render(GuiGraphics context, int mouseX, int mouseY);
 
-	private void drawScrollbar(DrawContext context, int mouseX, int mouseY) {
-		if (overflows()) {
-			final int x1 = getScrollbarX();
-			final int y1 = getScrollbarThumbY();
+	private void drawScrollbar(GuiGraphics context, int mouseX, int mouseY) {
+		if (scrollbarVisible()) {
+			final int x1 = scrollBarX();
+			final int y1 = scrollBarY();
 			final int x2 = x1 + SCROLLBAR_WIDTH;
-			final int y2 = y1 + getScrollbarThumbHeight();
+			final int y2 = y1 + scrollerHeight();
 			context.fill(x1 + 1, y1 + 1, x2 - 1, y2 - 1, Utilities.isBetween(mouseX, x1, x2 - 1) && Utilities.isBetween(mouseY, y1, y2 - 1) ? GuiHelper.SCROLL_BAR_HOVER_COLOR : GuiHelper.SCROLL_BAR_COLOR);
 		}
 	}
@@ -74,6 +74,6 @@ public abstract class ScrollablePanelWidget extends ScrollableWidget {
 	 */
 	@Deprecated
 	@Override
-	protected final void drawScrollbar(DrawContext context) {
+	protected final void renderScrollbar(GuiGraphics context) {
 	}
 }

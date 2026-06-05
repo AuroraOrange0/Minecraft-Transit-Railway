@@ -1,18 +1,18 @@
 package org.mtr.block;
 
-import net.minecraft.block.AbstractBlock;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.ShapeContext;
-import net.minecraft.block.entity.BlockEntityType;
-import net.minecraft.item.ItemPlacementContext;
-import net.minecraft.state.StateManager;
-import net.minecraft.state.property.Properties;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.shape.VoxelShape;
-import net.minecraft.world.BlockView;
-import net.minecraft.world.World;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.state.BlockBehaviour;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jspecify.annotations.Nullable;
 
 import java.util.function.BiFunction;
@@ -20,33 +20,33 @@ import java.util.function.BiPredicate;
 
 public abstract class BlockArrivalProjectorBase extends BlockPIDSBase {
 
-	private static final BiPredicate<World, BlockPos> CAN_STORE_DATA = (world, blockPos) -> true;
-	private static final BiFunction<World, BlockPos, BlockPos> GET_BLOCK_POS_WITH_DATA = (world, blockPos) -> blockPos;
+	private static final BiPredicate<Level, BlockPos> CAN_STORE_DATA = (world, blockPos) -> true;
+	private static final BiFunction<Level, BlockPos, BlockPos> GET_BLOCK_POS_WITH_DATA = (world, blockPos) -> blockPos;
 
-	public BlockArrivalProjectorBase(AbstractBlock.Settings settings, int maxArrivals) {
+	public BlockArrivalProjectorBase(BlockBehaviour.Properties settings, int maxArrivals) {
 		super(settings, maxArrivals, CAN_STORE_DATA, GET_BLOCK_POS_WITH_DATA);
 	}
 
 	@Nullable
 	@Override
-	public BlockState getPlacementState(ItemPlacementContext ctx) {
-		final Direction side = ctx.getSide();
+	public BlockState getStateForPlacement(BlockPlaceContext ctx) {
+		final Direction side = ctx.getClickedFace();
 		if (side != Direction.UP && side != Direction.DOWN) {
-			return getDefaultState().with(Properties.HORIZONTAL_FACING, side.getOpposite());
+			return defaultBlockState().setValue(BlockStateProperties.HORIZONTAL_FACING, side.getOpposite());
 		} else {
 			return null;
 		}
 	}
 
 	@Override
-	public VoxelShape getOutlineShape(BlockState state, BlockView world, BlockPos pos, ShapeContext context) {
-		final Direction facing = IBlock.getStatePropertySafe(state, Properties.HORIZONTAL_FACING);
+	public VoxelShape getShape(BlockState state, BlockGetter world, BlockPos pos, CollisionContext context) {
+		final Direction facing = IBlock.getStatePropertySafe(state, BlockStateProperties.HORIZONTAL_FACING);
 		return IBlock.getVoxelShapeByDirection(0, 0, 0, 16, 16, 1, facing);
 	}
 
 	@Override
-	protected void appendProperties(StateManager.Builder<Block, BlockState> builder) {
-		builder.add(Properties.HORIZONTAL_FACING);
+	protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+		builder.add(BlockStateProperties.HORIZONTAL_FACING);
 	}
 
 	public static abstract class BlockEntityArrivalProjectorBase extends BlockEntityBase {

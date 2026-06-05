@@ -1,48 +1,48 @@
 package org.mtr.block;
 
-import net.minecraft.block.AbstractBlock;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.state.StateManager;
-import net.minecraft.state.property.Properties;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.hit.BlockHitResult;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.world.World;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockBehaviour;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.phys.BlockHitResult;
 
 public abstract class BlockPSDAPGGlassBase extends BlockPSDAPGBase {
 
-	public BlockPSDAPGGlassBase(AbstractBlock.Settings settings) {
+	public BlockPSDAPGGlassBase(BlockBehaviour.Properties settings) {
 		super(settings);
 	}
 
 	@Override
-	protected ActionResult onUse(BlockState state, World world, BlockPos pos, PlayerEntity player, BlockHitResult hit) {
+	protected InteractionResult useWithoutItem(BlockState state, Level world, BlockPos pos, Player player, BlockHitResult hit) {
 		return IBlock.checkHoldingBrush(world, player, () -> {
 			for (int y = -1; y <= 1; y++) {
-				final BlockState scanState = world.getBlockState(pos.up(y));
-				if (state.isOf(scanState.getBlock())) {
-					connectGlass(world, pos.up(y), scanState);
+				final BlockState scanState = world.getBlockState(pos.above(y));
+				if (state.is(scanState.getBlock())) {
+					connectGlass(world, pos.above(y), scanState);
 				}
 			}
 		});
 	}
 
 	@Override
-	protected void appendProperties(StateManager.Builder<Block, BlockState> builder) {
-		builder.add(Properties.HORIZONTAL_FACING);
+	protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+		builder.add(BlockStateProperties.HORIZONTAL_FACING);
 		builder.add(HALF);
 		builder.add(SIDE_EXTENDED);
 	}
 
-	private void connectGlass(World world, BlockPos pos, BlockState state) {
-		final Direction facing = IBlock.getStatePropertySafe(state, Properties.HORIZONTAL_FACING);
+	private void connectGlass(Level world, BlockPos pos, BlockState state) {
+		final Direction facing = IBlock.getStatePropertySafe(state, BlockStateProperties.HORIZONTAL_FACING);
 
-		final BlockPos leftPos = pos.offset(facing.rotateYCounterclockwise());
+		final BlockPos leftPos = pos.relative(facing.getCounterClockWise());
 		final BlockState leftState = world.getBlockState(leftPos);
-		final boolean leftValid = state.isOf(leftState.getBlock());
+		final boolean leftValid = state.is(leftState.getBlock());
 
 		if (leftValid) {
 			final EnumSide side = IBlock.getStatePropertySafe(leftState, SIDE_EXTENDED);
@@ -56,12 +56,12 @@ public abstract class BlockPSDAPGGlassBase extends BlockPSDAPGBase {
 				newLeftSide = side;
 			}
 
-			world.setBlockState(leftPos, leftState.with(SIDE_EXTENDED, newLeftSide));
+			world.setBlockAndUpdate(leftPos, leftState.setValue(SIDE_EXTENDED, newLeftSide));
 		}
 
-		final BlockPos rightPos = pos.offset(facing.rotateYClockwise());
+		final BlockPos rightPos = pos.relative(facing.getClockWise());
 		final BlockState rightState = world.getBlockState(rightPos);
-		final boolean rightValid = state.isOf(rightState.getBlock());
+		final boolean rightValid = state.is(rightState.getBlock());
 
 		if (rightValid) {
 			final EnumSide side = IBlock.getStatePropertySafe(rightState, SIDE_EXTENDED);
@@ -75,7 +75,7 @@ public abstract class BlockPSDAPGGlassBase extends BlockPSDAPGBase {
 				newRightSide = side;
 			}
 
-			world.setBlockState(rightPos, rightState.with(SIDE_EXTENDED, newRightSide));
+			world.setBlockAndUpdate(rightPos, rightState.setValue(SIDE_EXTENDED, newRightSide));
 		}
 
 		EnumSide newSide;
@@ -89,6 +89,6 @@ public abstract class BlockPSDAPGGlassBase extends BlockPSDAPGBase {
 			newSide = EnumSide.SINGLE;
 		}
 
-		world.setBlockState(pos, state.with(SIDE_EXTENDED, newSide));
+		world.setBlockAndUpdate(pos, state.setValue(SIDE_EXTENDED, newSide));
 	}
 }

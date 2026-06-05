@@ -1,11 +1,11 @@
 package org.mtr.servlet;
 
+import com.mojang.blaze3d.platform.NativeImage;
 import gg.essential.universal.UMinecraft;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.texture.AbstractTexture;
-import net.minecraft.client.texture.NativeImage;
-import net.minecraft.client.texture.NativeImageBackedTexture;
-import net.minecraft.util.Identifier;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.texture.AbstractTexture;
+import net.minecraft.client.renderer.texture.DynamicTexture;
+import net.minecraft.resources.ResourceLocation;
 import org.jspecify.annotations.Nullable;
 import org.mtr.MTR;
 import org.mtr.client.CustomResourceLoader;
@@ -43,7 +43,7 @@ public abstract class AbstractResourcePackCreatorServlet extends HttpServlet {
 			ServletBase.sendResponse(httpServletResponse, asyncContext, Utilities.getJsonObjectFromData(resourceWrapper).toString(), "", HttpResponseStatus.OK);
 			if (refreshVehicleId != null) {
 				final JsonObject vehiclesFlattened = resourceWrapper.flatten();
-				final MinecraftClient minecraftClient = MinecraftClient.getInstance();
+				final Minecraft minecraftClient = Minecraft.getInstance();
 				minecraftClient.execute(() -> {
 					if (refreshVehicleId.isEmpty()) {
 						UMinecraft.setCurrentScreenObj(new ReloadCustomResourcesScreen(() -> refreshVehicles(refreshVehicleId, vehiclesFlattened)));
@@ -65,14 +65,14 @@ public abstract class AbstractResourcePackCreatorServlet extends HttpServlet {
 				resourceWrapper.addTextureResource(name);
 				TEXTURES.put(name, bytes);
 				try {
-					final Identifier identifier = Identifier.of(name);
+					final ResourceLocation identifier = ResourceLocation.parse(name);
 					final ByteBuffer byteBuffer = ByteBuffer.allocateDirect(bytes.length);
 					byteBuffer.put(bytes);
 					byteBuffer.rewind();
-					final AbstractTexture abstractTexture = new NativeImageBackedTexture(NativeImage.read(byteBuffer));
-					final MinecraftClient minecraftClient = MinecraftClient.getInstance();
+					final AbstractTexture abstractTexture = new DynamicTexture(NativeImage.read(byteBuffer));
+					final Minecraft minecraftClient = Minecraft.getInstance();
 					minecraftClient.execute(() -> {
-						minecraftClient.getTextureManager().registerTexture(identifier, abstractTexture);
+						minecraftClient.getTextureManager().register(identifier, abstractTexture);
 						MTR.LOGGER.info("Registered temporary texture [{}]", identifier.toString());
 					});
 				} catch (Exception e) {
@@ -87,8 +87,8 @@ public abstract class AbstractResourcePackCreatorServlet extends HttpServlet {
 				resourceWrapper.addModelResource(new ModelWrapper(name, modelParts));
 				MODELS.put(name, modelObject.toString());
 			} else if (name.endsWith(".obj")) {
-				final ObjModelLoader objModelLoader = new ObjModelLoader(Identifier.of(""));
-				objModelLoader.loadModel(content, mtlString -> "", textureString -> Identifier.of(""), true, false);
+				final ObjModelLoader objModelLoader = new ObjModelLoader(ResourceLocation.parse(""));
+				objModelLoader.loadModel(content, mtlString -> "", textureString -> ResourceLocation.parse(""), true, false);
 				resourceWrapper.addModelResource(new ModelWrapper(name, objModelLoader.getNames()));
 				MODELS.put(name, content);
 			} else if (name.endsWith(".mtl")) {
@@ -98,7 +98,7 @@ public abstract class AbstractResourcePackCreatorServlet extends HttpServlet {
 	}
 
 	protected static Path getBackupFile() {
-		return MinecraftClient.getInstance().runDirectory.toPath().resolve("config/mtr-resource-pack-creator-backup.json");
+		return Minecraft.getInstance().gameDirectory.toPath().resolve("config/mtr-resource-pack-creator-backup.json");
 	}
 
 	protected static void setEncoding(HttpServletRequest httpServletRequest, HttpServletResponse httpServletResponse) {

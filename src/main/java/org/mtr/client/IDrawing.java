@@ -1,23 +1,23 @@
 package org.mtr.client;
 
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.text2speech.Narrator;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.font.TextRenderer;
-import net.minecraft.client.gui.widget.ClickableWidget;
-import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.client.render.LightmapTextureManager;
-import net.minecraft.client.render.OverlayTexture;
-import net.minecraft.client.render.VertexConsumer;
-import net.minecraft.client.render.VertexConsumerProvider;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.text.MutableText;
-import net.minecraft.text.OrderedText;
-import net.minecraft.text.Style;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.components.AbstractWidget;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.client.renderer.LightTexture;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.core.Direction;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.chat.Style;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.FormattedCharSequence;
+import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
 import org.jspecify.annotations.Nullable;
 import org.mtr.MTR;
@@ -31,20 +31,20 @@ import java.awt.*;
 
 public interface IDrawing {
 
-	static void drawStringWithFont(MatrixStack matrixStack, VertexConsumerProvider vertexConsumers, String text, float x, float y, int light) {
+	static void drawStringWithFont(PoseStack matrixStack, MultiBufferSource vertexConsumers, String text, float x, float y, int light) {
 		drawStringWithFont(matrixStack, vertexConsumers, text, IGui.HorizontalAlignment.CENTER, IGui.VerticalAlignment.CENTER, x, y, -1, -1, 1, IGui.ARGB_WHITE, true, light, null);
 	}
 
-	static void drawStringWithFont(MatrixStack matrixStack, VertexConsumerProvider vertexConsumers, String text, IGui.HorizontalAlignment horizontalAlignment, IGui.VerticalAlignment verticalAlignment, float x, float y, float maxWidth, float maxHeight, float scale, int textColor, boolean shadow, int light, @Nullable DrawingCallback drawingCallback) {
+	static void drawStringWithFont(PoseStack matrixStack, MultiBufferSource vertexConsumers, String text, IGui.HorizontalAlignment horizontalAlignment, IGui.VerticalAlignment verticalAlignment, float x, float y, float maxWidth, float maxHeight, float scale, int textColor, boolean shadow, int light, @Nullable DrawingCallback drawingCallback) {
 		drawStringWithFont(matrixStack, vertexConsumers, text, horizontalAlignment, verticalAlignment, horizontalAlignment, x, y, maxWidth, maxHeight, scale, textColor, shadow, light, drawingCallback);
 	}
 
-	static void drawStringWithFont(MatrixStack matrixStack, VertexConsumerProvider vertexConsumers, String text, IGui.HorizontalAlignment horizontalAlignment, IGui.VerticalAlignment verticalAlignment, IGui.HorizontalAlignment xAlignment, float x, float y, float maxWidth, float maxHeight, float scale, int textColor, boolean shadow, int light, @Nullable DrawingCallback drawingCallback) {
+	static void drawStringWithFont(PoseStack matrixStack, MultiBufferSource vertexConsumers, String text, IGui.HorizontalAlignment horizontalAlignment, IGui.VerticalAlignment verticalAlignment, IGui.HorizontalAlignment xAlignment, float x, float y, float maxWidth, float maxHeight, float scale, int textColor, boolean shadow, int light, @Nullable DrawingCallback drawingCallback) {
 		drawStringWithFont(matrixStack, vertexConsumers, text, horizontalAlignment, verticalAlignment, xAlignment, x, y, maxWidth, maxHeight, scale, textColor, textColor, 2, shadow, light, drawingCallback);
 	}
 
-	static void drawStringWithFont(MatrixStack matrixStack, VertexConsumerProvider vertexConsumers, String text, IGui.HorizontalAlignment horizontalAlignment, IGui.VerticalAlignment verticalAlignment, IGui.HorizontalAlignment xAlignment, float x, float y, float maxWidth, float maxHeight, float scale, int textColorCjk, int textColor, float fontSizeRatio, boolean shadow, int light, @Nullable DrawingCallback drawingCallback) {
-		final Style style = Config.getClient().getUseMTRFont() ? Style.EMPTY.withFont(Identifier.of(MTR.MOD_ID, "mtr")) : Style.EMPTY;
+	static void drawStringWithFont(PoseStack matrixStack, MultiBufferSource vertexConsumers, String text, IGui.HorizontalAlignment horizontalAlignment, IGui.VerticalAlignment verticalAlignment, IGui.HorizontalAlignment xAlignment, float x, float y, float maxWidth, float maxHeight, float scale, int textColorCjk, int textColor, float fontSizeRatio, boolean shadow, int light, @Nullable DrawingCallback drawingCallback) {
+		final Style style = Config.getClient().getUseMTRFont() ? Style.EMPTY.withFont(ResourceLocation.fromNamespaceAndPath(MTR.MOD_ID, "mtr")) : Style.EMPTY;
 
 		while (text.contains("||")) {
 			text = text.replace("||", "|");
@@ -52,17 +52,17 @@ public interface IDrawing {
 		final String[] stringSplit = text.split("\\|");
 
 		final BooleanArrayList isCJKList = new BooleanArrayList();
-		final ObjectArrayList<OrderedText> orderedTexts = new ObjectArrayList<>();
+		final ObjectArrayList<FormattedCharSequence> orderedTexts = new ObjectArrayList<>();
 		int totalHeight = 0, totalWidth = 0;
 		for (final String stringSplitPart : stringSplit) {
 			final boolean isCJK = IGui.isCjk(stringSplitPart);
 			isCJKList.add(isCJK);
 
-			final OrderedText orderedText = Text.literal(stringSplitPart).setStyle(style).asOrderedText();
+			final FormattedCharSequence orderedText = Component.literal(stringSplitPart).setStyle(style).getVisualOrderText();
 			orderedTexts.add(orderedText);
 
 			totalHeight += Math.round(IGui.LINE_HEIGHT * (isCJK ? fontSizeRatio : 1));
-			final int width = (int) Math.ceil(MinecraftClient.getInstance().textRenderer.getWidth(orderedText) * (isCJK ? fontSizeRatio : 1));
+			final int width = (int) Math.ceil(Minecraft.getInstance().font.width(orderedText) * (isCJK ? fontSizeRatio : 1));
 			if (width > totalWidth) {
 				totalWidth = width;
 			}
@@ -72,7 +72,7 @@ public interface IDrawing {
 			scale = totalHeight / maxHeight;
 		}
 
-		matrixStack.push();
+		matrixStack.pushPose();
 
 		final float totalWidthScaled;
 		final float scaleX;
@@ -90,29 +90,29 @@ public interface IDrawing {
 			final boolean isCJK = isCJKList.getBoolean(i);
 			final float extraScale = isCJK ? fontSizeRatio : 1;
 			if (isCJK) {
-				matrixStack.push();
+				matrixStack.pushPose();
 				matrixStack.scale(extraScale, extraScale, 1);
 			}
 
-			final TextRenderer textRenderer = MinecraftClient.getInstance().textRenderer;
-			final float xOffset = horizontalAlignment.getOffset(xAlignment.getOffset(x * scaleX, totalWidth), textRenderer.getWidth(orderedTexts.get(i)) * extraScale - totalWidth);
+			final Font textRenderer = Minecraft.getInstance().font;
+			final float xOffset = horizontalAlignment.getOffset(xAlignment.getOffset(x * scaleX, totalWidth), textRenderer.width(orderedTexts.get(i)) * extraScale - totalWidth);
 
-			final float shade = light == IGui.DEFAULT_LIGHT ? 1 : Math.min(LightmapTextureManager.getBlockLightCoordinates(light) / 16F * 0.1F + 0.7F, 1);
+			final float shade = light == IGui.DEFAULT_LIGHT ? 1 : Math.min(LightTexture.block(light) / 16F * 0.1F + 0.7F, 1);
 			final int a = ((isCJK ? textColorCjk : textColor) >> 24) & 0xFF;
 			final int r = (int) ((((isCJK ? textColorCjk : textColor) >> 16) & 0xFF) * shade);
 			final int g = (int) ((((isCJK ? textColorCjk : textColor) >> 8) & 0xFF) * shade);
 			final int b = (int) (((isCJK ? textColorCjk : textColor) & 0xFF) * shade);
 
-			textRenderer.draw(orderedTexts.get(i), Math.round(xOffset / extraScale), Math.round(offset / extraScale), (a << 24) + (r << 16) + (g << 8) + b, shadow, matrixStack.peek().getPositionMatrix(), vertexConsumers, TextRenderer.TextLayerType.NORMAL, 0, IGui.DEFAULT_LIGHT);
+			textRenderer.drawInBatch(orderedTexts.get(i), Math.round(xOffset / extraScale), Math.round(offset / extraScale), (a << 24) + (r << 16) + (g << 8) + b, shadow, matrixStack.last().pose(), vertexConsumers, Font.DisplayMode.NORMAL, 0, IGui.DEFAULT_LIGHT);
 
 			if (isCJK) {
-				matrixStack.pop();
+				matrixStack.popPose();
 			}
 
 			offset += IGui.LINE_HEIGHT * extraScale;
 		}
 
-		matrixStack.pop();
+		matrixStack.popPose();
 
 		if (drawingCallback != null) {
 			final float x1 = xAlignment.getOffset(x, totalWidthScaled / scale);
@@ -121,23 +121,23 @@ public interface IDrawing {
 		}
 	}
 
-	static void drawTexture(MatrixStack matrixStack, VertexConsumer vertexConsumer, float x1, float y1, float z1, float x2, float y2, float z2, Direction facing, int color, int light) {
+	static void drawTexture(PoseStack matrixStack, VertexConsumer vertexConsumer, float x1, float y1, float z1, float x2, float y2, float z2, Direction facing, int color, int light) {
 		drawTexture(matrixStack, vertexConsumer, x1, y1, z1, x2, y2, z2, 0, 0, 1, 1, facing, color, light);
 	}
 
-	static void drawTexture(MatrixStack matrixStack, VertexConsumer vertexConsumer, float x, float y, float width, float height, Direction facing, int light) {
+	static void drawTexture(PoseStack matrixStack, VertexConsumer vertexConsumer, float x, float y, float width, float height, Direction facing, int light) {
 		drawTexture(matrixStack, vertexConsumer, x, y, 0, x + width, y + height, 0, 0, 0, 1, 1, facing, -1, light);
 	}
 
-	static void drawTexture(MatrixStack matrixStack, VertexConsumer vertexConsumer, float x, float y, float width, float height, float u1, float v1, float u2, float v2, Direction facing, int color, int light) {
+	static void drawTexture(PoseStack matrixStack, VertexConsumer vertexConsumer, float x, float y, float width, float height, float u1, float v1, float u2, float v2, Direction facing, int color, int light) {
 		drawTexture(matrixStack, vertexConsumer, x, y, 0, x + width, y + height, 0, u1, v1, u2, v2, facing, color, light);
 	}
 
-	static void drawTexture(MatrixStack matrixStack, VertexConsumer vertexConsumer, float x1, float y1, float z1, float x2, float y2, float z2, float u1, float v1, float u2, float v2, Direction facing, int color, int light) {
+	static void drawTexture(PoseStack matrixStack, VertexConsumer vertexConsumer, float x1, float y1, float z1, float x2, float y2, float z2, float u1, float v1, float u2, float v2, Direction facing, int color, int light) {
 		drawTexture(matrixStack, vertexConsumer, x1, y1, z1, x1, y2, z1, x2, y2, z2, x2, y1, z2, u1, v1, u2, v2, facing, color, light);
 	}
 
-	static void drawTexture(MatrixStack matrixStack, VertexConsumer vertexConsumer, double x1, double y1, double z1, double x2, double y2, double z2, double x3, double y3, double z3, double x4, double y4, double z4, Vec3d playerOffset, float u1, float v1, float u2, float v2, Direction facing, int color, int light) {
+	static void drawTexture(PoseStack matrixStack, VertexConsumer vertexConsumer, double x1, double y1, double z1, double x2, double y2, double z2, double x3, double y3, double z3, double x4, double y4, double z4, Vec3 playerOffset, float u1, float v1, float u2, float v2, Direction facing, int color, int light) {
 		drawTexture(
 			matrixStack, vertexConsumer,
 			(float) (x1 - playerOffset.x), (float) (y1 - playerOffset.y), (float) (z1 - playerOffset.z),
@@ -148,31 +148,31 @@ public interface IDrawing {
 		);
 	}
 
-	static void drawTexture(MatrixStack matrixStack, VertexConsumer vertexConsumer, float x1, float y1, float z1, float x2, float y2, float z2, float x3, float y3, float z3, float x4, float y4, float z4, float u1, float v1, float u2, float v2, Direction facing, int color, int light) {
-		vertexConsumer.vertex(matrixStack.peek().getPositionMatrix(), x1, y1, z1).color(color).texture(u1, v1).overlay(OverlayTexture.DEFAULT_UV).light(light).normal(0, 1, 0);
-		vertexConsumer.vertex(matrixStack.peek().getPositionMatrix(), x2, y2, z2).color(color).texture(u1, v2).overlay(OverlayTexture.DEFAULT_UV).light(light).normal(0, 1, 0);
-		vertexConsumer.vertex(matrixStack.peek().getPositionMatrix(), x3, y3, z3).color(color).texture(u2, v2).overlay(OverlayTexture.DEFAULT_UV).light(light).normal(0, 1, 0);
-		vertexConsumer.vertex(matrixStack.peek().getPositionMatrix(), x4, y4, z4).color(color).texture(u2, v1).overlay(OverlayTexture.DEFAULT_UV).light(light).normal(0, 1, 0);
+	static void drawTexture(PoseStack matrixStack, VertexConsumer vertexConsumer, float x1, float y1, float z1, float x2, float y2, float z2, float x3, float y3, float z3, float x4, float y4, float z4, float u1, float v1, float u2, float v2, Direction facing, int color, int light) {
+		vertexConsumer.addVertex(matrixStack.last().pose(), x1, y1, z1).setColor(color).setUv(u1, v1).setOverlay(OverlayTexture.NO_OVERLAY).setLight(light).setNormal(0, 1, 0);
+		vertexConsumer.addVertex(matrixStack.last().pose(), x2, y2, z2).setColor(color).setUv(u1, v2).setOverlay(OverlayTexture.NO_OVERLAY).setLight(light).setNormal(0, 1, 0);
+		vertexConsumer.addVertex(matrixStack.last().pose(), x3, y3, z3).setColor(color).setUv(u2, v2).setOverlay(OverlayTexture.NO_OVERLAY).setLight(light).setNormal(0, 1, 0);
+		vertexConsumer.addVertex(matrixStack.last().pose(), x4, y4, z4).setColor(color).setUv(u2, v1).setOverlay(OverlayTexture.NO_OVERLAY).setLight(light).setNormal(0, 1, 0);
 	}
 
-	static void drawLineInWorld(MatrixStack matrixStack, VertexConsumer vertexConsumer, float x1, float y1, float z1, float x2, float y2, float z2, int color) {
+	static void drawLineInWorld(PoseStack matrixStack, VertexConsumer vertexConsumer, float x1, float y1, float z1, float x2, float y2, float z2, int color) {
 		if (new Color(color, true).getAlpha() > 0) {
-			final MatrixStack.Entry entry = matrixStack.peek();
-			final Matrix4f matrix4f = entry.getPositionMatrix();
+			final PoseStack.Pose entry = matrixStack.last();
+			final Matrix4f matrix4f = entry.pose();
 
-			vertexConsumer.vertex(matrix4f, x1, y1, z1).color(color).normal(entry, 0, 1, 0);
-			vertexConsumer.vertex(matrix4f, x2, y2, z2).color(color).normal(entry, 0, 1, 0);
+			vertexConsumer.addVertex(matrix4f, x1, y1, z1).setColor(color).setNormal(entry, 0, 1, 0);
+			vertexConsumer.addVertex(matrix4f, x2, y2, z2).setColor(color).setNormal(entry, 0, 1, 0);
 		}
 	}
 
-	static void drawSevenSegment(MatrixStack matrixStack, VertexConsumer vertexConsumer, String numberString, float availableSpace, float x, float y, float height, FontRenderOptions.Alignment horizontalAlignment, int color, int light) {
+	static void drawSevenSegment(PoseStack matrixStack, VertexConsumer vertexConsumer, String numberString, float availableSpace, float x, float y, float height, FontRenderOptions.Alignment horizontalAlignment, int color, int light) {
 		try {
 			drawSevenSegment(matrixStack, vertexConsumer, Integer.parseInt(numberString), availableSpace, x, y, height, horizontalAlignment, color, light);
 		} catch (Exception ignored) {
 		}
 	}
 
-	static void drawSevenSegment(MatrixStack matrixStack, VertexConsumer vertexConsumer, int number, float availableSpace, float x, float y, float height, FontRenderOptions.Alignment horizontalAlignment, int color, int light) {
+	static void drawSevenSegment(PoseStack matrixStack, VertexConsumer vertexConsumer, int number, float availableSpace, float x, float y, float height, FontRenderOptions.Alignment horizontalAlignment, int color, int light) {
 		// Negatives and decimals are not supported right now
 		final float u = 0.25F;
 		final float v = 170F / 512;
@@ -188,37 +188,37 @@ public interface IDrawing {
 			final float digitV = Math.floorDiv(digit, 4) * v;
 			final float x1 = digitX + (paddingMultiplier - 1) * digitWidth / 2;
 			final float x2 = x1 + digitWidth / paddingMultiplier;
-			vertexConsumer.vertex(matrixStack.peek().getPositionMatrix(), x1, y, 0).color(color).texture(digitU, digitV).overlay(OverlayTexture.DEFAULT_UV).light(light).normal(0, 1, 0);
-			vertexConsumer.vertex(matrixStack.peek().getPositionMatrix(), x1, y + height, 0).color(color).texture(digitU, digitV + v).overlay(OverlayTexture.DEFAULT_UV).light(light).normal(0, 1, 0);
-			vertexConsumer.vertex(matrixStack.peek().getPositionMatrix(), x2, y + height, 0).color(color).texture(digitU + u, digitV + v).overlay(OverlayTexture.DEFAULT_UV).light(light).normal(0, 1, 0);
-			vertexConsumer.vertex(matrixStack.peek().getPositionMatrix(), x2, y, 0).color(color).texture(digitU + u, digitV).overlay(OverlayTexture.DEFAULT_UV).light(light).normal(0, 1, 0);
+			vertexConsumer.addVertex(matrixStack.last().pose(), x1, y, 0).setColor(color).setUv(digitU, digitV).setOverlay(OverlayTexture.NO_OVERLAY).setLight(light).setNormal(0, 1, 0);
+			vertexConsumer.addVertex(matrixStack.last().pose(), x1, y + height, 0).setColor(color).setUv(digitU, digitV + v).setOverlay(OverlayTexture.NO_OVERLAY).setLight(light).setNormal(0, 1, 0);
+			vertexConsumer.addVertex(matrixStack.last().pose(), x2, y + height, 0).setColor(color).setUv(digitU + u, digitV + v).setOverlay(OverlayTexture.NO_OVERLAY).setLight(light).setNormal(0, 1, 0);
+			vertexConsumer.addVertex(matrixStack.last().pose(), x2, y, 0).setColor(color).setUv(digitU + u, digitV).setOverlay(OverlayTexture.NO_OVERLAY).setLight(light).setNormal(0, 1, 0);
 		}
 	}
 
-	static void setPositionAndWidth(ClickableWidget widget, int x, int y, int widgetWidth) {
+	static void setPositionAndWidth(AbstractWidget widget, int x, int y, int widgetWidth) {
 		widget.setX(x);
 		widget.setY(y);
 		widget.setWidth(Math.clamp(widgetWidth, 0, 380));
 	}
 
-	static void narrateOrAnnounce(String narrateMessage, ObjectArrayList<MutableText> chatMessages) {
+	static void narrateOrAnnounce(String narrateMessage, ObjectArrayList<MutableComponent> chatMessages) {
 		if (Config.getClient().getTextToSpeechAnnouncements() && !narrateMessage.isEmpty()) {
 			Narrator.getNarrator().say(narrateMessage, true);
 		}
 		if (Config.getClient().getChatAnnouncements() && !chatMessages.isEmpty()) {
-			final ClientPlayerEntity player = MinecraftClient.getInstance().player;
+			final LocalPlayer player = Minecraft.getInstance().player;
 			if (player != null) {
 				chatMessages.forEach(chatMessage -> {
 					if (!chatMessage.getString().isEmpty()) {
-						player.sendMessage(chatMessage, false);
+						player.displayClientMessage(chatMessage, false);
 					}
 				});
 			}
 		}
 	}
 
-	static MutableText withMTRFont(MutableText text) {
-		return Config.getClient().getUseMTRFont() ? text.setStyle(Style.EMPTY.withFont(Identifier.of(MTR.MOD_ID, "mtr"))) : text;
+	static MutableComponent withMTRFont(MutableComponent text) {
+		return Config.getClient().getUseMTRFont() ? text.setStyle(Style.EMPTY.withFont(ResourceLocation.fromNamespaceAndPath(MTR.MOD_ID, "mtr"))) : text;
 	}
 
 	static void changeShaderColor(Color color, Runnable callback) {

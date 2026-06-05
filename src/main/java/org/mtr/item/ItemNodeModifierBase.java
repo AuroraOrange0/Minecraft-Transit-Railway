@@ -1,14 +1,14 @@
 package org.mtr.item;
 
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.ItemUsageContext;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
+import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.context.UseOnContext;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
 import org.jspecify.annotations.Nullable;
 import org.mtr.MTR;
 import org.mtr.block.BlockNode;
@@ -34,7 +34,7 @@ public abstract class ItemNodeModifierBase extends ItemBlockClickingBase {
 	public final boolean forAirplaneNode;
 	protected final boolean isConnector;
 
-	public ItemNodeModifierBase(boolean forNonContinuousMovementNode, boolean forContinuousMovementNode, boolean forAirplaneNode, boolean isConnector, Item.Settings settings) {
+	public ItemNodeModifierBase(boolean forNonContinuousMovementNode, boolean forContinuousMovementNode, boolean forAirplaneNode, boolean isConnector, Item.Properties settings) {
 		super(settings);
 		this.forNonContinuousMovementNode = forNonContinuousMovementNode;
 		this.forContinuousMovementNode = forContinuousMovementNode;
@@ -43,37 +43,37 @@ public abstract class ItemNodeModifierBase extends ItemBlockClickingBase {
 	}
 
 	@Override
-	protected void onStartClick(ItemUsageContext context) {
-		context.getStack().set(DataComponentTypes.TRANSPORT_MODE.get(), ((BlockNode) context.getWorld().getBlockState(context.getBlockPos()).getBlock()).transportMode.toString());
+	protected void onStartClick(UseOnContext context) {
+		context.getItemInHand().set(DataComponentTypes.TRANSPORT_MODE.get(), ((BlockNode) context.getLevel().getBlockState(context.getClickedPos()).getBlock()).transportMode.toString());
 	}
 
 	@Override
-	protected void onEndClick(ItemUsageContext context, BlockPos posEnd) {
-		final World world = context.getWorld();
-		final BlockPos posStart = context.getBlockPos();
+	protected void onEndClick(UseOnContext context, BlockPos posEnd) {
+		final Level world = context.getLevel();
+		final BlockPos posStart = context.getClickedPos();
 		final BlockState stateStart = world.getBlockState(posStart);
 		final Block blockStart = stateStart.getBlock();
 		final BlockState stateEnd = world.getBlockState(posEnd);
-		final PlayerEntity player = context.getPlayer();
+		final Player player = context.getPlayer();
 
-		if (player instanceof ServerPlayerEntity && stateEnd.getBlock() instanceof BlockNode && ((BlockNode) blockStart).transportMode.toString().equals(context.getStack().get(DataComponentTypes.TRANSPORT_MODE.get()))) {
+		if (player instanceof ServerPlayer && stateEnd.getBlock() instanceof BlockNode && ((BlockNode) blockStart).transportMode.toString().equals(context.getItemInHand().get(DataComponentTypes.TRANSPORT_MODE.get()))) {
 			if (isConnector) {
 				if (!posStart.equals(posEnd)) {
 					final ObjectObjectImmutablePair<Angle, Angle> angles = Rail.getAngles(MTR.blockPosToPosition(posStart), BlockNode.getAngle(stateStart), MTR.blockPosToPosition(posEnd), BlockNode.getAngle(stateEnd));
-					onConnect(world, context.getStack(), ((BlockNode) blockStart).transportMode, stateStart, stateEnd, posStart, posEnd, angles.left(), angles.right(), (ServerPlayerEntity) player);
+					onConnect(world, context.getItemInHand(), ((BlockNode) blockStart).transportMode, stateStart, stateEnd, posStart, posEnd, angles.left(), angles.right(), (ServerPlayer) player);
 				}
 			} else {
-				onRemove(world, posStart, posEnd, (ServerPlayerEntity) player);
+				onRemove(world, posStart, posEnd, (ServerPlayer) player);
 			}
 		}
 
-		context.getStack().remove(DataComponentTypes.TRANSPORT_MODE.get());
+		context.getItemInHand().remove(DataComponentTypes.TRANSPORT_MODE.get());
 	}
 
 	@Override
-	protected boolean clickCondition(ItemUsageContext context) {
-		final World world = context.getWorld();
-		final Block blockStart = world.getBlockState(context.getBlockPos()).getBlock();
+	protected boolean clickCondition(UseOnContext context) {
+		final Level world = context.getLevel();
+		final Block blockStart = world.getBlockState(context.getClickedPos()).getBlock();
 		if (blockStart instanceof BlockNode blockNode) {
 			if (blockNode.transportMode == TransportMode.AIRPLANE) {
 				return forAirplaneNode;
@@ -85,11 +85,11 @@ public abstract class ItemNodeModifierBase extends ItemBlockClickingBase {
 		}
 	}
 
-	protected abstract void onConnect(World world, ItemStack stack, TransportMode transportMode, BlockState stateStart, BlockState stateEnd, BlockPos posStart, BlockPos posEnd, Angle facingStart, Angle facingEnd, @Nullable ServerPlayerEntity player);
+	protected abstract void onConnect(Level world, ItemStack stack, TransportMode transportMode, BlockState stateStart, BlockState stateEnd, BlockPos posStart, BlockPos posEnd, Angle facingStart, Angle facingEnd, @Nullable ServerPlayer player);
 
-	protected abstract void onRemove(World world, BlockPos posStart, BlockPos posEnd, @Nullable ServerPlayerEntity player);
+	protected abstract void onRemove(Level world, BlockPos posStart, BlockPos posEnd, @Nullable ServerPlayer player);
 
-	public static void getRail(World world, BlockPos blockPos1, BlockPos blockPos2, @Nullable ServerPlayerEntity serverPlayerEntity, Consumer<Rail> consumer) {
+	public static void getRail(Level world, BlockPos blockPos1, BlockPos blockPos2, @Nullable ServerPlayer serverPlayerEntity, Consumer<Rail> consumer) {
 		MTR.sendMessageC2S(
 			OperationProcessor.RAILS,
 			world.getServer(),
@@ -99,7 +99,7 @@ public abstract class ItemNodeModifierBase extends ItemBlockClickingBase {
 				final ObjectImmutableList<Rail> rails = railsResponse.getRails();
 				if (rails.isEmpty()) {
 					if (serverPlayerEntity != null) {
-						serverPlayerEntity.sendMessage(TranslationProvider.GUI_MTR_RAIL_NOT_FOUND_ACTION.getText(), true);
+						serverPlayerEntity.displayClientMessage(TranslationProvider.GUI_MTR_RAIL_NOT_FOUND_ACTION.getText(), true);
 					}
 				} else {
 					consumer.accept(rails.getFirst());

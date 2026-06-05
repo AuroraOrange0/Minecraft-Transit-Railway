@@ -1,9 +1,9 @@
 package org.mtr.model;
 
-import net.minecraft.client.model.ModelPart;
-import net.minecraft.client.render.OverlayTexture;
-import net.minecraft.client.render.VertexConsumer;
-import net.minecraft.client.util.math.MatrixStack;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import net.minecraft.client.model.geom.ModelPart;
+import net.minecraft.client.renderer.texture.OverlayTexture;
 import org.joml.Vector2f;
 import org.joml.Vector3f;
 import org.mtr.data.IGui;
@@ -30,7 +30,7 @@ public record StoredVertexData(
 
 	public static void write(ModelPart modelPart, ObjectArrayList<StoredVertexData> storedVertexDataList) {
 		final StoredVertexConsumer storedVertexConsumer = new StoredVertexConsumer();
-		modelPart.render(new MatrixStack(), storedVertexConsumer, IGui.MAX_LIGHT_INTERIOR, OverlayTexture.DEFAULT_UV);
+		modelPart.render(new PoseStack(), storedVertexConsumer, IGui.MAX_LIGHT_INTERIOR, OverlayTexture.NO_OVERLAY);
 		for (int i = 0; i < storedVertexConsumer.vertexEntries.size(); i++) {
 			storedVertexDataList.add(new StoredVertexData(
 				storedVertexConsumer.vertexEntries.get(i).x,
@@ -47,14 +47,14 @@ public record StoredVertexData(
 	}
 
 	public static void apply(ObjectArrayList<StoredVertexData> storedVertexDataList, VertexConsumer vertexConsumer) {
-		storedVertexDataList.forEach(storedVertexData -> vertexConsumer.vertex(
+		storedVertexDataList.forEach(storedVertexData -> vertexConsumer.addVertex(
 			storedVertexData.x,
 			storedVertexData.y,
 			storedVertexData.z,
 			storedVertexData.color.getRGB(),
 			storedVertexData.u,
 			storedVertexData.v,
-			OverlayTexture.DEFAULT_UV,
+			OverlayTexture.NO_OVERLAY,
 			IGui.DEFAULT_LIGHT,
 			storedVertexData.normalX,
 			storedVertexData.normalY,
@@ -69,34 +69,34 @@ public record StoredVertexData(
 		private final ObjectArrayList<Vector3f> normalEntries = new ObjectArrayList<>();
 
 		@Override
-		public VertexConsumer vertex(float x, float y, float z) {
+		public VertexConsumer addVertex(float x, float y, float z) {
 			vertexEntries.add(new Vector3f(x, y, z));
 			return this;
 		}
 
 		@Override
-		public VertexConsumer color(int red, int green, int blue, int alpha) {
+		public VertexConsumer setColor(int red, int green, int blue, int alpha) {
 			return this;
 		}
 
 		@Override
-		public VertexConsumer texture(float u, float v) {
+		public VertexConsumer setUv(float u, float v) {
 			textureEntries.add(new Vector2f(u, v));
 			return this;
 		}
 
 		@Override
-		public VertexConsumer overlay(int u, int v) {
+		public VertexConsumer setUv1(int u, int v) {
 			return this;
 		}
 
 		@Override
-		public VertexConsumer light(int u, int v) {
+		public VertexConsumer setUv2(int u, int v) {
 			return this;
 		}
 
 		@Override
-		public VertexConsumer normal(float x, float y, float z) {
+		public VertexConsumer setNormal(float x, float y, float z) {
 			normalEntries.add(new Vector3f(x, y, z));
 			return this;
 		}

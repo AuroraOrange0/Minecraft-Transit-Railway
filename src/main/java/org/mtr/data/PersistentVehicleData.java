@@ -1,7 +1,7 @@
 package org.mtr.data;
 
 import lombok.Getter;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.core.BlockPos;
 import org.mtr.client.Oscillation;
 import org.mtr.client.ScrollingText;
 import org.mtr.core.data.TransportMode;

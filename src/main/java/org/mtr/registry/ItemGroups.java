@@ -1,6 +1,6 @@
 package org.mtr.registry;
 
-import net.minecraft.item.ItemStack;
+import net.minecraft.world.item.ItemStack;
 import org.mtr.MTR;
 
 public final class ItemGroups {

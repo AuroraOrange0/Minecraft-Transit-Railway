@@ -1,19 +1,19 @@
 package org.mtr.item;
 
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.ItemUsageContext;
-import net.minecraft.item.tooltip.TooltipType;
-import net.minecraft.state.property.Properties;
-import net.minecraft.text.Text;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.StringIdentifiable;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.world.World;
+import net.minecraft.ChatFormatting;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.network.chat.Component;
+import net.minecraft.util.StringRepresentable;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.context.UseOnContext;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import org.jspecify.annotations.Nullable;
 import org.mtr.block.BlockPSDTop;
 import org.mtr.block.IBlock;
@@ -28,93 +28,93 @@ public class ItemPSDAPGBase extends Item implements IBlock {
 	private final EnumPSDAPGItem item;
 	private final EnumPSDAPGType type;
 
-	public ItemPSDAPGBase(EnumPSDAPGItem item, EnumPSDAPGType type, Item.Settings settings) {
+	public ItemPSDAPGBase(EnumPSDAPGItem item, EnumPSDAPGType type, Item.Properties settings) {
 		super(settings);
 		this.item = item;
 		this.type = type;
 	}
 
 	@Override
-	public ActionResult useOnBlock(ItemUsageContext context) {
+	public InteractionResult useOn(UseOnContext context) {
 		final int horizontalBlocks = item.isDoor ? type.isOdd ? 3 : 2 : 1;
 		if (blocksNotReplaceable(context, horizontalBlocks, type.isPSD ? 3 : 2, getBlockStateFromItem().getBlock())) {
-			return ActionResult.FAIL;
+			return InteractionResult.FAIL;
 		}
 
-		final World world = context.getWorld();
-		final Direction playerFacing = context.getHorizontalPlayerFacing();
-		final BlockPos pos = context.getBlockPos().offset(context.getSide());
+		final Level world = context.getLevel();
+		final Direction playerFacing = context.getHorizontalDirection();
+		final BlockPos pos = context.getClickedPos().relative(context.getClickedFace());
 
 		for (int x = 0; x < horizontalBlocks; x++) {
-			final BlockPos newPos = pos.offset(playerFacing.rotateYClockwise(), x);
+			final BlockPos newPos = pos.relative(playerFacing.getClockWise(), x);
 
 			for (int y = 0; y < 2; y++) {
-				final BlockState state = getBlockStateFromItem().with(Properties.HORIZONTAL_FACING, playerFacing).with(HALF, y == 1 ? DoubleBlockHalf.UPPER : DoubleBlockHalf.LOWER);
+				final BlockState state = getBlockStateFromItem().setValue(BlockStateProperties.HORIZONTAL_FACING, playerFacing).setValue(HALF, y == 1 ? DoubleBlockHalf.UPPER : DoubleBlockHalf.LOWER);
 				if (item.isDoor) {
-					BlockState neighborState = state.with(SIDE, x == 0 ? EnumSide.LEFT : EnumSide.RIGHT);
+					BlockState neighborState = state.setValue(SIDE, x == 0 ? EnumSide.LEFT : EnumSide.RIGHT);
 					if (type.isOdd) {
-						neighborState = neighborState.with(TripleHorizontalBlock.CENTER, x > 0 && x < horizontalBlocks - 1);
+						neighborState = neighborState.setValue(TripleHorizontalBlock.CENTER, x > 0 && x < horizontalBlocks - 1);
 					}
-					world.setBlockState(newPos.up(y), neighborState);
+					world.setBlockAndUpdate(newPos.above(y), neighborState);
 				} else {
-					world.setBlockState(newPos.up(y), state.with(SIDE_EXTENDED, EnumSide.SINGLE));
+					world.setBlockAndUpdate(newPos.above(y), state.setValue(SIDE_EXTENDED, EnumSide.SINGLE));
 				}
 			}
 
 			if (type.isPSD) {
-				world.setBlockState(newPos.up(2), BlockPSDTop.getActualState(world, newPos.up(2)));
+				world.setBlockAndUpdate(newPos.above(2), BlockPSDTop.getActualState(world, newPos.above(2)));
 			}
 		}
 
-		context.getStack().decrement(1);
-		return ActionResult.SUCCESS;
+		context.getItemInHand().shrink(1);
+		return InteractionResult.SUCCESS;
 	}
 
 	@Override
-	public void appendTooltip(ItemStack stack, TooltipContext context, List<Text> tooltip, TooltipType type) {
-		tooltip.add((this.type.isLift ? this.type.isOdd ? TranslationProvider.TOOLTIP_MTR_RAILWAY_SIGN_ODD : TranslationProvider.TOOLTIP_MTR_RAILWAY_SIGN_EVEN : item.translationKey).getMutableText().formatted(Formatting.GRAY));
+	public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltip, TooltipFlag type) {
+		tooltip.add((this.type.isLift ? this.type.isOdd ? TranslationProvider.TOOLTIP_MTR_RAILWAY_SIGN_ODD : TranslationProvider.TOOLTIP_MTR_RAILWAY_SIGN_EVEN : item.translationKey).getMutableText().withStyle(ChatFormatting.GRAY));
 	}
 
 	private BlockState getBlockStateFromItem() {
 		return switch (type) {
 			case PSD_1 -> switch (item) {
-				case PSD_APG_DOOR -> Blocks.PSD_DOOR_1.get().getDefaultState();
-				case PSD_APG_GLASS -> Blocks.PSD_GLASS_1.get().getDefaultState();
-				case PSD_APG_GLASS_END -> Blocks.PSD_GLASS_END_1.get().getDefaultState();
+				case PSD_APG_DOOR -> Blocks.PSD_DOOR_1.get().defaultBlockState();
+				case PSD_APG_GLASS -> Blocks.PSD_GLASS_1.get().defaultBlockState();
+				case PSD_APG_GLASS_END -> Blocks.PSD_GLASS_END_1.get().defaultBlockState();
 			};
 			case PSD_2 -> switch (item) {
-				case PSD_APG_DOOR -> Blocks.PSD_DOOR_2.get().getDefaultState();
-				case PSD_APG_GLASS -> Blocks.PSD_GLASS_2.get().getDefaultState();
-				case PSD_APG_GLASS_END -> Blocks.PSD_GLASS_END_2.get().getDefaultState();
+				case PSD_APG_DOOR -> Blocks.PSD_DOOR_2.get().defaultBlockState();
+				case PSD_APG_GLASS -> Blocks.PSD_GLASS_2.get().defaultBlockState();
+				case PSD_APG_GLASS_END -> Blocks.PSD_GLASS_END_2.get().defaultBlockState();
 			};
 			case APG -> switch (item) {
-				case PSD_APG_DOOR -> Blocks.APG_DOOR.get().getDefaultState();
-				case PSD_APG_GLASS -> Blocks.APG_GLASS.get().getDefaultState();
-				case PSD_APG_GLASS_END -> Blocks.APG_GLASS_END.get().getDefaultState();
+				case PSD_APG_DOOR -> Blocks.APG_DOOR.get().defaultBlockState();
+				case PSD_APG_GLASS -> Blocks.APG_GLASS.get().defaultBlockState();
+				case PSD_APG_GLASS_END -> Blocks.APG_GLASS_END.get().defaultBlockState();
 			};
-			case LIFT_DOOR_1 -> Blocks.LIFT_DOOR_EVEN_1.get().getDefaultState();
-			case LIFT_DOOR_ODD_1 -> Blocks.LIFT_DOOR_ODD_1.get().getDefaultState();
+			case LIFT_DOOR_1 -> Blocks.LIFT_DOOR_EVEN_1.get().defaultBlockState();
+			case LIFT_DOOR_ODD_1 -> Blocks.LIFT_DOOR_ODD_1.get().defaultBlockState();
 		};
 	}
 
-	public static boolean blocksNotReplaceable(ItemUsageContext context, int width, int height, @Nullable Block blacklistBlock) {
-		final Direction facing = context.getHorizontalPlayerFacing();
-		final World world = context.getWorld();
-		final BlockPos startingPos = context.getBlockPos().offset(context.getSide());
+	public static boolean blocksNotReplaceable(UseOnContext context, int width, int height, @Nullable Block blacklistBlock) {
+		final Direction facing = context.getHorizontalDirection();
+		final Level world = context.getLevel();
+		final BlockPos startingPos = context.getClickedPos().relative(context.getClickedFace());
 
 		for (int x = 0; x < width; x++) {
-			final BlockPos offsetPos = startingPos.offset(facing.rotateYClockwise(), x);
+			final BlockPos offsetPos = startingPos.relative(facing.getClockWise(), x);
 
 			if (blacklistBlock != null) {
-				final boolean isBlacklistedBelow = world.getBlockState(offsetPos.down()).isOf(blacklistBlock);
-				final boolean isBlacklistedAbove = world.getBlockState(offsetPos.up(height)).isOf(blacklistBlock);
+				final boolean isBlacklistedBelow = world.getBlockState(offsetPos.below()).is(blacklistBlock);
+				final boolean isBlacklistedAbove = world.getBlockState(offsetPos.above(height)).is(blacklistBlock);
 				if (isBlacklistedBelow || isBlacklistedAbove) {
 					return true;
 				}
 			}
 
 			for (int y = 0; y < height; y++) {
-				if (!world.getBlockState(offsetPos.up(y)).getBlock().equals(net.minecraft.block.Blocks.AIR)) {
+				if (!world.getBlockState(offsetPos.above(y)).getBlock().equals(net.minecraft.world.level.block.Blocks.AIR)) {
 					return true;
 				}
 			}
@@ -141,7 +141,7 @@ public class ItemPSDAPGBase extends Item implements IBlock {
 		}
 	}
 
-	public enum EnumPSDAPGItem implements StringIdentifiable {
+	public enum EnumPSDAPGItem implements StringRepresentable {
 
 		PSD_APG_DOOR(TranslationProvider.TOOLTIP_MTR_PSD_APG_DOOR, "psd_apg_door", true),
 		PSD_APG_GLASS(TranslationProvider.TOOLTIP_MTR_PSD_APG_GLASS, "psd_apg_glass", false),
@@ -158,7 +158,7 @@ public class ItemPSDAPGBase extends Item implements IBlock {
 		}
 
 		@Override
-		public String asString() {
+		public String getSerializedName() {
 			return name;
 		}
 	}

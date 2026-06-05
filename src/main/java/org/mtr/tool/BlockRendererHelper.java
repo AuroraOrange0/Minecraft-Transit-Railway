@@ -1,13 +1,13 @@
 package org.mtr.tool;
 
 import gg.essential.universal.UMatrixStack;
-import net.minecraft.block.BlockState;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.render.model.BakedQuad;
-import net.minecraft.client.texture.Sprite;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.random.Random;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.block.model.BakedQuad;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.core.Direction;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.level.block.state.BlockState;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import org.mtr.widget.ImageComponentBase;
 
@@ -21,17 +21,17 @@ public final class BlockRendererHelper {
 
 	public static void renderBlock(UMatrixStack matrixStack, BlockState blockState, long renderKey, double x, double y, double z, double brightness) {
 		for (int i = -1; i < Direction.values().length; i++) {
-			final List<BakedQuad> bakedQuads = MinecraftClient.getInstance().getBlockRenderManager().getModel(blockState).getQuads(blockState, i < 0 ? null : Direction.values()[i], Random.create());
+			final List<BakedQuad> bakedQuads = Minecraft.getInstance().getBlockRenderer().getBlockModel(blockState).getQuads(blockState, i < 0 ? null : Direction.values()[i], RandomSource.create());
 
 			for (int j = 0; j < bakedQuads.size(); j++) {
 				final BakedQuad bakedQuad = bakedQuads.get(j);
-				final Sprite sprite = bakedQuad.getSprite();
-				final Identifier tempIdentifier = bakedQuad.getSprite().getContents().getId();
-				final Identifier newIdentifier = Identifier.of(tempIdentifier.getNamespace(), String.format("textures/%s.png", tempIdentifier.getPath()));
+				final TextureAtlasSprite sprite = bakedQuad.getSprite();
+				final ResourceLocation tempIdentifier = bakedQuad.getSprite().contents().name();
+				final ResourceLocation newIdentifier = ResourceLocation.fromNamespaceAndPath(tempIdentifier.getNamespace(), String.format("textures/%s.png", tempIdentifier.getPath()));
 				final String newRenderKey = String.format("%s_%s_%s_%s", tempIdentifier, i, j, renderKey);
 
 				ImageComponentBase.drawTexture(BLOCK_TEXTURE_MAP.computeIfAbsent(newIdentifier.toString(), key -> ReleasedDynamicTextureRegistry.INSTANCE.create(newIdentifier)).get(), vertexConsumer -> {
-					final int[] vertexData = VERTEX_DATA_MAP.computeIfAbsent(newRenderKey, key -> bakedQuad.getVertexData());
+					final int[] vertexData = VERTEX_DATA_MAP.computeIfAbsent(newRenderKey, key -> bakedQuad.getVertices());
 					for (int k = 0; k < vertexData.length; k += 8) {
 						final Color color = new Color(vertexData[k + 3]);
 						final int r = (int) Math.floor(color.getRed() * brightness);
@@ -43,8 +43,8 @@ public final class BlockRendererHelper {
 							y + Float.intBitsToFloat(vertexData[k + 1]),
 							z + Float.intBitsToFloat(vertexData[k + 2])
 						).tex(
-							(Float.intBitsToFloat(vertexData[k + 4]) - sprite.getMinU()) / (sprite.getMaxU() - sprite.getMinU()),
-							(Float.intBitsToFloat(vertexData[k + 5]) - sprite.getMinV()) / (sprite.getMaxV() - sprite.getMinV())
+							(Float.intBitsToFloat(vertexData[k + 4]) - sprite.getU0()) / (sprite.getU1() - sprite.getU0()),
+							(Float.intBitsToFloat(vertexData[k + 5]) - sprite.getV0()) / (sprite.getV1() - sprite.getV0())
 						).color(new Color(r, g, b)).endVertex();
 					}
 				});

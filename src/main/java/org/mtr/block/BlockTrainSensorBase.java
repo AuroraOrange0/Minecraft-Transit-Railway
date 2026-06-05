@@ -1,36 +1,36 @@
 package org.mtr.block;
 
-import net.minecraft.block.AbstractBlock;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockEntityProvider;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.block.entity.BlockEntityType;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.hit.BlockHitResult;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
+import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.EntityBlock;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.state.BlockBehaviour;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.BlockHitResult;
 import org.mtr.libraries.it.unimi.dsi.fastutil.longs.LongAVLTreeSet;
 import org.mtr.packet.PacketOpenBlockEntityScreen;
 
 import java.util.ArrayList;
 
-public abstract class BlockTrainSensorBase extends Block implements BlockEntityProvider {
+public abstract class BlockTrainSensorBase extends Block implements EntityBlock {
 
-	public BlockTrainSensorBase(AbstractBlock.Settings settings) {
+	public BlockTrainSensorBase(BlockBehaviour.Properties settings) {
 		super(settings);
 	}
 
 	@Override
-	protected ActionResult onUse(BlockState state, World world, BlockPos pos, PlayerEntity player, BlockHitResult hit) {
-		return IBlock.checkHoldingBrush(world, player, () -> PacketOpenBlockEntityScreen.sendDirectlyToServer((ServerWorld) world, (ServerPlayerEntity) player, pos));
+	protected InteractionResult useWithoutItem(BlockState state, Level world, BlockPos pos, Player player, BlockHitResult hit) {
+		return IBlock.checkHoldingBrush(world, player, () -> PacketOpenBlockEntityScreen.sendDirectlyToServer((ServerLevel) world, (ServerPlayer) player, pos));
 	}
 
-	public static boolean matchesFilter(World world, BlockPos pos, long routeId, double speed) {
+	public static boolean matchesFilter(Level world, BlockPos pos, long routeId, double speed) {
 		final BlockEntity entity = world.getBlockEntity(pos);
 		return entity instanceof BlockEntityBase && ((BlockEntityBase) entity).matchesFilter(routeId, speed);
 	}
@@ -49,7 +49,7 @@ public abstract class BlockTrainSensorBase extends Block implements BlockEntityP
 		}
 
 		@Override
-		protected void readNbt(NbtCompound nbtCompound) {
+		protected void readNbt(CompoundTag nbtCompound) {
 			final long[] routeIdsArray = nbtCompound.getLongArray(KEY_ROUTE_IDS);
 			for (final long routeId : routeIdsArray) {
 				filterRouteIds.add(routeId);
@@ -59,7 +59,7 @@ public abstract class BlockTrainSensorBase extends Block implements BlockEntityP
 		}
 
 		@Override
-		protected void writeNbt(NbtCompound nbtCompound) {
+		protected void writeNbt(CompoundTag nbtCompound) {
 			nbtCompound.putLongArray(KEY_ROUTE_IDS, new ArrayList<>(filterRouteIds));
 			nbtCompound.putBoolean(KEY_STOPPED_ONLY, stoppedOnly);
 			nbtCompound.putBoolean(KEY_MOVING_ONLY, movingOnly);
@@ -91,7 +91,7 @@ public abstract class BlockTrainSensorBase extends Block implements BlockEntityP
 			this.filterRouteIds.addAll(filterRouteIdsCopy);
 			this.stoppedOnly = stoppedOnly;
 			this.movingOnly = movingOnly;
-			markDirty();
+			setChanged();
 		}
 	}
 }

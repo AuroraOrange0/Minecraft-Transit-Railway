@@ -1,7 +1,7 @@
 package org.mtr.sound;
 
-import net.minecraft.sound.SoundEvent;
-import net.minecraft.util.Identifier;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.sounds.SoundEvent;
 import org.apache.commons.lang3.StringUtils;
 import org.jspecify.annotations.Nullable;
 
@@ -102,7 +102,7 @@ public class BveConfigFile {
 					continue;
 				}
 
-				final SoundEvent valueAsSoundEvent = SoundEvent.of(Identifier.of(config.audioBaseName + value));
+				final SoundEvent valueAsSoundEvent = SoundEvent.createVariableRangeEvent(ResourceLocation.parse(config.audioBaseName + value));
 				switch (section) {
 					case "mtr":
 						switch (key) {

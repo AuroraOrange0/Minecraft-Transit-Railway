@@ -1,14 +1,14 @@
 package org.mtr.render;
 
-import net.minecraft.block.BlockState;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.client.render.VertexConsumerProvider;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.client.world.ClientWorld;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
+import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.level.block.state.BlockState;
 import org.jspecify.annotations.Nullable;
 import org.mtr.MTR;
 import org.mtr.block.BlockNode;
@@ -40,15 +40,15 @@ public abstract class RenderSignalBase<T extends BlockSignalBase.BlockEntityBase
 	}
 
 	@Override
-	public void render(T entity, MatrixStack matrixStack2, VertexConsumerProvider vertexConsumerProvider, ClientWorld world, ClientPlayerEntity player, float tickDelta, int light, int overlay) {
-		final BlockPos pos = entity.getPos();
+	public void render(T entity, PoseStack matrixStack2, MultiBufferSource vertexConsumerProvider, ClientLevel world, LocalPlayer player, float tickDelta, int light, int overlay) {
+		final BlockPos pos = entity.getBlockPos();
 		final BlockState state = world.getBlockState(pos);
 		if (!(state.getBlock() instanceof BlockSignalBase)) {
 			return;
 		}
 
 		final float angle = BlockSignalBase.getAngle(state);
-		final StoredMatrixTransformations storedMatrixTransformations = new StoredMatrixTransformations(0.5 + entity.getPos().getX(), entity.getPos().getY(), 0.5 + entity.getPos().getZ());
+		final StoredMatrixTransformations storedMatrixTransformations = new StoredMatrixTransformations(0.5 + entity.getBlockPos().getX(), entity.getBlockPos().getY(), 0.5 + entity.getBlockPos().getZ());
 		int redstoneLevel = 0;
 		final ObjectArrayList<String> railIds1 = new ObjectArrayList<>();
 		final ObjectArrayList<String> railIds2 = new ObjectArrayList<>();
@@ -70,7 +70,7 @@ public abstract class RenderSignalBase<T extends BlockSignalBase.BlockEntityBase
 						final boolean occupied = aspectState.occupiedColors.contains(signalColor);
 						final float x = xStart + j * 0.03125F;
 						final float width = 0.03125F / (filterColors.isEmpty() || filterColors.contains(signalColor) ? 1 : 8);
-						MainRenderer.scheduleRender(Identifier.of(MTR.MOD_ID, "textures/block/white.png"), false, occupied ? QueuedRenderLayer.EXTERIOR : QueuedRenderLayer.LIGHT, (matrixStack, vertexConsumer, offset) -> {
+						MainRenderer.scheduleRender(ResourceLocation.fromNamespaceAndPath(MTR.MOD_ID, "textures/block/white.png"), false, occupied ? QueuedRenderLayer.EXTERIOR : QueuedRenderLayer.LIGHT, (matrixStack, vertexConsumer, offset) -> {
 							storedMatrixTransformationsNew.transform(matrixStack, offset);
 							IDrawing.drawTexture(
 								matrixStack, vertexConsumer,
@@ -81,7 +81,7 @@ public abstract class RenderSignalBase<T extends BlockSignalBase.BlockEntityBase
 								0, 0, 1, 1,
 								Direction.UP, occupied ? MainRenderer.getFlashingColor(signalColor, 1) : signalColor | ARGB_BLACK, IGui.DEFAULT_LIGHT
 							);
-							matrixStack.pop();
+							matrixStack.popPose();
 						});
 					}
 				}
@@ -102,16 +102,16 @@ public abstract class RenderSignalBase<T extends BlockSignalBase.BlockEntityBase
 		}
 	}
 
-	protected abstract void render(StoredMatrixTransformations storedMatrixTransformations, T entity, ClientWorld world, float tickDelta, int light, int occupiedAspect, boolean isBackSide);
+	protected abstract void render(StoredMatrixTransformations storedMatrixTransformations, T entity, ClientLevel world, float tickDelta, int light, int occupiedAspect, boolean isBackSide);
 
 	@Nullable
 	public static AspectState getAspectState(BlockPos blockPos, float angle) {
-		final ClientWorld clientWorld = MinecraftClient.getInstance().world;
+		final ClientLevel clientWorld = Minecraft.getInstance().level;
 		if (clientWorld == null) {
 			return null;
 		}
 
-		final BlockPos startPos = getNodePos(clientWorld, blockPos, Direction.fromHorizontalDegrees(angle));
+		final BlockPos startPos = getNodePos(clientWorld, blockPos, Direction.fromYRot(angle));
 		if (startPos == null) {
 			return null;
 		}
@@ -140,15 +140,15 @@ public abstract class RenderSignalBase<T extends BlockSignalBase.BlockEntityBase
 	}
 
 	@Nullable
-	private static BlockPos getNodePos(ClientWorld world, BlockPos pos, Direction facing) {
+	private static BlockPos getNodePos(ClientLevel world, BlockPos pos, Direction facing) {
 		int closestDistance = Integer.MAX_VALUE;
 		BlockPos closestPos = null;
 		for (int z = -4; z <= 4; z++) {
 			for (int x = -4; x <= 4; x++) {
 				for (int y = -5; y <= 5; y++) {
-					final BlockPos checkPos = pos.up(y).offset(facing.rotateYClockwise(), x).offset(facing, z);
+					final BlockPos checkPos = pos.above(y).relative(facing.getClockWise(), x).relative(facing, z);
 					final BlockState checkState = world.getBlockState(checkPos);
-					final int distance = checkPos.getManhattanDistance(pos);
+					final int distance = checkPos.distManhattan(pos);
 					if (checkState.getBlock() instanceof BlockNode && distance < closestDistance) {
 						closestDistance = distance;
 						closestPos = checkPos;

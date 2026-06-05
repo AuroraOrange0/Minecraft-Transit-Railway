@@ -2,10 +2,10 @@ package org.mtr.neoforge;
 
 //? if neoforge {
 
-/*import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.render.RenderTickCounter;
-import net.minecraft.client.world.ClientWorld;
+/*import net.minecraft.client.DeltaTracker;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.multiplayer.ClientLevel;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -27,10 +27,10 @@ public final class MainEventBusClient {
 	public static Runnable endClientTickRunnable = null;
 	public static Runnable clientJoinRunnable = null;
 	public static Runnable clientDisconnectRunnable = null;
-	public static Consumer<ClientWorld> startWorldTickRunnable = null;
-	public static Consumer<ClientWorld> endWorldTickRunnable = null;
+	public static Consumer<ClientLevel> startWorldTickRunnable = null;
+	public static Consumer<ClientLevel> endWorldTickRunnable = null;
 	public static MTRClient.WorldRenderCallback worldRenderCallback = null;
-	public static BiConsumer<DrawContext, RenderTickCounter> hudLayerRenderCallback = null;
+	public static BiConsumer<GuiGraphics, DeltaTracker> hudLayerRenderCallback = null;
 
 	@SubscribeEvent
 	public static void clientTickStart(ClientTickEvent.Pre event) {
@@ -48,14 +48,14 @@ public final class MainEventBusClient {
 
 	@SubscribeEvent
 	public static void worldTickStart(LevelTickEvent.Pre event) {
-		if (startWorldTickRunnable != null && event.getLevel() instanceof ClientWorld clientWorld) {
+		if (startWorldTickRunnable != null && event.getLevel() instanceof ClientLevel clientWorld) {
 			startWorldTickRunnable.accept(clientWorld);
 		}
 	}
 
 	@SubscribeEvent
 	public static void worldTickEnd(LevelTickEvent.Post event) {
-		if (endWorldTickRunnable != null && event.getLevel() instanceof ClientWorld clientWorld) {
+		if (endWorldTickRunnable != null && event.getLevel() instanceof ClientLevel clientWorld) {
 			endWorldTickRunnable.accept(clientWorld);
 		}
 	}
@@ -77,7 +77,7 @@ public final class MainEventBusClient {
 	@SubscribeEvent
 	public static void worldRendering(RenderLevelStageEvent event) {
 		if (worldRenderCallback != null && event.getStage() == RenderLevelStageEvent.Stage.AFTER_ENTITIES) {
-			worldRenderCallback.accept(event.getPoseStack(), MinecraftClient.getInstance().getBufferBuilders().getEntityVertexConsumers(), event.getCamera().getPos());
+			worldRenderCallback.accept(event.getPoseStack(), Minecraft.getInstance().renderBuffers().bufferSource(), event.getCamera().getPosition());
 		}
 	}
 

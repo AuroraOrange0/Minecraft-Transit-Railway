@@ -1,11 +1,11 @@
 package org.mtr.client;
 
-import net.minecraft.client.render.VertexConsumer;
-import net.minecraft.client.texture.NativeImage;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.MathHelper;
+import com.mojang.blaze3d.platform.NativeImage;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import net.minecraft.core.Direction;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Mth;
 import org.jspecify.annotations.Nullable;
 import org.mtr.MTR;
 import org.mtr.config.Config;
@@ -27,7 +27,7 @@ import java.util.Locale;
  * arrows, and every other "text on a sign" surface in the world.
  *
  * <p>Every {@code generate*} method here returns a freshly-allocated
- * {@link net.minecraft.client.texture.NativeImage} that the caller is expected to wrap in
+ * {@link NativeImage} that the caller is expected to wrap in
  * a texture binding (via {@link DynamicTextureCache#getResource} — see callers of this
  * class). The methods themselves are pure (no caching, no global state mutation beyond
  * the {@link #setConstants()} helper).</p>
@@ -109,7 +109,7 @@ public class RouteMapGenerator implements IGui {
 			final NativeImage nativeImage;
 			if (colors.isEmpty()) {
 				nativeImage = new NativeImage(NativeImage.Format.RGBA, 1, 1, false);
-				nativeImage.setColorArgb(0, 0, 0);
+				nativeImage.setPixel(0, 0, 0);
 			} else {
 				nativeImage = new NativeImage(NativeImage.Format.RGBA, 1, colors.size(), false);
 				for (int i = 0; i < colors.size(); i++) {
@@ -556,7 +556,7 @@ public class RouteMapGenerator implements IGui {
 				return nativeImage;
 			} else {
 				final NativeImage nativeImage = new NativeImage(NativeImage.Format.RGBA, 1, 1, false);
-				nativeImage.setColorArgb(0, 0, transparentWhite ? 0 : ARGB_WHITE);
+				nativeImage.setPixel(0, 0, transparentWhite ? 0 : ARGB_WHITE);
 				return nativeImage;
 			}
 		} catch (Exception e) {
@@ -566,7 +566,7 @@ public class RouteMapGenerator implements IGui {
 		return null;
 	}
 
-	public static void scrollTextLightRail(MatrixStack matrixStack, VertexConsumer vertexConsumer, int rows, float availableWidth, float availableHeight, int imageWidth, int imageHeight) {
+	public static void scrollTextLightRail(PoseStack matrixStack, VertexConsumer vertexConsumer, int rows, float availableWidth, float availableHeight, int imageWidth, int imageHeight) {
 		final float scale = availableHeight / imageHeight * rows;
 		final int delayTime = 3000;
 		final int slideTime = 8;
@@ -676,7 +676,7 @@ public class RouteMapGenerator implements IGui {
 	private static void drawLine(NativeImage nativeImage, int x, int y, int directionX, int directionY, int length, int color) {
 		final int halfLineHeight = lineSize / 2;
 		final int xWidth = directionX == 0 ? halfLineHeight : 0;
-		final int yWidth = directionX == 0 ? 0 : (directionY == 0 ? halfLineHeight : Math.round(lineSize * MathHelper.SQUARE_ROOT_OF_TWO / 2));
+		final int yWidth = directionX == 0 ? 0 : (directionY == 0 ? halfLineHeight : Math.round(lineSize * Mth.SQRT_OF_TWO / 2));
 		final int yMin = y - halfLineHeight - (directionY < 0 ? length : 0) + 1;
 		final int yMax = y + halfLineHeight + (directionY > 0 ? length : 0) - 1;
 		final int drawOffset = directionX != 0 && directionY != 0 ? halfLineHeight : 0;
@@ -770,7 +770,7 @@ public class RouteMapGenerator implements IGui {
 	}
 
 	private static void drawResource(NativeImage nativeImage, String resource, int x, int y, int width, int height, boolean flipX, float v1, float v2, int color, boolean useActualColor) {
-		ResourceManagerHelper.readResource(Identifier.of(MTR.MOD_ID, resource), inputStream -> {
+		ResourceManagerHelper.readResource(ResourceLocation.fromNamespaceAndPath(MTR.MOD_ID, resource), inputStream -> {
 			try {
 				final NativeImage nativeImageResource = NativeImage.read(NativeImage.Format.RGBA, inputStream);
 				final int resourceWidth = nativeImageResource.getWidth();
@@ -787,10 +787,10 @@ public class RouteMapGenerator implements IGui {
 						final float percentY1 = ceilY - pixelY;
 						final float percentX2 = pixelX - floorX;
 						final float percentY2 = pixelY - floorY;
-						final int pixel1 = nativeImageResource.getColorArgb(Math.clamp(floorX, 0, resourceWidth - 1), Math.clamp(floorY, 0, resourceHeight - 1));
-						final int pixel2 = nativeImageResource.getColorArgb(Math.clamp(ceilX, 0, resourceWidth - 1), Math.clamp(floorY, 0, resourceHeight - 1));
-						final int pixel3 = nativeImageResource.getColorArgb(Math.clamp(floorX, 0, resourceWidth - 1), Math.clamp(ceilY, 0, resourceHeight - 1));
-						final int pixel4 = nativeImageResource.getColorArgb(Math.clamp(ceilX, 0, resourceWidth - 1), Math.clamp(ceilY, 0, resourceHeight - 1));
+						final int pixel1 = nativeImageResource.getPixel(Math.clamp(floorX, 0, resourceWidth - 1), Math.clamp(floorY, 0, resourceHeight - 1));
+						final int pixel2 = nativeImageResource.getPixel(Math.clamp(ceilX, 0, resourceWidth - 1), Math.clamp(floorY, 0, resourceHeight - 1));
+						final int pixel3 = nativeImageResource.getPixel(Math.clamp(floorX, 0, resourceWidth - 1), Math.clamp(ceilY, 0, resourceHeight - 1));
+						final int pixel4 = nativeImageResource.getPixel(Math.clamp(ceilX, 0, resourceWidth - 1), Math.clamp(ceilY, 0, resourceHeight - 1));
 						final int newColor;
 						if (useActualColor) {
 							newColor = pixel1;
@@ -814,7 +814,7 @@ public class RouteMapGenerator implements IGui {
 		if (Utilities.isBetween(x, 0, nativeImage.getWidth() - 1) && Utilities.isBetween(y, 0, nativeImage.getHeight() - 1)) {
 			final float percent = (float) ((color >> 24) & 0xFF) / 0xFF;
 			if (percent > 0) {
-				final int existingPixel = nativeImage.getColorArgb(x, y);
+				final int existingPixel = nativeImage.getPixel(x, y);
 				final boolean existingTransparent = ((existingPixel >> 24) & 0xFF) == 0;
 				final int r1 = existingTransparent ? 0xFF : ((existingPixel >> 16) & 0xFF);
 				final int g1 = existingTransparent ? 0xFF : ((existingPixel >> 8) & 0xFF);
@@ -830,15 +830,15 @@ public class RouteMapGenerator implements IGui {
 
 	private static void drawPixelSafe(NativeImage nativeImage, int x, int y, int color) {
 		if (Utilities.isBetween(x, 0, nativeImage.getWidth() - 1) && Utilities.isBetween(y, 0, nativeImage.getHeight() - 1)) {
-			nativeImage.setColorArgb(x, y, color);
+			nativeImage.setPixel(x, y, color);
 		}
 	}
 
 	private static void clearColor(NativeImage nativeImage, int color) {
 		for (int x = 0; x < nativeImage.getWidth(); x++) {
 			for (int y = 0; y < nativeImage.getHeight(); y++) {
-				if (nativeImage.getColorArgb(x, y) == color) {
-					nativeImage.setColorArgb(x, y, 0);
+				if (nativeImage.getPixel(x, y) == color) {
+					nativeImage.setPixel(x, y, 0);
 				}
 			}
 		}

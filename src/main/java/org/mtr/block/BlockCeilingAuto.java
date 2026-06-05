@@ -1,53 +1,53 @@
 package org.mtr.block;
 
-import net.minecraft.block.AbstractBlock;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.item.ItemPlacementContext;
-import net.minecraft.state.StateManager;
-import net.minecraft.state.property.BooleanProperty;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.random.Random;
-import net.minecraft.world.World;
-import net.minecraft.world.WorldView;
-import net.minecraft.world.tick.ScheduledTickView;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.level.ScheduledTickAccess;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockBehaviour;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.BooleanProperty;
 
 public class BlockCeilingAuto extends BlockCeiling {
 
-	public static final BooleanProperty LIGHT = BooleanProperty.of("light");
+	public static final BooleanProperty LIGHT = BooleanProperty.create("light");
 
-	public BlockCeilingAuto(AbstractBlock.Settings blockSettings) {
+	public BlockCeilingAuto(BlockBehaviour.Properties blockSettings) {
 		super(blockSettings);
 	}
 
 	@Override
-	public BlockState getPlacementState(ItemPlacementContext itemPlacementContext) {
-		final boolean facing = itemPlacementContext.getHorizontalPlayerFacing().getAxis() == Direction.Axis.X;
-		return super.getPlacementState(itemPlacementContext).with(FACING, facing).with(LIGHT, hasLight(facing, itemPlacementContext.getBlockPos()));
+	public BlockState getStateForPlacement(BlockPlaceContext itemPlacementContext) {
+		final boolean facing = itemPlacementContext.getHorizontalDirection().getAxis() == Direction.Axis.X;
+		return super.getStateForPlacement(itemPlacementContext).setValue(FACING, facing).setValue(LIGHT, hasLight(facing, itemPlacementContext.getClickedPos()));
 	}
 
 	@Override
-	protected BlockState getStateForNeighborUpdate(BlockState state, WorldView world, ScheduledTickView tickView, BlockPos pos, Direction direction, BlockPos neighborPos, BlockState neighborState, Random random) {
-		return super.getStateForNeighborUpdate(state, world, tickView, pos, direction, neighborPos, neighborState, random).with(LIGHT, hasLight(IBlock.getStatePropertySafe(state, FACING), pos));
+	protected BlockState updateShape(BlockState state, LevelReader world, ScheduledTickAccess tickView, BlockPos pos, Direction direction, BlockPos neighborPos, BlockState neighborState, RandomSource random) {
+		return super.updateShape(state, world, tickView, pos, direction, neighborPos, neighborState, random).setValue(LIGHT, hasLight(IBlock.getStatePropertySafe(state, FACING), pos));
 	}
 
 	@Override
-	public void randomDisplayTick(BlockState state, World world, BlockPos pos, Random random) {
+	public void animateTick(BlockState state, Level world, BlockPos pos, RandomSource random) {
 		final boolean light = hasLight(IBlock.getStatePropertySafe(state, FACING), pos);
 		if (IBlock.getStatePropertySafe(state, LIGHT) != light) {
-			world.setBlockState(pos, state.with(LIGHT, light));
+			world.setBlockAndUpdate(pos, state.setValue(LIGHT, light));
 		}
 	}
 
 	@Override
-	public boolean hasRandomTicks(BlockState state) {
+	public boolean isRandomlyTicking(BlockState state) {
 		return true;
 	}
 
 	@Override
-	protected void appendProperties(StateManager.Builder<Block, BlockState> builder) {
-		super.appendProperties(builder);
+	protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+		super.createBlockStateDefinition(builder);
 		builder.add(LIGHT);
 	}
 

@@ -43,7 +43,7 @@ public final class PacketRequestData extends PacketRequestResponseBase {
 	}
 
 	@Override
-	protected PacketRequestResponseBase.ResponseType responseType() {
-		return PacketRequestResponseBase.ResponseType.PLAYER;
+	protected ResponseType responseType() {
+		return ResponseType.PLAYER;
 	}
 }

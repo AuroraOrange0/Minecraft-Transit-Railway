@@ -1,40 +1,40 @@
 package org.mtr.block;
 
-import net.minecraft.block.AbstractBlock;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.ShapeContext;
-import net.minecraft.state.StateManager;
-import net.minecraft.state.property.Properties;
-import net.minecraft.text.Text;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.shape.VoxelShape;
-import net.minecraft.world.BlockView;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockBehaviour;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.VoxelShape;
 import org.mtr.generated.lang.TranslationProvider;
 
 public class BlockPIDSPole extends BlockPoleCheckBase {
 
-	public BlockPIDSPole(AbstractBlock.Settings blockSettings) {
+	public BlockPIDSPole(BlockBehaviour.Properties blockSettings) {
 		super(blockSettings);
 	}
 
 	@Override
-	public VoxelShape getOutlineShape(BlockState state, BlockView world, BlockPos pos, ShapeContext context) {
-		return IBlock.getVoxelShapeByDirection(7.5, 0, 12.5, 8.5, 16, 13.5, IBlock.getStatePropertySafe(state, Properties.HORIZONTAL_FACING));
+	public VoxelShape getShape(BlockState state, BlockGetter world, BlockPos pos, CollisionContext context) {
+		return IBlock.getVoxelShapeByDirection(7.5, 0, 12.5, 8.5, 16, 13.5, IBlock.getStatePropertySafe(state, BlockStateProperties.HORIZONTAL_FACING));
 	}
 
 	@Override
-	protected boolean isBlock(Block block) {
+	protected boolean isBlock(BlockBehaviour block) {
 		return block instanceof BlockPIDSHorizontalBase || block instanceof BlockPIDSPole;
 	}
 
 	@Override
-	protected Text getTooltipBlockText() {
+	protected Component getTooltipBlockText() {
 		return TranslationProvider.BLOCK_MTR_PIDS_1.getText();
 	}
 
 	@Override
-	protected void appendProperties(StateManager.Builder<Block, BlockState> builder) {
-		builder.add(Properties.HORIZONTAL_FACING);
+	protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+		builder.add(BlockStateProperties.HORIZONTAL_FACING);
 	}
 }

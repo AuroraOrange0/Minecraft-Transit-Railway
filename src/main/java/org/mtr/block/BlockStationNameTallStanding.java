@@ -1,15 +1,16 @@
 package org.mtr.block;
 
-import net.minecraft.block.BlockState;
-import net.minecraft.block.ShapeContext;
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.item.ItemPlacementContext;
-import net.minecraft.state.property.Properties;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.shape.VoxelShape;
-import net.minecraft.util.shape.VoxelShapes;
-import net.minecraft.world.BlockView;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockBehaviour;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.Shapes;
+import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jspecify.annotations.Nullable;
 import org.mtr.registry.BlockEntityTypes;
 
@@ -18,34 +19,34 @@ public class BlockStationNameTallStanding extends BlockStationNameTallBase {
 	public static final float WIDTH = 0.6875F;
 	public static final float HEIGHT = 1;
 
-	public BlockStationNameTallStanding(Settings settings) {
+	public BlockStationNameTallStanding(BlockBehaviour.Properties settings) {
 		super(settings);
 	}
 
 	@Override
-	protected VoxelShape getOutlineShape(BlockState state, BlockView world, BlockPos pos, ShapeContext context) {
+	protected VoxelShape getShape(BlockState state, BlockGetter world, BlockPos pos, CollisionContext context) {
 		switch (IBlock.getStatePropertySafe(state, THIRD)) {
 			case LOWER:
-				final VoxelShape shape1 = IBlock.getVoxelShapeByDirection(1, 0, 0, 2, 16, 1, IBlock.getStatePropertySafe(state, Properties.HORIZONTAL_FACING));
-				final VoxelShape shape2 = IBlock.getVoxelShapeByDirection(14, 0, 0, 15, 16, 1, IBlock.getStatePropertySafe(state, Properties.HORIZONTAL_FACING));
-				return VoxelShapes.union(shape1, shape2);
+				final VoxelShape shape1 = IBlock.getVoxelShapeByDirection(1, 0, 0, 2, 16, 1, IBlock.getStatePropertySafe(state, BlockStateProperties.HORIZONTAL_FACING));
+				final VoxelShape shape2 = IBlock.getVoxelShapeByDirection(14, 0, 0, 15, 16, 1, IBlock.getStatePropertySafe(state, BlockStateProperties.HORIZONTAL_FACING));
+				return Shapes.or(shape1, shape2);
 			case MIDDLE:
-				return IBlock.getVoxelShapeByDirection(1, 0, 0, 15, 16, 1, IBlock.getStatePropertySafe(state, Properties.HORIZONTAL_FACING));
+				return IBlock.getVoxelShapeByDirection(1, 0, 0, 15, 16, 1, IBlock.getStatePropertySafe(state, BlockStateProperties.HORIZONTAL_FACING));
 			case UPPER:
-				return IBlock.getVoxelShapeByDirection(1, 0, 0, 15, 6, 1, IBlock.getStatePropertySafe(state, Properties.HORIZONTAL_FACING));
+				return IBlock.getVoxelShapeByDirection(1, 0, 0, 15, 6, 1, IBlock.getStatePropertySafe(state, BlockStateProperties.HORIZONTAL_FACING));
 			default:
-				return VoxelShapes.empty();
+				return Shapes.empty();
 		}
 	}
 
 	@Nullable
 	@Override
-	public BlockState getPlacementState(ItemPlacementContext ctx) {
-		return IBlock.isReplaceable(ctx, Direction.UP, 3) ? getDefaultState().with(Properties.HORIZONTAL_FACING, ctx.getHorizontalPlayerFacing()).with(METAL, true).with(THIRD, EnumThird.LOWER) : null;
+	public BlockState getStateForPlacement(BlockPlaceContext ctx) {
+		return IBlock.isReplaceable(ctx, Direction.UP, 3) ? defaultBlockState().setValue(BlockStateProperties.HORIZONTAL_FACING, ctx.getHorizontalDirection()).setValue(METAL, true).setValue(THIRD, EnumThird.LOWER) : null;
 	}
 
 	@Override
-	public BlockEntity createBlockEntity(BlockPos blockPos, BlockState blockState) {
+	public BlockEntity newBlockEntity(BlockPos blockPos, BlockState blockState) {
 		return new StationNameTallStandingBlockEntity(blockPos, blockState);
 	}
 

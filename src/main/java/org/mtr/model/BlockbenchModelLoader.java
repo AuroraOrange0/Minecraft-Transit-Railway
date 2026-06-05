@@ -1,10 +1,10 @@
 package org.mtr.model;
 
-import net.minecraft.client.model.ModelData;
-import net.minecraft.client.model.ModelPartData;
-import net.minecraft.client.render.VertexFormat;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.Box;
+import com.mojang.blaze3d.vertex.VertexFormat;
+import net.minecraft.client.model.geom.builders.MeshDefinition;
+import net.minecraft.client.model.geom.builders.PartDefinition;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.phys.AABB;
 import org.jspecify.annotations.Nullable;
 import org.mtr.MTR;
 import org.mtr.libraries.it.unimi.dsi.fastutil.ints.IntIntImmutablePair;
@@ -31,12 +31,12 @@ import java.util.function.Supplier;
  * a vehicle's {@code modelProperties.json} can address parts by their outline name.</p>
  *
  * <p>Parsing runs entirely on
- * {@link org.mtr.render.MainRenderer#WORKER_THREAD}'s virtual-thread executor.</p>
+ * {@link MainRenderer#WORKER_THREAD}'s virtual-thread executor.</p>
  */
 public final class BlockbenchModelLoader extends ModelLoaderBase {
 
-	public BlockbenchModelLoader(Identifier defaultTexture) {
-		super(defaultTexture, VertexFormat.DrawMode.QUADS);
+	public BlockbenchModelLoader(ResourceLocation defaultTexture) {
+		super(defaultTexture, VertexFormat.Mode.QUADS);
 	}
 
 	public void loadModel(BlockbenchModel blockbenchModel) {
@@ -62,7 +62,7 @@ public final class BlockbenchModelLoader extends ModelLoaderBase {
 					blockbenchModel.getElements().forEach(blockbenchElement -> uuidToBlockbenchElement.put(blockbenchElement.getUuid(), blockbenchElement));
 
 					blockbenchModel.getOutlines().forEach(blockbenchOutline -> {
-						final ModelPartData modelPartData = new ModelData().getRoot();
+						final PartDefinition modelPartData = new MeshDefinition().getRoot();
 						final NewOptimizedModelGroup newOptimizedModelGroup = new NewOptimizedModelGroup();
 						final MutableBox mutableBox = new MutableBox();
 						final ObjectArrayList<ObjectObjectImmutablePair<StoredMatrixTransformations, IntIntImmutablePair>> rawModelDisplayParts = new ObjectArrayList<>();
@@ -70,13 +70,13 @@ public final class BlockbenchModelLoader extends ModelLoaderBase {
 						iterateChildren(blockbenchOutline, null, new GroupTransformations(), (uuid, groupTransformations) -> {
 							final BlockbenchElement blockbenchElement = uuidToBlockbenchElement.remove(uuid);
 							if (blockbenchElement != null) {
-								final ObjectObjectImmutablePair<Box, ObjectObjectImmutablePair<StoredMatrixTransformations, IntIntImmutablePair>> modelPartDetails = blockbenchElement.setModelPart(modelPartData.addChild(MTR.randomString()), groupTransformations);
+								final ObjectObjectImmutablePair<AABB, ObjectObjectImmutablePair<StoredMatrixTransformations, IntIntImmutablePair>> modelPartDetails = blockbenchElement.setModelPart(modelPartData.clearChild(MTR.randomString()), groupTransformations);
 								mutableBox.add(modelPartDetails.left());
 								rawModelDisplayParts.add(modelPartDetails.right());
 							}
 						});
 
-						newOptimizedModelGroup.add(null, defaultTexture, storedVertexDataList -> StoredVertexData.write(modelPartData.createPart(blockbenchModel.getTextureWidth(), blockbenchModel.getTextureHeight()), storedVertexDataList), mutableBox.getAll());
+						newOptimizedModelGroup.add(null, defaultTexture, storedVertexDataList -> StoredVertexData.write(modelPartData.bake(blockbenchModel.getTextureWidth(), blockbenchModel.getTextureHeight()), storedVertexDataList), mutableBox.getAll());
 						addModel(blockbenchOutline.getName(), newOptimizedModelGroup);
 
 						if (!rawModelDisplayParts.isEmpty()) {

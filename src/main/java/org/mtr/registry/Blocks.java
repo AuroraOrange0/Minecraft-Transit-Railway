@@ -1,12 +1,12 @@
 package org.mtr.registry;
 
-import net.minecraft.block.AbstractBlock;
-import net.minecraft.block.Block;
-import net.minecraft.block.SlabBlock;
-import net.minecraft.block.piston.PistonBehavior;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.item.BlockItem;
-import net.minecraft.item.Item;
+import net.minecraft.client.Minecraft;
+import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.SlabBlock;
+import net.minecraft.world.level.block.state.BlockBehaviour;
+import net.minecraft.world.level.material.PushReaction;
 import org.apache.commons.io.FileUtils;
 import org.mtr.Keys;
 import org.mtr.MTR;
@@ -220,10 +220,10 @@ public final class Blocks {
 	public static final ObjectHolder<Block> TRAIN_SCHEDULE_SENSOR = registerBlockWithBlockItem("train_schedule_sensor", BlockTrainScheduleSensor::new, true, ItemGroups.RAILWAY_FACILITIES);
 
 	// Misc
-	public static final ObjectHolder<Block> CEILING = registerBlockWithBlockItem("ceiling", settings -> new BlockCeilingAuto(settings.luminance(blockState -> 15)), false, ItemGroups.RAILWAY_FACILITIES);
-	public static final ObjectHolder<Block> CEILING_LIGHT = registerBlockWithBlockItem("ceiling_light", settings -> new BlockCeiling(settings.luminance(blockState -> 15)), false, ItemGroups.RAILWAY_FACILITIES);
+	public static final ObjectHolder<Block> CEILING = registerBlockWithBlockItem("ceiling", settings -> new BlockCeilingAuto(settings.lightLevel(blockState -> 15)), false, ItemGroups.RAILWAY_FACILITIES);
+	public static final ObjectHolder<Block> CEILING_LIGHT = registerBlockWithBlockItem("ceiling_light", settings -> new BlockCeiling(settings.lightLevel(blockState -> 15)), false, ItemGroups.RAILWAY_FACILITIES);
 	public static final ObjectHolder<Block> CEILING_NO_LIGHT = registerBlockWithBlockItem("ceiling_no_light", BlockCeiling::new, false, ItemGroups.RAILWAY_FACILITIES);
-	public static final ObjectHolder<Block> CLOCK = registerBlockWithBlockItem("clock", settings -> new BlockClock(settings.luminance(blockState -> 5)), true, ItemGroups.RAILWAY_FACILITIES);
+	public static final ObjectHolder<Block> CLOCK = registerBlockWithBlockItem("clock", settings -> new BlockClock(settings.lightLevel(blockState -> 5)), true, ItemGroups.RAILWAY_FACILITIES);
 	public static final ObjectHolder<Block> CLOCK_POLE = registerBlockWithBlockItem("clock_pole", BlockClockPole::new, false, ItemGroups.RAILWAY_FACILITIES);
 	public static final ObjectHolder<Block> DRIVER_KEY_DISPENSER = registerBlockWithBlockItem("driver_key_dispenser", BlockDriverKeyDispenser::new, true, ItemGroups.CORE);
 	public static final ObjectHolder<Block> GLASS_FENCE_CIO = registerBlockWithBlockItem("glass_fence_cio", BlockGlassFence::new, true, ItemGroups.RAILWAY_FACILITIES);
@@ -236,7 +236,7 @@ public final class Blocks {
 	public static final ObjectHolder<Block> GLASS_FENCE_STW = registerBlockWithBlockItem("glass_fence_stw", BlockGlassFence::new, true, ItemGroups.RAILWAY_FACILITIES);
 	public static final ObjectHolder<Block> GLASS_FENCE_TSH = registerBlockWithBlockItem("glass_fence_tsh", BlockGlassFence::new, true, ItemGroups.RAILWAY_FACILITIES);
 	public static final ObjectHolder<Block> GLASS_FENCE_WKS = registerBlockWithBlockItem("glass_fence_wks", BlockGlassFence::new, true, ItemGroups.RAILWAY_FACILITIES);
-	public static final ObjectHolder<Block> LOGO = registerBlockWithBlockItem("logo", settings -> new Block(settings.luminance(blockState -> 10)), false, ItemGroups.STATION_BUILDING_BLOCKS);
+	public static final ObjectHolder<Block> LOGO = registerBlockWithBlockItem("logo", settings -> new Block(settings.lightLevel(blockState -> 10)), false, ItemGroups.STATION_BUILDING_BLOCKS);
 	public static final ObjectHolder<Block> MARBLE_BLUE = registerBlockWithBlockItem("marble_blue", Block::new, false, ItemGroups.STATION_BUILDING_BLOCKS);
 	public static final ObjectHolder<Block> MARBLE_BLUE_SLAB = registerBlockWithBlockItem("marble_blue_slab", SlabBlock::new, false, ItemGroups.STATION_BUILDING_BLOCKS);
 	public static final ObjectHolder<Block> MARBLE_SANDY = registerBlockWithBlockItem("marble_sandy", Block::new, false, ItemGroups.STATION_BUILDING_BLOCKS);
@@ -258,7 +258,7 @@ public final class Blocks {
 				// Validate all registered blocks are in pickaxe.json
 				final ObjectAVLTreeSet<String> expectedIdentifiers = new ObjectAVLTreeSet<>();
 				JsonParser.parseString(FileUtils.readFileToString(
-					MinecraftClient.getInstance().runDirectory.toPath().resolve("../src/main/resources/data/minecraft/tags/block/mineable/pickaxe.json").toFile(),
+					Minecraft.getInstance().gameDirectory.toPath().resolve("../src/main/resources/data/minecraft/tags/block/mineable/pickaxe.json").toFile(),
 					StandardCharsets.UTF_8
 				)).getAsJsonObject().getAsJsonArray("values").forEach(identifier -> expectedIdentifiers.add(identifier.getAsString()));
 				REGISTERED_IDENTIFIERS.forEach(identifier -> {
@@ -274,7 +274,7 @@ public final class Blocks {
 
 				// Validate json file exists in loot_table/block
 				final ObjectAVLTreeSet<String> expectedFiles = new ObjectAVLTreeSet<>();
-				try (final Stream<Path> stream = Files.list(MinecraftClient.getInstance().runDirectory.toPath().resolve("../src/main/resources/data/mtr/loot_table/block"))) {
+				try (final Stream<Path> stream = Files.list(Minecraft.getInstance().gameDirectory.toPath().resolve("../src/main/resources/data/mtr/loot_table/block"))) {
 					stream.forEach(path -> expectedFiles.add("mtr:" + path.getFileName().toString().split(".json")[0]));
 				}
 				REGISTERED_IDENTIFIERS.forEach(identifier -> {
@@ -293,25 +293,25 @@ public final class Blocks {
 		}
 	}
 
-	private static AbstractBlock.Settings createDefaultBlockSettings(AbstractBlock.Settings settings, boolean blockPiston) {
-		return settings.pistonBehavior(blockPiston ? PistonBehavior.BLOCK : PistonBehavior.NORMAL).strength(3);
+	private static BlockBehaviour.Properties createDefaultBlockSettings(BlockBehaviour.Properties settings, boolean blockPiston) {
+		return settings.pushReaction(blockPiston ? PushReaction.BLOCK : PushReaction.NORMAL).strength(3);
 	}
 
-	private static ObjectHolder<Block> registerBlock(String registryName, Function<AbstractBlock.Settings, Block> factory) {
+	private static ObjectHolder<Block> registerBlock(String registryName, Function<BlockBehaviour.Properties, Block> factory) {
 		REGISTERED_IDENTIFIERS.add(registryName);
 		return RegistryServer.registerBlock(registryName, settings -> factory.apply(createDefaultBlockSettings(settings, true)));
 	}
 
-	private static ObjectHolder<Block> registerBlockWithBlockItem(String registryName, Function<AbstractBlock.Settings, Block> factory, boolean blockPiston, String itemGroupRegistryName) {
+	private static ObjectHolder<Block> registerBlockWithBlockItem(String registryName, Function<BlockBehaviour.Properties, Block> factory, boolean blockPiston, String itemGroupRegistryName) {
 		return registerBlockWithBlockItem(registryName, factory, blockPiston, BlockItem::new, itemGroupRegistryName);
 	}
 
-	private static ObjectHolder<Block> registerBlockWithBlockItem(String registryName, Function<AbstractBlock.Settings, Block> blockFactory, boolean blockPiston, BiFunction<Block, Item.Settings, BlockItem> blockItemFactory, String itemGroupRegistryName) {
+	private static ObjectHolder<Block> registerBlockWithBlockItem(String registryName, Function<BlockBehaviour.Properties, Block> blockFactory, boolean blockPiston, BiFunction<Block, Item.Properties, BlockItem> blockItemFactory, String itemGroupRegistryName) {
 		REGISTERED_IDENTIFIERS.add(registryName);
 		final ObjectHolder<Block> objectHolder = RegistryServer.registerBlock(registryName, settings -> blockFactory.apply(createDefaultBlockSettings(settings, blockPiston)));
 		RegistryServer.registerItem(registryName, settings -> {
 			final Block block = objectHolder.get();
-			return blockItemFactory.apply(block, settings.translationKey(formatBlockItemTranslationKey(block, registryName)));
+			return blockItemFactory.apply(block, settings.overrideDescription(formatBlockItemTranslationKey(block, registryName)));
 		}, itemGroupRegistryName);
 		return objectHolder;
 	}

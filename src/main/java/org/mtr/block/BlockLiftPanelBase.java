@@ -1,53 +1,58 @@
 package org.mtr.block;
 
 import lombok.Getter;
-import net.minecraft.block.*;
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.block.entity.BlockEntityType;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemPlacementContext;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.tooltip.TooltipType;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.state.property.Properties;
-import net.minecraft.text.Text;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.hit.BlockHitResult;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.random.Random;
-import net.minecraft.util.shape.VoxelShape;
-import net.minecraft.world.BlockView;
-import net.minecraft.world.World;
-import net.minecraft.world.WorldView;
-import net.minecraft.world.tick.ScheduledTickView;
+import net.minecraft.ChatFormatting;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.level.ScheduledTickAccess;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.EntityBlock;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.state.BlockBehaviour;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jspecify.annotations.Nullable;
 import org.mtr.generated.lang.TranslationProvider;
 import org.mtr.registry.Items;
 
 import java.util.List;
 
-public abstract class BlockLiftPanelBase extends Block implements IBlock, TripleHorizontalBlock, BlockEntityProvider {
+public abstract class BlockLiftPanelBase extends Block implements IBlock, TripleHorizontalBlock, EntityBlock {
 
 	private final boolean isOdd;
 	private final boolean isFlat;
 
-	public BlockLiftPanelBase(AbstractBlock.Settings settings, boolean isOdd, boolean isFlat) {
-		super(settings.luminance(blockState -> 5));
+	public BlockLiftPanelBase(BlockBehaviour.Properties settings, boolean isOdd, boolean isFlat) {
+		super(settings.lightLevel(blockState -> 5));
 		this.isOdd = isOdd;
 		this.isFlat = isFlat;
 	}
 
 	@Override
-	protected BlockState getStateForNeighborUpdate(BlockState state, WorldView world, ScheduledTickView tickView, BlockPos pos, Direction direction, BlockPos neighborPos, BlockState neighborState, Random random) {
+	protected BlockState updateShape(BlockState state, LevelReader world, ScheduledTickAccess tickView, BlockPos pos, Direction direction, BlockPos neighborPos, BlockState neighborState, RandomSource random) {
 		if (isOdd) {
-			return TripleHorizontalBlock.getStateForNeighborUpdate(state, direction, neighborState.isOf(this), super.getStateForNeighborUpdate(state, world, tickView, pos, direction, neighborPos, neighborState, random));
+			return TripleHorizontalBlock.updateShape(state, direction, neighborState.is(this), super.updateShape(state, world, tickView, pos, direction, neighborPos, neighborState, random));
 		} else {
-			if (IBlock.getSideDirection(state) == direction && !neighborState.isOf(this)) {
-				return Blocks.AIR.getDefaultState();
+			if (IBlock.getSideDirection(state) == direction && !neighborState.is(this)) {
+				return Blocks.AIR.defaultBlockState();
 			} else {
 				return state;
 			}
@@ -56,60 +61,60 @@ public abstract class BlockLiftPanelBase extends Block implements IBlock, Triple
 
 	@Nullable
 	@Override
-	public BlockState getPlacementState(ItemPlacementContext ctx) {
-		final Direction direction = ctx.getHorizontalPlayerFacing();
+	public BlockState getStateForPlacement(BlockPlaceContext ctx) {
+		final Direction direction = ctx.getHorizontalDirection();
 		if (isOdd) {
-			return TripleHorizontalBlock.getPlacementState(ctx, getDefaultState());
+			return TripleHorizontalBlock.getStateForPlacement(ctx, defaultBlockState());
 		} else {
-			return IBlock.isReplaceable(ctx, direction.rotateYClockwise(), 2) ? getDefaultState().with(Properties.HORIZONTAL_FACING, direction).with(SIDE, EnumSide.LEFT) : null;
+			return IBlock.isReplaceable(ctx, direction.getClockWise(), 2) ? defaultBlockState().setValue(BlockStateProperties.HORIZONTAL_FACING, direction).setValue(SIDE, EnumSide.LEFT) : null;
 		}
 	}
 
 	@Override
-	public VoxelShape getOutlineShape(BlockState state, BlockView world, BlockPos pos, ShapeContext context) {
-		return IBlock.getVoxelShapeByDirection(0, 0, 0, 16, 16, isFlat ? 1 : 4, state.get(Properties.HORIZONTAL_FACING));
+	public VoxelShape getShape(BlockState state, BlockGetter world, BlockPos pos, CollisionContext context) {
+		return IBlock.getVoxelShapeByDirection(0, 0, 0, 16, 16, isFlat ? 1 : 4, state.getValue(BlockStateProperties.HORIZONTAL_FACING));
 	}
 
 	@Override
-	public void onPlaced(World world, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack itemStack) {
-		if (!world.isClient()) {
-			final Direction direction = IBlock.getStatePropertySafe(state, Properties.HORIZONTAL_FACING);
+	public void setPlacedBy(Level world, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack itemStack) {
+		if (!world.isClientSide()) {
+			final Direction direction = IBlock.getStatePropertySafe(state, BlockStateProperties.HORIZONTAL_FACING);
 
 			if (isOdd) {
-				TripleHorizontalBlock.onPlaced(world, pos, state, getDefaultState());
+				TripleHorizontalBlock.setPlacedBy(world, pos, state, defaultBlockState());
 			} else {
-				world.setBlockState(pos.offset(direction.rotateYClockwise()), getDefaultState().with(Properties.HORIZONTAL_FACING, direction).with(SIDE, EnumSide.RIGHT), 3);
+				world.setBlock(pos.relative(direction.getClockWise()), defaultBlockState().setValue(BlockStateProperties.HORIZONTAL_FACING, direction).setValue(SIDE, EnumSide.RIGHT), 3);
 			}
 
-			world.updateNeighbors(pos, Blocks.AIR);
-			state.updateNeighbors(world, pos, 3);
+			world.blockUpdated(pos, Blocks.AIR);
+			state.updateNeighbourShapes(world, pos, 3);
 		}
 	}
 
 	@Override
-	public BlockState onBreak(World world, BlockPos pos, BlockState state, PlayerEntity player) {
+	public BlockState playerWillDestroy(Level world, BlockPos pos, BlockState state, Player player) {
 		if (isOdd) {
-			TripleHorizontalBlock.onBreak(world, pos, state, player);
+			TripleHorizontalBlock.playerWillDestroy(world, pos, state, player);
 		} else {
 			if (IBlock.getStatePropertySafe(state, SIDE) == EnumSide.RIGHT) {
-				IBlock.onBreakCreative(world, player, pos.offset(IBlock.getSideDirection(state)));
+				IBlock.playerWillDestroyCreative(world, player, pos.relative(IBlock.getSideDirection(state)));
 			}
 		}
-		return super.onBreak(world, pos, state, player);
+		return super.playerWillDestroy(world, pos, state, player);
 	}
 
 	@Override
-	protected ActionResult onUse(BlockState state, World world, BlockPos pos, PlayerEntity player, BlockHitResult hit) {
-		if (world.isClient()) {
-			return ActionResult.SUCCESS;
+	protected InteractionResult useWithoutItem(BlockState state, Level world, BlockPos pos, Player player, BlockHitResult hit) {
+		if (world.isClientSide()) {
+			return InteractionResult.SUCCESS;
 		} else {
-			return player.isHolding(Items.LIFT_BUTTONS_LINK_CONNECTOR.get()) || player.isHolding(Items.LIFT_BUTTONS_LINK_REMOVER.get()) ? ActionResult.PASS : ActionResult.FAIL;
+			return player.isHolding(Items.LIFT_BUTTONS_LINK_CONNECTOR.get()) || player.isHolding(Items.LIFT_BUTTONS_LINK_REMOVER.get()) ? InteractionResult.PASS : InteractionResult.FAIL;
 		}
 	}
 
 	@Override
-	public void appendTooltip(ItemStack stack, Item.TooltipContext context, List<Text> tooltip, TooltipType options) {
-		tooltip.add((isOdd ? TranslationProvider.TOOLTIP_MTR_RAILWAY_SIGN_ODD : TranslationProvider.TOOLTIP_MTR_RAILWAY_SIGN_EVEN).getMutableText().formatted(Formatting.GRAY));
+	public void appendHoverText(ItemStack stack, Item.TooltipContext context, List<Component> tooltip, TooltipFlag options) {
+		tooltip.add((isOdd ? TranslationProvider.TOOLTIP_MTR_RAILWAY_SIGN_ODD : TranslationProvider.TOOLTIP_MTR_RAILWAY_SIGN_EVEN).getMutableText().withStyle(ChatFormatting.GRAY));
 	}
 
 	public abstract static class BlockEntityBase extends BlockEntityExtension {
@@ -124,19 +129,19 @@ public abstract class BlockLiftPanelBase extends Block implements IBlock, Triple
 		}
 
 		@Override
-		protected void readNbt(NbtCompound nbtCompound) {
+		protected void readNbt(CompoundTag nbtCompound) {
 			final long data = nbtCompound.getLong(KEY_TRACK_FLOOR_POS);
-			trackPosition = data == 0 ? null : BlockPos.fromLong(data);
+			trackPosition = data == 0 ? null : BlockPos.of(data);
 		}
 
 		@Override
-		protected void writeNbt(NbtCompound nbtCompound) {
+		protected void writeNbt(CompoundTag nbtCompound) {
 			nbtCompound.putLong(KEY_TRACK_FLOOR_POS, trackPosition == null ? 0 : trackPosition.asLong());
 		}
 
-		public void registerFloor(World world, BlockPos pos, boolean isAdd) {
-			if (IBlock.getStatePropertySafe(world, getPos(), SIDE) == EnumSide.RIGHT) {
-				final BlockEntity blockEntity = world.getBlockEntity(getPos().offset(IBlock.getStatePropertySafe(world, getPos(), Properties.HORIZONTAL_FACING).rotateYCounterclockwise()));
+		public void registerFloor(Level world, BlockPos pos, boolean isAdd) {
+			if (IBlock.getStatePropertySafe(world, getBlockPos(), SIDE) == EnumSide.RIGHT) {
+				final BlockEntity blockEntity = world.getBlockEntity(getBlockPos().relative(IBlock.getStatePropertySafe(world, getBlockPos(), BlockStateProperties.HORIZONTAL_FACING).getCounterClockWise()));
 				if (blockEntity instanceof BlockEntityBase) {
 					((BlockEntityBase) blockEntity).registerFloor(world, pos, isAdd);
 				}
@@ -146,7 +151,7 @@ public abstract class BlockLiftPanelBase extends Block implements IBlock, Triple
 				} else {
 					trackPosition = null;
 				}
-				markDirty();
+				setChanged();
 			}
 		}
 	}

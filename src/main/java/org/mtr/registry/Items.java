@@ -1,7 +1,7 @@
 package org.mtr.registry;
 
-import net.minecraft.item.Item;
-import net.minecraft.item.PlaceableOnWaterItem;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.PlaceOnWaterBlockItem;
 import org.mtr.MTR;
 import org.mtr.core.data.TransportMode;
 import org.mtr.data.RailType;
@@ -18,11 +18,11 @@ public final class Items {
 		AIRPLANE_DASHBOARD = RegistryServer.registerItem("dashboard_4", itemSettings -> new ItemDashboard(TransportMode.AIRPLANE, itemSettings), ItemGroups.CORE);
 
 		// Misc
-		BASIC_DRIVER_KEY = RegistryServer.registerItem("basic_driver_key", itemSettings -> new ItemDepotDriverKey(itemSettings.maxCount(1), true, false, false, 0xB6B6B6), null);
-		ADVANCED_DRIVER_KEY = RegistryServer.registerItem("advanced_driver_key", itemSettings -> new ItemDepotDriverKey(itemSettings.maxCount(1), true, true, false, 0xFFB6B6), null);
-		GUARD_KEY = RegistryServer.registerItem("guard_key", itemSettings -> new ItemDepotDriverKey(itemSettings.maxCount(1), false, true, false, 0xB6FFB6), null);
-		CREATIVE_DRIVER_KEY = RegistryServer.registerItem("creative_driver_key", itemSettings -> new ItemCreativeDriverKey(itemSettings.maxCount(1)), ItemGroups.CORE);
-		BOAT_NODE = RegistryServer.registerItem("boat_node", itemSettings -> new PlaceableOnWaterItem(Blocks.BOAT_NODE.get(), itemSettings.translationKey("block.mtr.boat_node")), ItemGroups.CORE);
+		BASIC_DRIVER_KEY = RegistryServer.registerItem("basic_driver_key", itemSettings -> new ItemDepotDriverKey(itemSettings.stacksTo(1), true, false, false, 0xB6B6B6), null);
+		ADVANCED_DRIVER_KEY = RegistryServer.registerItem("advanced_driver_key", itemSettings -> new ItemDepotDriverKey(itemSettings.stacksTo(1), true, true, false, 0xFFB6B6), null);
+		GUARD_KEY = RegistryServer.registerItem("guard_key", itemSettings -> new ItemDepotDriverKey(itemSettings.stacksTo(1), false, true, false, 0xB6FFB6), null);
+		CREATIVE_DRIVER_KEY = RegistryServer.registerItem("creative_driver_key", itemSettings -> new ItemCreativeDriverKey(itemSettings.stacksTo(1)), ItemGroups.CORE);
+		BOAT_NODE = RegistryServer.registerItem("boat_node", itemSettings -> new PlaceOnWaterBlockItem(Blocks.BOAT_NODE.get(), itemSettings.overrideDescription("block.mtr.boat_node")), ItemGroups.CORE);
 
 		// Doors
 		APG_DOOR = RegistryServer.registerItem("apg_door", itemSettings -> new ItemPSDAPGBase(ItemPSDAPGBase.EnumPSDAPGItem.PSD_APG_DOOR, ItemPSDAPGBase.EnumPSDAPGType.APG, itemSettings), ItemGroups.RAILWAY_FACILITIES);

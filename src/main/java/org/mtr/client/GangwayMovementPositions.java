@@ -1,8 +1,8 @@
 package org.mtr.client;
 
 import lombok.Getter;
-import net.minecraft.util.math.Box;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 import org.mtr.render.PositionAndRotation;
 import org.mtr.render.RenderVehicleHelper;
 
@@ -23,7 +23,7 @@ public class GangwayMovementPositions {
 		this.getMax = getMax;
 	}
 
-	public void check(Box box) {
+	public void check(AABB box) {
 		if (getMax) {
 			if (box.maxZ > z) {
 				xMin = box.minX;
@@ -45,8 +45,8 @@ public class GangwayMovementPositions {
 		}
 	}
 
-	public Box getBox() {
-		return new Box(xMin, y, z, xMax, y, z + (getMax ? 1 : -1) * RenderVehicleHelper.HALF_PLAYER_WIDTH);
+	public AABB getBox() {
+		return new AABB(xMin, y, z, xMax, y, z + (getMax ? 1 : -1) * RenderVehicleHelper.HALF_PLAYER_WIDTH);
 	}
 
 	public double getPercentageX(double x) {
@@ -65,11 +65,11 @@ public class GangwayMovementPositions {
 		return (xMaxClamped - xMinClamped) * percentageX + xMinClamped;
 	}
 
-	public Vec3d getMinWorldPosition() {
-		return positionAndRotation.transformForwards(new Vec3d(xMinClamped, y, z), Vec3d::rotateX, Vec3d::rotateY, Vec3d::rotateZ, Vec3d::add);
+	public Vec3 getMinWorldPosition() {
+		return positionAndRotation.transformForwards(new Vec3(xMinClamped, y, z), Vec3::xRot, Vec3::yRot, Vec3::zRot, Vec3::add);
 	}
 
-	public Vec3d getMaxWorldPosition() {
-		return positionAndRotation.transformForwards(new Vec3d(xMaxClamped, y, z), Vec3d::rotateX, Vec3d::rotateY, Vec3d::rotateZ, Vec3d::add);
+	public Vec3 getMaxWorldPosition() {
+		return positionAndRotation.transformForwards(new Vec3(xMaxClamped, y, z), Vec3::xRot, Vec3::yRot, Vec3::zRot, Vec3::add);
 	}
 }

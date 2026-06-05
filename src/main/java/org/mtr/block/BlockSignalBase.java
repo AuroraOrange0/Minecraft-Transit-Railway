@@ -1,26 +1,26 @@
 package org.mtr.block;
 
-import net.minecraft.block.AbstractBlock;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockEntityProvider;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.entity.BlockEntityType;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemPlacementContext;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.state.StateManager;
-import net.minecraft.state.property.EnumProperty;
-import net.minecraft.state.property.IntProperty;
-import net.minecraft.state.property.Properties;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.StringIdentifiable;
-import net.minecraft.util.hit.BlockHitResult;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.world.BlockView;
-import net.minecraft.world.World;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.StringRepresentable;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.EntityBlock;
+import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.state.BlockBehaviour;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.state.properties.EnumProperty;
+import net.minecraft.world.level.block.state.properties.IntegerProperty;
+import net.minecraft.world.phys.BlockHitResult;
 import org.mtr.core.operation.BlockRails;
 import org.mtr.core.tool.Angle;
 import org.mtr.libraries.it.unimi.dsi.fastutil.ints.IntAVLTreeSet;
@@ -33,58 +33,58 @@ import org.mtr.registry.RegistryClient;
 
 import java.util.ArrayList;
 
-public abstract class BlockSignalBase extends Block implements BlockEntityProvider {
+public abstract class BlockSignalBase extends Block implements EntityBlock {
 
-	public static final EnumProperty<EnumBooleanInverted> IS_22_5 = EnumProperty.of("is_22_5", EnumBooleanInverted.class);
-	public static final EnumProperty<EnumBooleanInverted> IS_45 = EnumProperty.of("is_45", EnumBooleanInverted.class);
-	public static final IntProperty POWER = IntProperty.of("power", 0, 15);
+	public static final EnumProperty<EnumBooleanInverted> IS_22_5 = EnumProperty.create("is_22_5", EnumBooleanInverted.class);
+	public static final EnumProperty<EnumBooleanInverted> IS_45 = EnumProperty.create("is_45", EnumBooleanInverted.class);
+	public static final IntegerProperty POWER = IntegerProperty.create("power", 0, 15);
 
 	private static final int COOLDOWN_1 = 2000;
 	private static final int COOLDOWN_2 = COOLDOWN_1 + 2000;
 	private static final int ACCEPT_REDSTONE_COOLDOWN = 800;
 
-	public BlockSignalBase(AbstractBlock.Settings blockSettings) {
+	public BlockSignalBase(BlockBehaviour.Properties blockSettings) {
 		super(blockSettings);
 	}
 
 	@Override
-	protected ActionResult onUse(BlockState state, World world, BlockPos pos, PlayerEntity player, BlockHitResult hit) {
-		return IBlock.checkHoldingBrush(world, player, () -> PacketOpenBlockEntityScreen.sendDirectlyToServer((ServerWorld) world, (ServerPlayerEntity) player, pos));
+	protected InteractionResult useWithoutItem(BlockState state, Level world, BlockPos pos, Player player, BlockHitResult hit) {
+		return IBlock.checkHoldingBrush(world, player, () -> PacketOpenBlockEntityScreen.sendDirectlyToServer((ServerLevel) world, (ServerPlayer) player, pos));
 	}
 
 	@Override
-	public BlockState getPlacementState(ItemPlacementContext ctx) {
-		final int quadrant = Angle.getQuadrant(ctx.getPlayerYaw(), true);
-		return getDefaultState().with(Properties.HORIZONTAL_FACING, Direction.fromHorizontalDegrees(quadrant / 4F)).with(IS_45, EnumBooleanInverted.fromBoolean(quadrant % 4 >= 2)).with(IS_22_5, EnumBooleanInverted.fromBoolean(quadrant % 2 == 1));
+	public BlockState getStateForPlacement(BlockPlaceContext ctx) {
+		final int quadrant = Angle.getQuadrant(ctx.getRotation(), true);
+		return defaultBlockState().setValue(BlockStateProperties.HORIZONTAL_FACING, Direction.fromYRot(quadrant / 4F)).setValue(IS_45, EnumBooleanInverted.fromBoolean(quadrant % 4 >= 2)).setValue(IS_22_5, EnumBooleanInverted.fromBoolean(quadrant % 2 == 1));
 	}
 
 	@Override
-	public boolean emitsRedstonePower(BlockState blockState) {
+	public boolean isSignalSource(BlockState blockState) {
 		return true;
 	}
 
 	@Override
-	public int getWeakRedstonePower(BlockState state, BlockView world, BlockPos pos, Direction direction) {
+	public int getSignal(BlockState state, BlockGetter world, BlockPos pos, Direction direction) {
 		return IBlock.getStatePropertySafe(state, POWER);
 	}
 
 	@Override
-	protected void appendProperties(StateManager.Builder<Block, BlockState> builder) {
-		builder.add(Properties.HORIZONTAL_FACING);
+	protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+		builder.add(BlockStateProperties.HORIZONTAL_FACING);
 		builder.add(IS_22_5);
 		builder.add(IS_45);
 		builder.add(POWER);
 	}
 
-	public void power(World world, BlockState state, BlockPos pos, int level) {
+	public void power(Level world, BlockState state, BlockPos pos, int level) {
 		final int oldPowered = IBlock.getStatePropertySafe(state, POWER);
 		if (oldPowered != level) {
-			world.setBlockState(pos, state.with(POWER, level));
+			world.setBlockAndUpdate(pos, state.setValue(POWER, level));
 		}
 	}
 
 	public static float getAngle(BlockState state) {
-		return IBlock.getStatePropertySafe(state, Properties.HORIZONTAL_FACING).getPositiveHorizontalDegrees() + (IBlock.getStatePropertySafe(state, BlockSignalBase.IS_22_5).booleanValue ? 22.5F : 0) + (IBlock.getStatePropertySafe(state, BlockSignalBase.IS_45).booleanValue ? 45 : 0);
+		return IBlock.getStatePropertySafe(state, BlockStateProperties.HORIZONTAL_FACING).toYRot() + (IBlock.getStatePropertySafe(state, BlockSignalBase.IS_22_5).booleanValue ? 22.5F : 0) + (IBlock.getStatePropertySafe(state, BlockSignalBase.IS_45).booleanValue ? 45 : 0);
 	}
 
 	public static abstract class BlockEntityBase extends BlockEntityExtension {
@@ -111,7 +111,7 @@ public abstract class BlockSignalBase extends Block implements BlockEntityProvid
 		}
 
 		@Override
-		protected void readNbt(NbtCompound nbtCompound) {
+		protected void readNbt(CompoundTag nbtCompound) {
 			acceptRedstone = nbtCompound.getBoolean(KEY_ACCEPT_REDSTONE);
 			outputRedstone = nbtCompound.getBoolean(KEY_OUTPUT_REDSTONE);
 			signalColors1.clear();
@@ -125,7 +125,7 @@ public abstract class BlockSignalBase extends Block implements BlockEntityProvid
 		}
 
 		@Override
-		protected void writeNbt(NbtCompound nbtCompound) {
+		protected void writeNbt(CompoundTag nbtCompound) {
 			nbtCompound.putBoolean(KEY_ACCEPT_REDSTONE, acceptRedstone);
 			nbtCompound.putBoolean(KEY_OUTPUT_REDSTONE, outputRedstone);
 			nbtCompound.putIntArray(KEY_SIGNAL_COLORS_1, new ArrayList<>(signalColors1));
@@ -137,7 +137,7 @@ public abstract class BlockSignalBase extends Block implements BlockEntityProvid
 			this.outputRedstone = outputRedstone;
 			getSignalColors(isBackSide).clear();
 			getSignalColors(isBackSide).addAll(signalColors);
-			markDirty();
+			setChanged();
 		}
 
 		public boolean getAcceptRedstone() {
@@ -177,16 +177,16 @@ public abstract class BlockSignalBase extends Block implements BlockEntityProvid
 			final int newRedstoneLevel = getOutputRedstone() ? redstoneLevel : 0;
 			if (oldRedstoneLevel != newRedstoneLevel) {
 				oldRedstoneLevel = newRedstoneLevel;
-				RegistryClient.sendPacketToServer(new PacketTurnOnBlockEntity(getPos(), newRedstoneLevel));
+				RegistryClient.sendPacketToServer(new PacketTurnOnBlockEntity(getBlockPos(), newRedstoneLevel));
 			}
 
 			final long currentTime = System.currentTimeMillis();
-			final World world = getWorld();
+			final Level world = getLevel();
 
 			if (getAcceptRedstone() && currentTime - lastAcceptedRedstoneTime > ACCEPT_REDSTONE_COOLDOWN && world != null) {
 				lastAcceptedRedstoneTime = currentTime;
 				for (final Direction direction : Direction.values()) {
-					if (world.isEmittingRedstonePower(getPos().offset(direction.getOpposite()), direction)) {
+					if (world.hasSignal(getBlockPos().relative(direction.getOpposite()), direction)) {
 						if (!railIds1.isEmpty()) {
 							RegistryClient.sendPacketToServer(new PacketBlockRails(new BlockRails(railIds1, new IntArrayList(signalColors1))));
 						}
@@ -200,7 +200,7 @@ public abstract class BlockSignalBase extends Block implements BlockEntityProvid
 		}
 	}
 
-	public enum EnumBooleanInverted implements StringIdentifiable {
+	public enum EnumBooleanInverted implements StringRepresentable {
 
 		FALSE(false), TRUE(true);
 		public final boolean booleanValue;
@@ -210,7 +210,7 @@ public abstract class BlockSignalBase extends Block implements BlockEntityProvid
 		}
 
 		@Override
-		public String asString() {
+		public String getSerializedName() {
 			return String.valueOf(booleanValue);
 		}
 

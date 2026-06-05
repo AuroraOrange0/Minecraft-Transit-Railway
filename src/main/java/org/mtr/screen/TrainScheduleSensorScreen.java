@@ -3,8 +3,8 @@ package org.mtr.screen;
 import gg.essential.elementa.constraints.PixelConstraint;
 import gg.essential.elementa.constraints.RelativeConstraint;
 import gg.essential.elementa.constraints.SiblingConstraint;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.client.Minecraft;
+import net.minecraft.core.BlockPos;
 import org.mtr.block.BlockTrainScheduleSensor;
 import org.mtr.generated.lang.TranslationProvider;
 import org.mtr.libraries.it.unimi.dsi.fastutil.longs.LongAVLTreeSet;
@@ -45,6 +45,6 @@ public class TrainScheduleSensorScreen extends TrainSensorScreenBase<BlockTrainS
 
 	@Override
 	protected void sendUpdate(BlockPos blockPos, LongAVLTreeSet filterRouteIds, boolean stoppedOnly, boolean movingOnly) {
-		new PacketUpdateTrainScheduleSensorConfig(blockPos, filterRouteIds, stoppedOnly, movingOnly, (int) secondsNumberInput.getValue(), realtimeOnlyCheckbox.isChecked()).send(MinecraftClient.getInstance().world);
+		new PacketUpdateTrainScheduleSensorConfig(blockPos, filterRouteIds, stoppedOnly, movingOnly, (int) secondsNumberInput.getValue(), realtimeOnlyCheckbox.isChecked()).send(Minecraft.getInstance().level);
 	}
 }

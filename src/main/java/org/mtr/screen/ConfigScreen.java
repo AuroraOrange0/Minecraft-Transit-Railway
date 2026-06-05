@@ -3,8 +3,8 @@ package org.mtr.screen;
 import gg.essential.elementa.constraints.PixelConstraint;
 import gg.essential.elementa.constraints.RelativeConstraint;
 import gg.essential.elementa.constraints.SiblingConstraint;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.util.Util;
+import net.minecraft.Util;
+import net.minecraft.client.gui.screens.Screen;
 import org.jspecify.annotations.Nullable;
 import org.mtr.client.DynamicTextureCache;
 import org.mtr.config.Client;
@@ -48,7 +48,7 @@ public final class ConfigScreen extends SingleTabBackgroundScreenBase {
 			.setWidth(new RelativeConstraint());
 
 		supportButton.setText(TranslationProvider.OPTIONS_MTR_SUPPORT_PATREON.getString());
-		supportButton.onClick(() -> Util.getOperatingSystem().open("https://www.patreon.com/minecraft_transit_railway"));
+		supportButton.onClick(() -> Util.getPlatform().openUri("https://www.patreon.com/minecraft_transit_railway"));
 	}
 
 	@Override

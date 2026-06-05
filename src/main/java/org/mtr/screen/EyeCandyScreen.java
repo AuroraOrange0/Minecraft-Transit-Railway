@@ -1,5 +1,6 @@
 package org.mtr.screen;
 
+import com.mojang.blaze3d.vertex.PoseStack;
 import gg.essential.elementa.components.ScrollComponent;
 import gg.essential.elementa.components.UIContainer;
 import gg.essential.elementa.components.UIWrappedText;
@@ -7,12 +8,11 @@ import gg.essential.elementa.constraints.*;
 import gg.essential.universal.UMatrixStack;
 import gg.essential.universal.UMinecraft;
 import gg.essential.universal.vertex.UVertexConsumer;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.client.world.ClientWorld;
-import net.minecraft.state.property.Properties;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import org.jspecify.annotations.Nullable;
 import org.mtr.block.BlockEyeCandy;
 import org.mtr.block.IBlock;
@@ -42,7 +42,7 @@ public final class EyeCandyScreen extends WindowBase {
 
 	private final BlockPos blockPos;
 	@Nullable
-	private final ClientWorld clientWorld;
+	private final ClientLevel clientWorld;
 	private final BlockEyeCandy.EyeCandyBlockEntity blockEntity;
 
 	private final NumberInputComponent translateXInputComponent;
@@ -60,7 +60,7 @@ public final class EyeCandyScreen extends WindowBase {
 
 	public EyeCandyScreen(BlockPos blockPos, BlockEyeCandy.EyeCandyBlockEntity blockEntity) {
 		this.blockPos = blockPos;
-		this.clientWorld = MinecraftClient.getInstance().world;
+		this.clientWorld = Minecraft.getInstance().level;
 		this.blockEntity = blockEntity;
 		this.selectedModelId = blockEntity.getModelId();
 
@@ -130,12 +130,12 @@ public final class EyeCandyScreen extends WindowBase {
 			(float) Math.toRadians(rotateYInputComponent.getValue()),
 			(float) Math.toRadians(rotateZInputComponent.getValue()),
 			fullBrightnessCheckboxComponent.isChecked()
-		).send(MinecraftClient.getInstance().world);
+		).send(Minecraft.getInstance().level);
 
 		super.onScreenClose();
 	}
 
-	private void onDrawPreview(MatrixStack matrixStack) {
+	private void onDrawPreview(PoseStack matrixStack) {
 		if (clientWorld == null) {
 			return;
 		}
@@ -152,7 +152,7 @@ public final class EyeCandyScreen extends WindowBase {
 			for (int y = -1; y <= 1; y++) {
 				for (int z = -1; z <= 1; z++) {
 					if (x != 0 || y != 0 || z != 0) {
-						BlockRendererHelper.renderBlock(uMatrixStack, clientWorld.getBlockState(blockPos.add(x, y, z)), renderKey, x - 0.5, y - 0.5, z - 0.5, 0.5);
+						BlockRendererHelper.renderBlock(uMatrixStack, clientWorld.getBlockState(blockPos.offset(x, y, z)), renderKey, x - 0.5, y - 0.5, z - 0.5, 0.5);
 					}
 				}
 			}
@@ -160,7 +160,7 @@ public final class EyeCandyScreen extends WindowBase {
 
 		final String modelId = blockEntity.getModelId();
 		if (modelId != null) {
-			final Direction facing = IBlock.getStatePropertySafe(clientWorld.getBlockState(blockPos), Properties.HORIZONTAL_FACING);
+			final Direction facing = IBlock.getStatePropertySafe(clientWorld.getBlockState(blockPos), BlockStateProperties.HORIZONTAL_FACING);
 			CustomResourceLoader.getObjectById(modelId, objectResource -> objectResource.getOptimizedModel().forEach((renderStage, newOptimizedModels) -> newOptimizedModels.forEach(newOptimizedModel -> {
 				// TODO render model preview
 			})));

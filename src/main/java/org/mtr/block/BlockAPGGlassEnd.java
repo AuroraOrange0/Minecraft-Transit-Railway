@@ -1,12 +1,12 @@
 package org.mtr.block;
 
-import net.minecraft.block.AbstractBlock;
-import net.minecraft.item.Item;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.level.block.state.BlockBehaviour;
 import org.mtr.registry.Items;
 
 public class BlockAPGGlassEnd extends BlockPSDAPGGlassEndBase {
 
-	public BlockAPGGlassEnd(AbstractBlock.Settings settings) {
+	public BlockAPGGlassEnd(BlockBehaviour.Properties settings) {
 		super(settings);
 	}
 

@@ -1,6 +1,6 @@
 package org.mtr.servlet;
 
-import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.Minecraft;
 import org.apache.commons.io.IOUtils;
 import org.jspecify.annotations.Nullable;
 import org.mtr.core.servlet.HttpResponseStatus;
@@ -31,7 +31,7 @@ public final class ClientServlet extends HttpServlet {
 		final AsyncContext asyncContext = httpServletRequest.startAsync();
 		asyncContext.setTimeout(0);
 		final String endpoint = httpServletRequest instanceof Request ? ((Request) httpServletRequest).getOriginalURI() : httpServletRequest.getRequestURI();
-		MinecraftClient.getInstance().execute(() -> RegistryClient.sendPacketToServer(new PacketForwardClientRequest(
+		Minecraft.getInstance().execute(() -> RegistryClient.sendPacketToServer(new PacketForwardClientRequest(
 			endpoint,
 			content,
 			(response, path) -> {

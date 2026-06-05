@@ -1,31 +1,31 @@
 package org.mtr.block;
 
 import lombok.Getter;
-import net.minecraft.block.AbstractBlock;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockEntityProvider;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.component.DataComponentTypes;
-import net.minecraft.entity.ItemEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemPlacementContext;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.state.StateManager;
-import net.minecraft.state.property.BooleanProperty;
-import net.minecraft.state.property.Properties;
-import net.minecraft.text.Text;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.hit.BlockHitResult;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.random.Random;
-import net.minecraft.world.World;
-import net.minecraft.world.block.WireOrientation;
-import net.minecraft.world.tick.OrderedTick;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.item.ItemEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.EntityBlock;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockBehaviour;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.state.properties.BooleanProperty;
+import net.minecraft.world.level.redstone.Orientation;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.ticks.ScheduledTick;
 import org.jspecify.annotations.Nullable;
 import org.mtr.MTR;
 import org.mtr.core.data.Depot;
@@ -38,71 +38,71 @@ import org.mtr.packet.PacketOpenBlockEntityScreen;
 import org.mtr.registry.BlockEntityTypes;
 import org.mtr.registry.Items;
 
-public class BlockDriverKeyDispenser extends BlockWaterloggable implements BlockEntityProvider {
+public class BlockDriverKeyDispenser extends BlockWaterloggable implements EntityBlock {
 
-	public static final BooleanProperty TRIGGERED = BooleanProperty.of("triggered");
+	public static final BooleanProperty TRIGGERED = BooleanProperty.create("triggered");
 
-	public BlockDriverKeyDispenser(AbstractBlock.Settings blockSettings) {
-		super(blockSettings.nonOpaque());
+	public BlockDriverKeyDispenser(BlockBehaviour.Properties blockSettings) {
+		super(blockSettings.noOcclusion());
 	}
 
 	@Override
-	protected ActionResult onUse(BlockState state, World world, BlockPos pos, PlayerEntity player, BlockHitResult hit) {
-		return IBlock.checkHoldingBrush(world, player, () -> PacketOpenBlockEntityScreen.sendDirectlyToServer((ServerWorld) world, (ServerPlayerEntity) player, pos));
+	protected InteractionResult useWithoutItem(BlockState state, Level world, BlockPos pos, Player player, BlockHitResult hit) {
+		return IBlock.checkHoldingBrush(world, player, () -> PacketOpenBlockEntityScreen.sendDirectlyToServer((ServerLevel) world, (ServerPlayer) player, pos));
 	}
 
 	@Override
-	public BlockState getPlacementState(ItemPlacementContext itemPlacementContext) {
-		return super.getPlacementState(itemPlacementContext).with(Properties.HORIZONTAL_FACING, itemPlacementContext.getHorizontalPlayerFacing());
+	public BlockState getStateForPlacement(BlockPlaceContext itemPlacementContext) {
+		return super.getStateForPlacement(itemPlacementContext).setValue(BlockStateProperties.HORIZONTAL_FACING, itemPlacementContext.getHorizontalDirection());
 	}
 
 	@Override
-	protected void neighborUpdate(BlockState state, World world, BlockPos pos, Block sourceBlock, @Nullable WireOrientation wireOrientation, boolean notify) {
-		final boolean hasPower = isReceivingRedstonePower(world, pos) || isReceivingRedstonePower(world, pos.up());
-		final boolean isTriggered = state.get(TRIGGERED);
+	protected void neighborChanged(BlockState state, Level world, BlockPos pos, Block sourceBlock, @Nullable Orientation wireOrientation, boolean notify) {
+		final boolean hasPower = isReceivingRedstonePower(world, pos) || isReceivingRedstonePower(world, pos.above());
+		final boolean isTriggered = state.getValue(TRIGGERED);
 		if (hasPower && !isTriggered) {
-			world.getBlockTickScheduler().scheduleTick(new OrderedTick<>(this, pos, 4, 0));
-			world.setBlockState(pos, state.with(TRIGGERED, true), 2);
+			world.getBlockTicks().schedule(new ScheduledTick<>(this, pos, 4, 0));
+			world.setBlock(pos, state.setValue(TRIGGERED, true), 2);
 		} else if (!hasPower && isTriggered) {
-			world.setBlockState(pos, state.with(TRIGGERED, false), 2);
+			world.setBlock(pos, state.setValue(TRIGGERED, false), 2);
 		}
 	}
 
 	@Override
-	protected void scheduledTick(BlockState state, ServerWorld world, BlockPos pos, Random random) {
+	protected void tick(BlockState state, ServerLevel world, BlockPos pos, RandomSource random) {
 		final BlockEntity blockEntity = world.getBlockEntity(pos);
 		if (blockEntity instanceof DriverKeyDispenserBlockEntity driverKeyDispenserBlockEntity) {
-			driverKeyDispenserBlockEntity.dispense(state.get(Properties.HORIZONTAL_FACING));
+			driverKeyDispenserBlockEntity.dispense(state.getValue(BlockStateProperties.HORIZONTAL_FACING));
 		}
 	}
 
 	@Override
-	protected void appendProperties(StateManager.Builder<Block, BlockState> builder) {
-		super.appendProperties(builder);
-		builder.add(Properties.HORIZONTAL_FACING, TRIGGERED);
+	protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+		super.createBlockStateDefinition(builder);
+		builder.add(BlockStateProperties.HORIZONTAL_FACING, TRIGGERED);
 	}
 
 	@Override
-	public BlockEntity createBlockEntity(BlockPos blockPos, BlockState blockState) {
+	public BlockEntity newBlockEntity(BlockPos blockPos, BlockState blockState) {
 		return new DriverKeyDispenserBlockEntity(blockPos, blockState);
 	}
 
 	/**
-	 * See {@link net.minecraft.world.RedstoneView#isReceivingRedstonePower(BlockPos)}
+	 * See {@link net.minecraft.world.level.SignalGetter#hasNeighborSignal(BlockPos)}
 	 */
-	private static boolean isReceivingRedstonePower(World world, BlockPos pos) {
-		if (world.isEmittingRedstonePower(pos.down(), Direction.DOWN)) {
+	private static boolean isReceivingRedstonePower(Level world, BlockPos pos) {
+		if (world.hasSignal(pos.below(), Direction.DOWN)) {
 			return true;
-		} else if (world.isEmittingRedstonePower(pos.up(), Direction.UP)) {
+		} else if (world.hasSignal(pos.above(), Direction.UP)) {
 			return true;
-		} else if (world.isEmittingRedstonePower(pos.north(), Direction.NORTH)) {
+		} else if (world.hasSignal(pos.north(), Direction.NORTH)) {
 			return true;
-		} else if (world.isEmittingRedstonePower(pos.south(), Direction.SOUTH)) {
+		} else if (world.hasSignal(pos.south(), Direction.SOUTH)) {
 			return true;
-		} else if (world.isEmittingRedstonePower(pos.west(), Direction.WEST)) {
+		} else if (world.hasSignal(pos.west(), Direction.WEST)) {
 			return true;
 		} else {
-			return world.isEmittingRedstonePower(pos.east(), Direction.EAST);
+			return world.hasSignal(pos.east(), Direction.EAST);
 		}
 	}
 
@@ -124,7 +124,7 @@ public class BlockDriverKeyDispenser extends BlockWaterloggable implements Block
 		}
 
 		@Override
-		protected void readNbt(NbtCompound nbtCompound) {
+		protected void readNbt(CompoundTag nbtCompound) {
 			dispenseBasicDriverKey = nbtCompound.getBoolean(KEY_DISPENSE_BASIC_DRIVER_KEY);
 			dispenseAdvancedDriverKey = nbtCompound.getBoolean(KEY_DISPENSE_ADVANCED_DRIVER_KEY);
 			dispenseGuardKey = nbtCompound.getBoolean(KEY_DISPENSE_GUARD_KEY);
@@ -132,7 +132,7 @@ public class BlockDriverKeyDispenser extends BlockWaterloggable implements Block
 		}
 
 		@Override
-		protected void writeNbt(NbtCompound nbtCompound) {
+		protected void writeNbt(CompoundTag nbtCompound) {
 			nbtCompound.putBoolean(KEY_DISPENSE_BASIC_DRIVER_KEY, dispenseBasicDriverKey);
 			nbtCompound.putBoolean(KEY_DISPENSE_ADVANCED_DRIVER_KEY, dispenseAdvancedDriverKey);
 			nbtCompound.putBoolean(KEY_DISPENSE_GUARD_KEY, dispenseGuardKey);
@@ -144,7 +144,7 @@ public class BlockDriverKeyDispenser extends BlockWaterloggable implements Block
 			this.dispenseAdvancedDriverKey = dispenseAdvancedDriverKey;
 			this.dispenseGuardKey = dispenseGuardKey;
 			this.timeout = timeout;
-			markDirty();
+			setChanged();
 		}
 
 		public boolean getDispenseBasicDriverKey() {
@@ -160,20 +160,20 @@ public class BlockDriverKeyDispenser extends BlockWaterloggable implements Block
 		}
 
 		private void dispense(Direction direction) {
-			final World world = getWorld();
-			if (world != null && !world.isClient()) {
-				MTR.sendMessageC2S(OperationProcessor.NEARBY_DEPOTS, world.getServer(), world, new NearbyAreasRequest<>(MTR.blockPosToPosition(getPos()), 0), nearbyAreasResponse -> {
+			final Level world = getLevel();
+			if (world != null && !world.isClientSide()) {
+				MTR.sendMessageC2S(OperationProcessor.NEARBY_DEPOTS, world.getServer(), world, new NearbyAreasRequest<>(MTR.blockPosToPosition(getBlockPos()), 0), nearbyAreasResponse -> {
 					for (final Depot depot : nearbyAreasResponse.getDepots()) {
 						if (dispenseBasicDriverKey) {
-							spawnItemStack(world, depot, Items.BASIC_DRIVER_KEY.get().getDefaultStack(), direction);
+							spawnItemStack(world, depot, Items.BASIC_DRIVER_KEY.get().getDefaultInstance(), direction);
 						}
 
 						if (dispenseAdvancedDriverKey) {
-							spawnItemStack(world, depot, Items.ADVANCED_DRIVER_KEY.get().getDefaultStack(), direction);
+							spawnItemStack(world, depot, Items.ADVANCED_DRIVER_KEY.get().getDefaultInstance(), direction);
 						}
 
 						if (dispenseGuardKey) {
-							spawnItemStack(world, depot, Items.GUARD_KEY.get().getDefaultStack(), direction);
+							spawnItemStack(world, depot, Items.GUARD_KEY.get().getDefaultInstance(), direction);
 						}
 
 						break;
@@ -182,11 +182,11 @@ public class BlockDriverKeyDispenser extends BlockWaterloggable implements Block
 			}
 		}
 
-		private void spawnItemStack(World world, Depot depot, ItemStack itemStack, Direction direction) {
+		private void spawnItemStack(Level world, Depot depot, ItemStack itemStack, Direction direction) {
 			ItemDepotDriverKey.setData(itemStack, depot, timeout);
-			itemStack.set(DataComponentTypes.CUSTOM_NAME, Text.literal(String.format("%s (%s)", itemStack.getItem().getName().getString(), depot.getName())));
-			final BlockPos pos = getPos().offset(direction);
-			world.spawnEntity(new ItemEntity(world, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, itemStack));
+			itemStack.set(DataComponents.CUSTOM_NAME, Component.literal(String.format("%s (%s)", itemStack.getItem().getName().getString(), depot.getName())));
+			final BlockPos pos = getBlockPos().relative(direction);
+			world.addFreshEntity(new ItemEntity(world, pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5, itemStack));
 		}
 	}
 }

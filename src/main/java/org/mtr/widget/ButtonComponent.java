@@ -4,7 +4,7 @@ import gg.essential.elementa.components.UIText;
 import gg.essential.elementa.components.UIWrappedText;
 import gg.essential.elementa.constraints.*;
 import gg.essential.universal.UMatrixStack;
-import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.Minecraft;
 import org.jspecify.annotations.Nullable;
 import org.mtr.tool.ReleasedDynamicTextureRegistry;
 
@@ -57,7 +57,7 @@ public final class ButtonComponent extends StitchedImageComponent {
 
 			while (trimIndex > 0) {
 				final String checkText = text.substring(0, trimIndex).trim() + (trimIndex < textLength ? "..." : "");
-				if (MinecraftClient.getInstance().textRenderer.getWidth(checkText) <= newTextWidth) {
+				if (Minecraft.getInstance().font.width(checkText) <= newTextWidth) {
 					textLabel.setText(checkText);
 					break;
 				}

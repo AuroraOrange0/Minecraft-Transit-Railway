@@ -1,18 +1,18 @@
 package org.mtr.map;
 
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
-import net.minecraft.block.MapColor;
-import net.minecraft.client.gl.VertexBuffer;
-import net.minecraft.client.render.VertexFormat;
-import net.minecraft.client.render.VertexFormats;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.ChunkSectionPos;
-import net.minecraft.world.Heightmap;
-import net.minecraft.world.LightType;
-import net.minecraft.world.World;
-import net.minecraft.world.biome.BiomeEffects;
+import com.mojang.blaze3d.vertex.DefaultVertexFormat;
+import com.mojang.blaze3d.vertex.VertexBuffer;
+import com.mojang.blaze3d.vertex.VertexFormat;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.SectionPos;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LightLayer;
+import net.minecraft.world.level.biome.BiomeSpecialEffects;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.levelgen.Heightmap;
+import net.minecraft.world.level.material.MapColor;
 import org.jspecify.annotations.Nullable;
 import org.mtr.cache.CachedFileResource;
 import org.mtr.libraries.it.unimi.dsi.fastutil.bytes.ByteArrayList;
@@ -27,7 +27,7 @@ public final class MapTileResource extends CachedFileResource {
 	@Nullable
 	private VertexBuffer vertexBuffer;
 
-	private final World world;
+	private final Level world;
 	private final MapTileProvider.MapType mapType;
 	private final int chunkX;
 	private final int y;
@@ -55,7 +55,7 @@ public final class MapTileResource extends CachedFileResource {
 		Blocks.MANGROVE_LEAVES
 	);
 
-	public MapTileResource(World world, MapTileProvider.MapType mapType, int chunkX, int y, int chunkZ, Path path) {
+	public MapTileResource(Level world, MapTileProvider.MapType mapType, int chunkX, int y, int chunkZ, Path path) {
 		super(path, LIFESPAN);
 		this.world = world;
 		this.mapType = mapType;
@@ -75,14 +75,14 @@ public final class MapTileResource extends CachedFileResource {
 				final int blockZ = chunkZ * MapTileProvider.TILE_SIZE + z;
 
 				// Only draw for loaded chunks
-				if (world.getChunkManager().isChunkLoaded(ChunkSectionPos.getSectionCoord(blockX), ChunkSectionPos.getSectionCoord(blockZ))) {
+				if (world.getChunkSource().hasChunk(SectionPos.posToSectionCoord(blockX), SectionPos.posToSectionCoord(blockZ))) {
 					// Find appropriate Y level
-					final int topY = world.getTopY(Heightmap.Type.MOTION_BLOCKING, blockX, blockZ) - 1;
+					final int topY = world.getHeight(Heightmap.Types.MOTION_BLOCKING, blockX, blockZ) - 1;
 					final int blockY;
 					if (mapType == MapTileProvider.MapType.DYNAMIC && y < topY) {
 						int currentY = y;
 						while (true) {
-							if (currentY < world.getBottomY() || !world.isAir(new BlockPos(blockX, currentY, blockZ))) {
+							if (currentY < world.getMinY() || !world.isEmptyBlock(new BlockPos(blockX, currentY, blockZ))) {
 								break;
 							} else {
 								currentY--;
@@ -108,8 +108,8 @@ public final class MapTileResource extends CachedFileResource {
 					// Figure out light level
 					final float lightLevel;
 					if (mapType == MapTileProvider.MapType.DYNAMIC) {
-						final BlockPos lightReferencePos = finalPos.up();
-						lightLevel = (Math.max(world.getLightLevel(LightType.BLOCK, lightReferencePos), world.getLightLevel(LightType.SKY, lightReferencePos)) + 5) / 20F;
+						final BlockPos lightReferencePos = finalPos.above();
+						lightLevel = (Math.max(world.getBrightness(LightLayer.BLOCK, lightReferencePos), world.getBrightness(LightLayer.SKY, lightReferencePos)) + 5) / 20F;
 					} else {
 						lightLevel = 1;
 					}
@@ -136,7 +136,7 @@ public final class MapTileResource extends CachedFileResource {
 		} else {
 			final boolean[] noVertices = {true};
 
-			final VertexBuffer vertexBuffer = VertexBuffer.createAndUpload(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_COLOR, vertexConsumer -> {
+			final VertexBuffer vertexBuffer = VertexBuffer.uploadStatic(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR, vertexConsumer -> {
 				final Drawing drawing = new Drawing(vertexConsumer);
 				int pixelOffsetX = 0;
 				int pixelOffsetY = 0;
@@ -197,17 +197,17 @@ public final class MapTileResource extends CachedFileResource {
 	private Color getBlockColor(BlockPos blockPos) {
 		final BlockState blockState = world.getBlockState(blockPos);
 		final Block block = blockState.getBlock();
-		final int defaultColor = blockState.getMapColor(world, blockPos).color;
-		final BiomeEffects biomeEffects = world.getBiome(blockPos).value().getEffects();
+		final int defaultColor = blockState.getMapColor(world, blockPos).col;
+		final BiomeSpecialEffects biomeEffects = world.getBiome(blockPos).value().getSpecialEffects();
 
 		if (GRASS_COLOR_BLOCKS.contains(block)) {
-			return new Color(biomeEffects.getGrassColor().orElse(defaultColor));
+			return new Color(biomeEffects.getGrassColorOverride().orElse(defaultColor));
 		} else if (FOLIAGE_COLOR_BLOCKS.contains(block)) {
-			return new Color(biomeEffects.getFoliageColor().orElse(defaultColor));
-		} else if (block.getDefaultMapColor() == MapColor.WATER_BLUE) {
+			return new Color(biomeEffects.getFoliageColorOverride().orElse(defaultColor));
+		} else if (block.defaultMapColor() == MapColor.WATER) {
 			for (int i = 1; i < WATER_DEPTH_CHECK; i++) {
-				final BlockPos checkPos = blockPos.down(i);
-				if (world.getBlockState(checkPos).getMapColor(world, checkPos) != MapColor.WATER_BLUE) {
+				final BlockPos checkPos = blockPos.below(i);
+				if (world.getBlockState(checkPos).getMapColor(world, checkPos) != MapColor.WATER) {
 					return blendColors(getBlockColor(checkPos), WATER_DEPTH_CHECK - i, new Color(biomeEffects.getWaterColor()), i + WATER_DEPTH_CHECK);
 				}
 			}

@@ -1,11 +1,11 @@
 package org.mtr.sound;
 
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.client.world.ClientWorld;
-import net.minecraft.sound.SoundCategory;
-import net.minecraft.sound.SoundEvent;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.core.BlockPos;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundSource;
 import org.jspecify.annotations.Nullable;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.Object2ObjectAVLTreeMap;
 
@@ -26,19 +26,19 @@ public final class ScheduledSound {
 	}
 
 	private void play() {
-		final ClientWorld clientWorld = MinecraftClient.getInstance().world;
+		final ClientLevel clientWorld = Minecraft.getInstance().level;
 		if (clientWorld != null) {
-			SCHEDULED_SOUNDS.values().forEach(scheduledSound -> clientWorld.playSoundAtBlockCenter(blockPos, soundEvent, SoundCategory.BLOCKS, gain, pitch, false));
+			SCHEDULED_SOUNDS.values().forEach(scheduledSound -> clientWorld.playLocalSound(blockPos, soundEvent, SoundSource.BLOCKS, gain, pitch, false));
 		}
 	}
 
 	public static void schedule(BlockPos blockPos, @Nullable SoundEvent soundEvent, float gain, float pitch) {
-		final ClientPlayerEntity clientPlayerEntity = MinecraftClient.getInstance().player;
+		final LocalPlayer clientPlayerEntity = Minecraft.getInstance().player;
 		if (soundEvent != null && clientPlayerEntity != null) {
-			final String currentKey = String.format("%s_%s_%s", soundEvent.id().toString(), gain, pitch);
+			final String currentKey = String.format("%s_%s_%s", soundEvent.location(), gain, pitch);
 			final ScheduledSound scheduledSound = SCHEDULED_SOUNDS.computeIfAbsent(currentKey, key -> new ScheduledSound(blockPos, soundEvent, gain, pitch));
-			final BlockPos clientPos = clientPlayerEntity.getBlockPos();
-			if (blockPos.getManhattanDistance(clientPos) < scheduledSound.blockPos.getManhattanDistance(clientPos)) {
+			final BlockPos clientPos = clientPlayerEntity.blockPosition();
+			if (blockPos.distManhattan(clientPos) < scheduledSound.blockPos.distManhattan(clientPos)) {
 				scheduledSound.blockPos = blockPos;
 			}
 		}

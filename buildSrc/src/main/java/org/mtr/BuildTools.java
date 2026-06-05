@@ -76,7 +76,7 @@ public final class BuildTools {
 	}
 
 	public void generateTranslations() throws IOException {
-		final StringBuilder stringBuilder = new StringBuilder("package org.mtr.generated.lang;import net.minecraft.client.MinecraftClient;import net.minecraft.text.MutableText;import net.minecraft.text.Text;public interface TranslationProvider{\n");
+		final StringBuilder stringBuilder = new StringBuilder("package org.mtr.generated.lang;import net.minecraft.client.Minecraft;import net.minecraft.network.chat.Component;import net.minecraft.network.chat.MutableComponent;public interface TranslationProvider{\n");
 		JsonParser.parseString(FileUtils.readFileToString(path.resolve("src/main/resources/assets/mtr/lang/en_us.json").toFile(), StandardCharsets.UTF_8)).getAsJsonObject().entrySet().forEach(entry -> {
 			final String key = entry.getKey();
 			if (key.startsWith("block.") || key.startsWith("item.") || key.startsWith("entity.") || key.startsWith("itemGroup.")) {
@@ -85,10 +85,10 @@ public final class BuildTools {
 			stringBuilder.append(String.format("TranslationHolder %s=new TranslationHolder(\"%s\");\n", key.replace(".", "_").toUpperCase(Locale.ENGLISH), key));
 		});
 		stringBuilder.append("class TranslationHolder{public final String key;private TranslationHolder(String key){this.key=key;}\n");
-		stringBuilder.append("public MutableText getMutableText(Object...arguments){return Text.translatable(key,arguments);}\n");
-		stringBuilder.append("public Text getText(Object...arguments){return Text.translatable(key,arguments);}\n");
+		stringBuilder.append("public MutableComponent getMutableText(Object...arguments){return Component.translatable(key,arguments);}\n");
+		stringBuilder.append("public Component getText(Object...arguments){return Component.translatable(key,arguments);}\n");
 		stringBuilder.append("public String getString(Object...arguments){return getMutableText(arguments).getString();}\n");
-		stringBuilder.append("public int width(Object...arguments){return MinecraftClient.getInstance().textRenderer.getWidth(getMutableText(arguments));}\n");
+		stringBuilder.append("public int width(Object...arguments){return Minecraft.getInstance().font.width(getMutableText(arguments));}\n");
 		stringBuilder.append("}}");
 		FileUtils.write(path.resolve("src/main/java/org/mtr/generated/lang/TranslationProvider.java").toFile(), stringBuilder.toString(), StandardCharsets.UTF_8);
 	}

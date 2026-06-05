@@ -1,11 +1,11 @@
 package org.mtr.packet;
 
 import gg.essential.universal.UMinecraft;
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.world.ClientWorld;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import org.mtr.MTR;
 import org.mtr.block.*;
 import org.mtr.client.MinecraftClientData;
@@ -90,15 +90,15 @@ public final class ClientPacketHelper {
 	}
 
 	private static void openScreen(Screen screen, Predicate<Screen> isInstance) {
-		final MinecraftClient minecraftClient = MinecraftClient.getInstance();
-		final Screen currentScreen = minecraftClient.currentScreen;
+		final Minecraft minecraftClient = Minecraft.getInstance();
+		final Screen currentScreen = minecraftClient.screen;
 		if (currentScreen == null || !isInstance.test(currentScreen)) {
 			minecraftClient.setScreen(screen);
 		}
 	}
 
 	private static void getBlockEntity(BlockPos blockPos, Consumer<BlockEntity> consumer) {
-		final ClientWorld clientWorld = MinecraftClient.getInstance().world;
+		final ClientLevel clientWorld = Minecraft.getInstance().level;
 		if (clientWorld != null) {
 			final BlockEntity blockEntity = clientWorld.getBlockEntity(blockPos);
 			if (blockEntity != null) {
@@ -112,7 +112,7 @@ public final class ClientPacketHelper {
 			blockPos,
 			new LongAVLTreeSet[]{new LongAVLTreeSet(selectedRoutes.stream().map(NameColorDataBase::getId).toList())},
 			new String[0]
-		).send(MinecraftClient.getInstance().world));
+		).send(Minecraft.getInstance().level));
 
 		final ObjectArrayList<Platform> platforms = SignResource.getPlatforms(blockPos);
 		platformListSelectorScreen.setAvailableList(platforms);

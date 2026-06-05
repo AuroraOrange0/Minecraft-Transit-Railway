@@ -4,8 +4,8 @@ import gg.essential.elementa.components.UIWrappedText;
 import gg.essential.elementa.constraints.PixelConstraint;
 import gg.essential.elementa.constraints.RelativeConstraint;
 import gg.essential.elementa.constraints.SiblingConstraint;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.client.Minecraft;
+import net.minecraft.core.BlockPos;
 import org.mtr.MTRClient;
 import org.mtr.block.BlockDriverKeyDispenser;
 import org.mtr.core.data.Depot;
@@ -96,7 +96,7 @@ public final class DriverKeyDispenserScreen extends SingleTabBackgroundScreenBas
 			dispenseAdvancedDriverKeyCheckbox.isChecked(),
 			dispenseGuardKeyCheckbox.isChecked(),
 			Math.round(timeoutHoursInputComponent.getValue() * Utilities.MILLIS_PER_HOUR + timeoutMinutesInputComponent.getValue() * Utilities.MILLIS_PER_MINUTE)
-		).send(MinecraftClient.getInstance().world);
+		).send(Minecraft.getInstance().level);
 		super.onScreenClose();
 	}
 }

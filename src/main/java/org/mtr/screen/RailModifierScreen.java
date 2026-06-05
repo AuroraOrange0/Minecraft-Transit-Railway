@@ -1,5 +1,6 @@
 package org.mtr.screen;
 
+import com.mojang.blaze3d.vertex.PoseStack;
 import gg.essential.elementa.UIComponent;
 import gg.essential.elementa.components.ScrollComponent;
 import gg.essential.elementa.components.UIBlock;
@@ -9,12 +10,11 @@ import gg.essential.elementa.constraints.*;
 import gg.essential.universal.UMatrixStack;
 import gg.essential.universal.UMinecraft;
 import gg.essential.universal.vertex.UVertexConsumer;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.client.world.ClientWorld;
-import net.minecraft.text.Text;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
 import org.jspecify.annotations.Nullable;
 import org.mtr.client.CustomResourceLoader;
 import org.mtr.client.MinecraftClientData;
@@ -114,7 +114,7 @@ public final class RailModifierScreen extends WindowBase {
 			.setY(new SiblingConstraint())
 			.setWidth(new RelativeConstraint());
 
-		editStylesButtonComponent.setText(Text.translatable("selectWorld.edit").getString());
+		editStylesButtonComponent.setText(Component.translatable("selectWorld.edit").getString());
 		editStylesButtonComponent.onMouseClickConsumer(clickEvent -> UMinecraft.setCurrentScreenObj(createRailStyleSelectorScreen()));
 
 		final ButtonComponent flipStylesButtonComponent = (ButtonComponent) new ButtonComponent(true)
@@ -134,7 +134,7 @@ public final class RailModifierScreen extends WindowBase {
 				}
 			}).collect(Collectors.toCollection(ObjectArrayList::new));
 			updateRailStyles(styles);
-			MinecraftClient.getInstance().setScreen(null);
+			Minecraft.getInstance().setScreen(null);
 		});
 
 		if (rail.canAccelerate() && !rail.isPlatform() && !rail.isSiding()) {
@@ -219,7 +219,7 @@ public final class RailModifierScreen extends WindowBase {
 		update(true);
 	}
 
-	private void onDrawPreview(MatrixStack matrixStack, boolean isStylesTab) {
+	private void onDrawPreview(PoseStack matrixStack, boolean isStylesTab) {
 		final Rail newRail = createRailCopy();
 		final double length = newRail.railMath.getLength();
 		final ObjectImmutableList<DoubleDoubleImmutablePair> tiltPointsAndAngles = newRail.getTiltPointsAndAngles();
@@ -273,11 +273,11 @@ public final class RailModifierScreen extends WindowBase {
 		}, false);
 
 		if (isStylesTab) {
-			final ClientWorld clientWorld = MinecraftClient.getInstance().world;
+			final ClientLevel clientWorld = Minecraft.getInstance().level;
 			if (clientWorld != null) {
 				for (int i = 0; i < 2; i++) {
 					final Vector vector = newRail.railMath.getPosition(i == 0 ? 0 : newRail.railMath.getLength(), false);
-					final BlockPos blockPos = BlockPos.ofFloored(vector.x(), vector.y() - 1, vector.z());
+					final BlockPos blockPos = BlockPos.containing(vector.x(), vector.y() - 1, vector.z());
 					BlockRendererHelper.renderBlock(uMatrixStack, clientWorld.getBlockState(blockPos), i == 0 ? renderKey1 : renderKey2, blockPos.getX() - offsetX, blockPos.getY() - offsetY, blockPos.getZ() - offsetZ, 0.5);
 				}
 			}
@@ -457,9 +457,9 @@ public final class RailModifierScreen extends WindowBase {
 
 	private void updateRailStyles(ObjectArrayList<String> styles) {
 		RegistryClient.sendPacketToServer(new PacketUpdateData(new UpdateDataRequest(MinecraftClientData.getInstance()).addRail(Rail.copy(rail, styles))));
-		final ClientPlayerEntity clientPlayerEntity = MinecraftClient.getInstance().player;
+		final LocalPlayer clientPlayerEntity = Minecraft.getInstance().player;
 		if (clientPlayerEntity != null) {
-			RegistryClient.sendPacketToServer(new PacketUpdateLastRailStyles(clientPlayerEntity.getUuid(), rail.getTransportMode(), styles));
+			RegistryClient.sendPacketToServer(new PacketUpdateLastRailStyles(clientPlayerEntity.getUUID(), rail.getTransportMode(), styles));
 		}
 	}
 

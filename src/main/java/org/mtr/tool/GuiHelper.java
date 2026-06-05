@@ -1,14 +1,14 @@
 package org.mtr.tool;
 
+import com.mojang.blaze3d.vertex.PoseStack;
 import gg.essential.elementa.components.UIContainer;
 import gg.essential.elementa.components.UIWrappedText;
 import gg.essential.elementa.constraints.*;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.ColorHelper;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.ARGB;
 import org.jspecify.annotations.Nullable;
 import org.mtr.core.tool.Utilities;
 import org.mtr.libraries.it.unimi.dsi.fastutil.ints.IntArrayList;
@@ -57,25 +57,25 @@ public final class GuiHelper {
 	public static final int DEFAULT_ICON_SIZE = DEFAULT_LINE_SIZE - DEFAULT_PADDING;
 	public static final int STANDARD_SCREEN_WIDTH = 320;
 
-	public static final Identifier ADD_TEXTURE_ID = Identifier.of("textures/gui/sprites/mtr/icon_add.png");
-	public static final Identifier EDIT_TEXTURE_ID = Identifier.of("textures/gui/sprites/mtr/icon_edit.png");
-	public static final Identifier UP_TEXTURE_ID = Identifier.of("textures/gui/sprites/mtr/icon_up.png");
-	public static final Identifier DOWN_TEXTURE_ID = Identifier.of("textures/gui/sprites/mtr/icon_down.png");
-	public static final Identifier CHEVRON_UP_TEXTURE_ID = Identifier.of("textures/gui/sprites/mtr/icon_chevron_up.png");
-	public static final Identifier CHEVRON_DOWN_TEXTURE_ID = Identifier.of("textures/gui/sprites/mtr/icon_chevron_down.png");
-	public static final Identifier EXPAND_ALL_TEXTURE_ID = Identifier.of("textures/gui/sprites/mtr/icon_expand_all.png");
-	public static final Identifier COLLAPSE_ALL_TEXTURE_ID = Identifier.of("textures/gui/sprites/mtr/icon_collapse_all.png");
-	public static final Identifier ZOOM_IN_TEXTURE_ID = Identifier.of("textures/gui/sprites/mtr/icon_zoom_in.png");
-	public static final Identifier ZOOM_OUT_TEXTURE_ID = Identifier.of("textures/gui/sprites/mtr/icon_zoom_out.png");
-	public static final Identifier FIND_TEXTURE_ID = Identifier.of("textures/gui/sprites/mtr/icon_find.png");
-	public static final Identifier CHECK_TEXTURE_ID = Identifier.of("textures/gui/sprites/mtr/icon_check.png");
-	public static final Identifier RESET_TEXTURE_ID = Identifier.of("textures/gui/sprites/mtr/icon_reset.png");
-	public static final Identifier COLOR_TEXTURE_ID = Identifier.of("textures/gui/sprites/mtr/icon_color.png");
-	public static final Identifier SELECT_TEXTURE_ID = Identifier.of("textures/gui/sprites/mtr/icon_select.png");
-	public static final Identifier MAP_TEXTURE_ID = Identifier.of("textures/gui/sprites/mtr/icon_map.png");
-	public static final Identifier EDITOR_TEXTURE_ID = Identifier.of("textures/gui/sprites/mtr/icon_editor.png");
-	public static final Identifier SETTINGS_TEXTURE_ID = Identifier.of("textures/gui/sprites/mtr/icon_settings.png");
-	public static final Identifier DELETE_TEXTURE_ID = Identifier.of("textures/gui/sprites/mtr/icon_delete.png");
+	public static final ResourceLocation ADD_TEXTURE_ID = ResourceLocation.parse("textures/gui/sprites/mtr/icon_add.png");
+	public static final ResourceLocation EDIT_TEXTURE_ID = ResourceLocation.parse("textures/gui/sprites/mtr/icon_edit.png");
+	public static final ResourceLocation UP_TEXTURE_ID = ResourceLocation.parse("textures/gui/sprites/mtr/icon_up.png");
+	public static final ResourceLocation DOWN_TEXTURE_ID = ResourceLocation.parse("textures/gui/sprites/mtr/icon_down.png");
+	public static final ResourceLocation CHEVRON_UP_TEXTURE_ID = ResourceLocation.parse("textures/gui/sprites/mtr/icon_chevron_up.png");
+	public static final ResourceLocation CHEVRON_DOWN_TEXTURE_ID = ResourceLocation.parse("textures/gui/sprites/mtr/icon_chevron_down.png");
+	public static final ResourceLocation EXPAND_ALL_TEXTURE_ID = ResourceLocation.parse("textures/gui/sprites/mtr/icon_expand_all.png");
+	public static final ResourceLocation COLLAPSE_ALL_TEXTURE_ID = ResourceLocation.parse("textures/gui/sprites/mtr/icon_collapse_all.png");
+	public static final ResourceLocation ZOOM_IN_TEXTURE_ID = ResourceLocation.parse("textures/gui/sprites/mtr/icon_zoom_in.png");
+	public static final ResourceLocation ZOOM_OUT_TEXTURE_ID = ResourceLocation.parse("textures/gui/sprites/mtr/icon_zoom_out.png");
+	public static final ResourceLocation FIND_TEXTURE_ID = ResourceLocation.parse("textures/gui/sprites/mtr/icon_find.png");
+	public static final ResourceLocation CHECK_TEXTURE_ID = ResourceLocation.parse("textures/gui/sprites/mtr/icon_check.png");
+	public static final ResourceLocation RESET_TEXTURE_ID = ResourceLocation.parse("textures/gui/sprites/mtr/icon_reset.png");
+	public static final ResourceLocation COLOR_TEXTURE_ID = ResourceLocation.parse("textures/gui/sprites/mtr/icon_color.png");
+	public static final ResourceLocation SELECT_TEXTURE_ID = ResourceLocation.parse("textures/gui/sprites/mtr/icon_select.png");
+	public static final ResourceLocation MAP_TEXTURE_ID = ResourceLocation.parse("textures/gui/sprites/mtr/icon_map.png");
+	public static final ResourceLocation EDITOR_TEXTURE_ID = ResourceLocation.parse("textures/gui/sprites/mtr/icon_editor.png");
+	public static final ResourceLocation SETTINGS_TEXTURE_ID = ResourceLocation.parse("textures/gui/sprites/mtr/icon_settings.png");
+	public static final ResourceLocation DELETE_TEXTURE_ID = ResourceLocation.parse("textures/gui/sprites/mtr/icon_delete.png");
 
 	private static final int SHADOW_COLOR_DARK = 0x11000000;
 	private static final int SHADOW_COLOR_LIGHT = 0x11FFFFFF;
@@ -236,7 +236,7 @@ public final class GuiHelper {
 					y + Math.max(circlePart.sliceStart, circleColorPart.sliceStart),
 					x + diameter - emptySpace,
 					y + Math.min(circlePart.sliceEnd, circleColorPart.sliceEnd)
-				).setColor(ColorHelper.fullAlpha(circleColorPart.color)).draw();
+				).setColor(ARGB.opaque(circleColorPart.color)).draw();
 			}
 			for (int i = 0; i < circleColorPartsToRemove; i++) {
 				circleColorParts.removeFirst();
@@ -259,7 +259,7 @@ public final class GuiHelper {
 		if (intensity != 0) {
 			final double r1 = shadowRadius > 0 ? shadowRadius : 0;
 			final double r2 = shadowRadius < 0 ? -shadowRadius : 0;
-			final int color = ColorHelper.withAlpha(0x11 * Math.abs(intensity), intensity > 0 ? BLACK_COLOR : WHITE_COLOR);
+			final int color = ARGB.color(0x11 * Math.abs(intensity), intensity > 0 ? BLACK_COLOR : WHITE_COLOR);
 			final int color1 = shadowRadius > 0 ? color : 0;
 			final int color2 = shadowRadius < 0 ? color : 0;
 			drawing.setVertices(x1 - r1, y1 - r1, z, x1 - r1, y2 + r1, z, x1 + r2, y2 - r2, z, x1 + r2, y1 + r2, z).setColor(color2, color2, color1, color1).draw();
@@ -276,28 +276,28 @@ public final class GuiHelper {
 	/**
 	 * Draws text (in a GUI) with the Minecraft font from double coordinates. No shadow is drawn.
 	 */
-	public static void drawText(DrawContext context, @Nullable String text, double x, double y, double z, int color) {
+	public static void drawText(GuiGraphics context, @Nullable String text, double x, double y, double z, int color) {
 		drawText(context, text, null, x, y, z, color);
 	}
 
 	/**
 	 * Draws text (in a GUI) with the Minecraft font from double coordinates. No shadow is drawn.
 	 */
-	public static void drawText(DrawContext context, @Nullable Text text, double x, double y, double z, int color) {
+	public static void drawText(GuiGraphics context, @Nullable Component text, double x, double y, double z, int color) {
 		drawText(context, null, text, x, y, z, color);
 	}
 
-	private static void drawText(DrawContext context, @Nullable String text1, @Nullable Text text2, double x, double y, double z, int color) {
-		if ((text1 != null || text2 != null) && ColorHelper.getAlpha(color) != 0) {
-			final MatrixStack matrixStack = context.getMatrices();
-			matrixStack.push();
+	private static void drawText(GuiGraphics context, @Nullable String text1, @Nullable Component text2, double x, double y, double z, int color) {
+		if ((text1 != null || text2 != null) && ARGB.alpha(color) != 0) {
+			final PoseStack matrixStack = context.pose();
+			matrixStack.pushPose();
 			matrixStack.translate(x, y, z);
 			if (text1 != null) {
-				context.drawText(MinecraftClient.getInstance().textRenderer, text1, 0, 0, color, false);
+				context.drawString(Minecraft.getInstance().font, text1, 0, 0, color, false);
 			} else {
-				context.drawText(MinecraftClient.getInstance().textRenderer, text2, 0, 0, color, false);
+				context.drawString(Minecraft.getInstance().font, text2, 0, 0, color, false);
 			}
-			matrixStack.pop();
+			matrixStack.popPose();
 		}
 	}
 

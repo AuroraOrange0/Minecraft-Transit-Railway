@@ -1,38 +1,38 @@
 package org.mtr.block;
 
-import net.minecraft.block.AbstractBlock;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.ShapeContext;
-import net.minecraft.item.ItemPlacementContext;
-import net.minecraft.state.StateManager;
-import net.minecraft.state.property.BooleanProperty;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.shape.VoxelShape;
-import net.minecraft.world.BlockView;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockBehaviour;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.BooleanProperty;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.VoxelShape;
 
 public class BlockCeiling extends BlockWaterloggable {
 
-	public static final BooleanProperty FACING = BooleanProperty.of("facing");
+	public static final BooleanProperty FACING = BooleanProperty.create("facing");
 
-	public BlockCeiling(AbstractBlock.Settings settings) {
+	public BlockCeiling(BlockBehaviour.Properties settings) {
 		super(settings);
 	}
 
 	@Override
-	public BlockState getPlacementState(ItemPlacementContext itemPlacementContext) {
-		return super.getPlacementState(itemPlacementContext).with(FACING, itemPlacementContext.getHorizontalPlayerFacing().getAxis() == Direction.Axis.X);
+	public BlockState getStateForPlacement(BlockPlaceContext itemPlacementContext) {
+		return super.getStateForPlacement(itemPlacementContext).setValue(FACING, itemPlacementContext.getHorizontalDirection().getAxis() == Direction.Axis.X);
 	}
 
 	@Override
-	public VoxelShape getOutlineShape(BlockState state, BlockView world, BlockPos pos, ShapeContext context) {
-		return Block.createCuboidShape(0, 7, 0, 16, 10, 16);
+	public VoxelShape getShape(BlockState state, BlockGetter world, BlockPos pos, CollisionContext context) {
+		return Block.box(0, 7, 0, 16, 10, 16);
 	}
 
 	@Override
-	protected void appendProperties(StateManager.Builder<Block, BlockState> builder) {
-		super.appendProperties(builder);
+	protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+		super.createBlockStateDefinition(builder);
 		builder.add(FACING);
 	}
 }

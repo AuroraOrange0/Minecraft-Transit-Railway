@@ -1,41 +1,41 @@
 package org.mtr.block;
 
-import net.minecraft.block.AbstractBlock;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.Item;
-import net.minecraft.state.StateManager;
-import net.minecraft.state.property.Properties;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.random.Random;
-import net.minecraft.world.World;
-import net.minecraft.world.WorldView;
-import net.minecraft.world.tick.ScheduledTickView;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.level.ScheduledTickAccess;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockBehaviour;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import org.mtr.registry.BlockEntityTypes;
 import org.mtr.registry.Items;
 
 public class BlockLiftDoorOdd extends BlockPSDAPGDoorBase implements TripleHorizontalBlock {
 
-	public BlockLiftDoorOdd(AbstractBlock.Settings settings) {
+	public BlockLiftDoorOdd(BlockBehaviour.Properties settings) {
 		super(settings);
 	}
 
 	@Override
-	protected BlockState getStateForNeighborUpdate(BlockState state, WorldView world, ScheduledTickView tickView, BlockPos pos, Direction direction, BlockPos neighborPos, BlockState neighborState, Random random) {
-		return TripleHorizontalBlock.getStateForNeighborUpdate(state, direction, neighborState.isOf(this), super.getStateForNeighborUpdate(state, world, tickView, pos, direction, neighborPos, neighborState, random));
+	protected BlockState updateShape(BlockState state, LevelReader world, ScheduledTickAccess tickView, BlockPos pos, Direction direction, BlockPos neighborPos, BlockState neighborState, RandomSource random) {
+		return TripleHorizontalBlock.updateShape(state, direction, neighborState.is(this), super.updateShape(state, world, tickView, pos, direction, neighborPos, neighborState, random));
 	}
 
 	@Override
-	public BlockState onBreak(World world, BlockPos pos, BlockState state, PlayerEntity player) {
-		TripleHorizontalBlock.onBreak(world, pos.down(IBlock.getStatePropertySafe(state, HALF) == DoubleBlockHalf.UPPER ? 1 : 0), state, player);
-		return super.onBreak(world, pos, state, player);
+	public BlockState playerWillDestroy(Level world, BlockPos pos, BlockState state, Player player) {
+		TripleHorizontalBlock.playerWillDestroy(world, pos.below(IBlock.getStatePropertySafe(state, HALF) == DoubleBlockHalf.UPPER ? 1 : 0), state, player);
+		return super.playerWillDestroy(world, pos, state, player);
 	}
 
 	@Override
-	public BlockEntity createBlockEntity(BlockPos blockPos, BlockState blockState) {
+	public BlockEntity newBlockEntity(BlockPos blockPos, BlockState blockState) {
 		return new LiftDoorOddBlockEntity(blockPos, blockState);
 	}
 
@@ -45,9 +45,9 @@ public class BlockLiftDoorOdd extends BlockPSDAPGDoorBase implements TripleHoriz
 	}
 
 	@Override
-	protected void appendProperties(StateManager.Builder<Block, BlockState> builder) {
+	protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
 		builder.add(END);
-		builder.add(Properties.HORIZONTAL_FACING);
+		builder.add(BlockStateProperties.HORIZONTAL_FACING);
 		builder.add(HALF);
 		builder.add(CENTER);
 		builder.add(SIDE);

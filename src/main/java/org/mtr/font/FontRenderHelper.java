@@ -1,13 +1,13 @@
 package org.mtr.font;
 
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.font.TextRenderer;
-import net.minecraft.client.render.VertexConsumerProvider;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.text.OrderedText;
-import net.minecraft.text.Style;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
+import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.Style;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.FormattedCharSequence;
 import org.jspecify.annotations.Nullable;
 import org.mtr.MTR;
 import org.mtr.data.IGui;
@@ -18,14 +18,14 @@ import java.awt.*;
 
 public final class FontRenderHelper {
 
-	public static final Identifier MTR_FONT = Identifier.of(MTR.MOD_ID, "mtr");
+	public static final ResourceLocation MTR_FONT = ResourceLocation.fromNamespaceAndPath(MTR.MOD_ID, "mtr");
 	private static final float LINE_SPACING = 0.25F;
 
-	public static FloatFloatImmutablePair render(@Nullable MatrixStack matrixStack, String text, FontRenderOptions fontRenderOptions) {
+	public static FloatFloatImmutablePair render(@Nullable PoseStack matrixStack, String text, FontRenderOptions fontRenderOptions) {
 		return render(matrixStack, null, text, fontRenderOptions);
 	}
 
-	public static FloatFloatImmutablePair render(@Nullable MatrixStack matrixStack, @Nullable VertexConsumerProvider vertexConsumerProvider, String text, FontRenderOptions fontRenderOptions) {
+	public static FloatFloatImmutablePair render(@Nullable PoseStack matrixStack, @Nullable MultiBufferSource vertexConsumerProvider, String text, FontRenderOptions fontRenderOptions) {
 		// Split lines
 		final String[] lines;
 		switch (fontRenderOptions.getLineBreak()) {
@@ -33,7 +33,7 @@ public final class FontRenderHelper {
 			case FORCE_ONE_LINE -> lines = new String[]{IGui.formatStationName(text)};
 			default -> lines = new String[0];
 		}
-		final OrderedText[] orderedTextArray = getOrderedTextArray(lines, fontRenderOptions.getFont());
+		final FormattedCharSequence[] orderedTextArray = getOrderedTextArray(lines, fontRenderOptions.getFont());
 
 		// Calculate dimensions
 		final float[] rawLineWidths = new float[orderedTextArray.length];
@@ -87,25 +87,25 @@ public final class FontRenderHelper {
 		return new FloatFloatImmutablePair(totalWidth, y);
 	}
 
-	private static float[] renderRaw(@Nullable MatrixStack matrixStack, @Nullable VertexConsumerProvider vertexConsumerProvider, OrderedText orderedText, float x, float y, float z, float xScale, float yScale, boolean isDefaultFont, boolean drawShadow, @Nullable Color color, int light) {
+	private static float[] renderRaw(@Nullable PoseStack matrixStack, @Nullable MultiBufferSource vertexConsumerProvider, FormattedCharSequence orderedText, float x, float y, float z, float xScale, float yScale, boolean isDefaultFont, boolean drawShadow, @Nullable Color color, int light) {
 		if (matrixStack != null && color != null) {
-			final VertexConsumerProvider newVertexConsumerProvider = vertexConsumerProvider == null ? MinecraftClient.getInstance().getBufferBuilders().getEntityVertexConsumers() : vertexConsumerProvider;
-			matrixStack.push();
+			final MultiBufferSource newVertexConsumerProvider = vertexConsumerProvider == null ? Minecraft.getInstance().renderBuffers().bufferSource() : vertexConsumerProvider;
+			matrixStack.pushPose();
 			matrixStack.translate(x, y, z);
 			matrixStack.scale(xScale / GuiHelper.MINECRAFT_FONT_SIZE, yScale / GuiHelper.MINECRAFT_FONT_SIZE, 1);
-			MinecraftClient.getInstance().textRenderer.draw(orderedText, isDefaultFont ? 0.5F : 0, 1, color.getRGB(), drawShadow, matrixStack.peek().getPositionMatrix(), newVertexConsumerProvider, TextRenderer.TextLayerType.NORMAL, 0, light);
-			matrixStack.pop();
+			Minecraft.getInstance().font.drawInBatch(orderedText, isDefaultFont ? 0.5F : 0, 1, color.getRGB(), drawShadow, matrixStack.last().pose(), newVertexConsumerProvider, Font.DisplayMode.NORMAL, 0, light);
+			matrixStack.popPose();
 		}
 
-		return new float[]{MinecraftClient.getInstance().textRenderer.getWidth(orderedText) * xScale / GuiHelper.MINECRAFT_FONT_SIZE, yScale * (1 + LINE_SPACING)};
+		return new float[]{Minecraft.getInstance().font.width(orderedText) * xScale / GuiHelper.MINECRAFT_FONT_SIZE, yScale * (1 + LINE_SPACING)};
 	}
 
-	private static OrderedText getOrderedText(String text, @Nullable Identifier font) {
-		return (font == null ? Text.literal(text) : Text.literal(text).setStyle(Style.EMPTY.withFont(font))).asOrderedText();
+	private static FormattedCharSequence getOrderedText(String text, @Nullable ResourceLocation font) {
+		return (font == null ? Component.literal(text) : Component.literal(text).setStyle(Style.EMPTY.withFont(font))).getVisualOrderText();
 	}
 
-	private static OrderedText[] getOrderedTextArray(String[] lines, @Nullable Identifier font) {
-		final OrderedText[] orderedText = new OrderedText[lines.length];
+	private static FormattedCharSequence[] getOrderedTextArray(String[] lines, @Nullable ResourceLocation font) {
+		final FormattedCharSequence[] orderedText = new FormattedCharSequence[lines.length];
 		for (int i = 0; i < lines.length; i++) {
 			orderedText[i] = getOrderedText(lines[i], font);
 		}

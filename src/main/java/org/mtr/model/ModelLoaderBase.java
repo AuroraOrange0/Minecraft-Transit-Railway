@@ -1,8 +1,8 @@
 package org.mtr.model;
 
-import net.minecraft.client.render.VertexFormat;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.Box;
+import com.mojang.blaze3d.vertex.VertexFormat;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.phys.AABB;
 import org.jspecify.annotations.Nullable;
 import org.mtr.libraries.it.unimi.dsi.fastutil.ints.IntIntImmutablePair;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
@@ -41,7 +41,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * <p><b>Threading:</b> {@link #addModel(String, NewOptimizedModelGroup)} and
  * {@link #addModelDisplayParts(String, ObjectArrayList)} may be called from any thread.
  * The {@code get(...)} methods must run on the render thread because they upload vertex
- * buffers via {@link NewOptimizedModelGroup#build(net.minecraft.client.render.VertexFormat.DrawMode)}.</p>
+ * buffers via {@link NewOptimizedModelGroup#build(com.mojang.blaze3d.vertex.VertexFormat.Mode)}.</p>
  */
 public abstract class ModelLoaderBase {
 
@@ -98,13 +98,13 @@ public abstract class ModelLoaderBase {
 	@Nullable
 	private Object2ObjectOpenHashMap<RenderStage, ObjectArrayList<NewOptimizedModel>> builtModel2;
 
-	protected final Identifier defaultTexture;
-	private final VertexFormat.DrawMode drawMode;
+	protected final ResourceLocation defaultTexture;
+	private final VertexFormat.Mode drawMode;
 
 	private final ConcurrentHashMap<String, NewOptimizedModelGroup> nameToNewOptimizedModelGroup = new ConcurrentHashMap<>();
 	private final ConcurrentHashMap<String, ObjectArrayList<ObjectObjectImmutablePair<StoredMatrixTransformations, IntIntImmutablePair>>> nameToRawModelDisplayParts = new ConcurrentHashMap<>();
 
-	protected ModelLoaderBase(Identifier defaultTexture, VertexFormat.DrawMode drawMode) {
+	protected ModelLoaderBase(ResourceLocation defaultTexture, VertexFormat.Mode drawMode) {
 		this.defaultTexture = defaultTexture;
 		this.drawMode = drawMode;
 	}
@@ -120,8 +120,8 @@ public abstract class ModelLoaderBase {
 			final Object2ObjectOpenHashMap<PartCondition, NewOptimizedModelGroup> rawModels = new Object2ObjectOpenHashMap<>();
 			final ObjectArrayList<ModelPropertiesPart.RawDoorModelDetails> rawDoorModelDetailsList = new ObjectArrayList<>();
 			final Object2ObjectOpenHashMap<PartCondition, ObjectArrayList<ModelDisplayPart>> displays = new Object2ObjectOpenHashMap<>();
-			final ObjectArrayList<Box> floors = new ObjectArrayList<>();
-			final ObjectArrayList<Box> doorways = new ObjectArrayList<>();
+			final ObjectArrayList<AABB> floors = new ObjectArrayList<>();
+			final ObjectArrayList<AABB> doorways = new ObjectArrayList<>();
 			modelProperties.iterateParts(modelPropertiesPart -> modelPropertiesPart.writeCache(nameToNewOptimizedModelGroup, nameToRawModelDisplayParts, positionDefinitions, rawModels, rawDoorModelDetailsList, displays, floors, doorways, modelProperties.getModelYOffset()));
 			builtModel1 = new BuiltVehicleModelHolder(modelProperties, get(rawModels), mapDoors(rawDoorModelDetailsList, doorways), displays, floors, doorways);
 		}
@@ -183,11 +183,11 @@ public abstract class ModelLoaderBase {
 	 */
 	private ObjectArrayList<BuiltVehicleModelHolder.BuiltDoorModelDetails> mapDoors(
 		ObjectArrayList<ModelPropertiesPart.RawDoorModelDetails> rawDoorModelDetailsList,
-		ObjectArrayList<Box> doorways
+		ObjectArrayList<AABB> doorways
 	) {
 		final ObjectArrayList<BuiltVehicleModelHolder.BuiltDoorModelDetails> builtDoorModelDetailsList = new ObjectArrayList<>();
 		rawDoorModelDetailsList.forEach(rawDoorModelDetails -> {
-			final Box closestDoorway = doorways.stream().min(Comparator.comparingDouble(checkDoorway -> rawDoorModelDetails.boxes().stream().map(box -> getClosestDistance(
+			final AABB closestDoorway = doorways.stream().min(Comparator.comparingDouble(checkDoorway -> rawDoorModelDetails.boxes().stream().map(box -> getClosestDistance(
 				box.minX,
 				box.maxX,
 				checkDoorway.minX,

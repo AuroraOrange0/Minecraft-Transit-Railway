@@ -1,11 +1,11 @@
 package org.mtr.render;
 
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.font.TextRenderer;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.render.RenderLayer;
-import net.minecraft.client.util.Window;
-import net.minecraft.client.util.math.MatrixStack;
+import com.mojang.blaze3d.platform.Window;
+import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.renderer.RenderType;
 import org.jspecify.annotations.Nullable;
 import org.mtr.client.VehicleRidingMovement;
 import org.mtr.core.data.Vehicle;
@@ -49,22 +49,22 @@ public final class DrivingGuiRenderer {
 	private static final int BLUE_COLOR = 0xFFAACCFF;
 	private static final int ORANGE_COLOR = 0xFFFF9900;
 
-	public static void render(DrawContext context) {
-		final MinecraftClient minecraftClient = MinecraftClient.getInstance();
-		if (vehicle != null && (minecraftClient.currentScreen == null || minecraftClient.currentScreen.getTitle().getString().contains("chat_screen.title")) && VehicleRidingMovement.getValidHoldingKey(vehicle.vehicleExtraData.getDepotId()) != null) {
+	public static void render(GuiGraphics context) {
+		final Minecraft minecraftClient = Minecraft.getInstance();
+		if (vehicle != null && (minecraftClient.screen == null || minecraftClient.screen.getTitle().getString().contains("chat_screen.title")) && VehicleRidingMovement.getValidHoldingKey(vehicle.vehicleExtraData.getDepotId()) != null) {
 			final VehicleExtraData vehicleExtraData = vehicle.vehicleExtraData;
 			final Window window = minecraftClient.getWindow();
-			final int speedometerX = window.getScaledWidth() - TOOL_SIZE - EDGE_PADDING;
-			final int speedometerY = window.getScaledHeight() - TOOL_SIZE - EDGE_PADDING;
+			final int speedometerX = window.getGuiScaledWidth() - TOOL_SIZE - EDGE_PADDING;
+			final int speedometerY = window.getGuiScaledHeight() - TOOL_SIZE - EDGE_PADDING;
 			final int radius = TOOL_SIZE / 2;
 
-			final MatrixStack matrixStack = context.getMatrices();
-			matrixStack.push();
+			final PoseStack matrixStack = context.pose();
+			matrixStack.pushPose();
 			matrixStack.translate(speedometerX + radius, speedometerY + radius, 0);
-			final Drawing drawing1 = new Drawing(matrixStack, RenderLayer.getGui());
+			final Drawing drawing1 = new Drawing(matrixStack, RenderType.gui());
 
 			// Render speedometer background
-			matrixStack.push();
+			matrixStack.pushPose();
 			for (int i = 0; i < 180; i += SPEEDOMETER_CIRCLE_INTERVAL) {
 				drawing1.setVertices(
 					-radius, -(float) SPEEDOMETER_CIRCLE_EDGE_LENGTH / 2,
@@ -76,10 +76,10 @@ public final class DrivingGuiRenderer {
 				).setColor(0xFF111111).draw();
 				Drawing.rotateZDegrees(matrixStack, SPEEDOMETER_CIRCLE_INTERVAL);
 			}
-			matrixStack.pop();
+			matrixStack.popPose();
 
 			// Draw ATS background
-			matrixStack.push();
+			matrixStack.pushPose();
 			matrixStack.translate(0, radius - 2 - ATS_RADIUS_1, 0);
 			Drawing.rotateZDegrees(matrixStack, ATS_INTERVAL * 2.5F);
 			for (float i = 0; i < ATS_SLICES; i++) {
@@ -117,10 +117,10 @@ public final class DrivingGuiRenderer {
 				}
 				Drawing.rotateZDegrees(matrixStack, ATS_INTERVAL);
 			}
-			matrixStack.pop();
+			matrixStack.popPose();
 
 			// Draw speedometer ticks
-			matrixStack.push();
+			matrixStack.pushPose();
 			final int maxSpeedKilometersPerHour = vehicleExtraData.getIsManualAllowed() ? (int) Math.round(vehicleExtraData.getMaxManualSpeed() * 3600) : RailType.DIAMOND.speedLimit;
 			Drawing.rotateZDegrees(matrixStack, SPEEDOMETER_START_ANGLE);
 			for (int i = 0; i <= maxSpeedKilometersPerHour; i += SPEEDOMETER_TICK_INTERVAL) {
@@ -130,24 +130,24 @@ public final class DrivingGuiRenderer {
 				).setColor(vehicle.getSpeedLimitKilometersPerHour() > 0 && i == Math.min(vehicle.getSpeedLimitKilometersPerHour(), maxSpeedKilometersPerHour) ? 0xFF00FF00 : IGui.ARGB_WHITE).draw();
 				Drawing.rotateZDegrees(matrixStack, (float) SPEEDOMETER_TICK_INTERVAL * SPEEDOMETER_SPAN / maxSpeedKilometersPerHour);
 			}
-			matrixStack.pop();
+			matrixStack.popPose();
 
 			// Draw speedometer labels
-			matrixStack.push();
+			matrixStack.pushPose();
 			Drawing.rotateZDegrees(matrixStack, SPEEDOMETER_START_ANGLE);
 			for (int i = 0; i <= maxSpeedKilometersPerHour; i += SPEEDOMETER_TICK_INTERVAL * 4) {
-				matrixStack.push();
+				matrixStack.pushPose();
 				matrixStack.translate(-radius + 10 + IGui.LINE_HEIGHT / 2F, 0, 0);
 				Drawing.rotateZDegrees(matrixStack, -SPEEDOMETER_START_ANGLE - (float) i * SPEEDOMETER_SPAN / maxSpeedKilometersPerHour);
 				matrixStack.scale(0.5F, 0.5F, 1);
 				drawCenteredText(context, String.valueOf(i), IGui.ARGB_WHITE);
-				matrixStack.pop();
+				matrixStack.popPose();
 				Drawing.rotateZDegrees(matrixStack, (float) SPEEDOMETER_TICK_INTERVAL * 4 * SPEEDOMETER_SPAN / maxSpeedKilometersPerHour);
 			}
-			matrixStack.pop();
+			matrixStack.popPose();
 
 			// Draw power level
-			matrixStack.push();
+			matrixStack.pushPose();
 			matrixStack.translate(-radius * 0.3F, -TOOL_SIZE * 0.05F - SMALL_LINE_SPACING, 0);
 			final int notch = vehicleExtraData.getPowerLevel();
 			final int notchColor = notch < -Vehicle.MAX_POWER_LEVEL ? 0xFFFF0000 : (notch < 0 ? ORANGE_COLOR : (notch > 0 ? BLUE_COLOR : IGui.ARGB_WHITE));
@@ -157,25 +157,25 @@ public final class DrivingGuiRenderer {
 				matrixStack.scale(0.5F, 0.5F, 1);
 				drawCenteredText(context, String.format("(%s%%)", Math.abs(notch) * 100 / Vehicle.POWER_LEVEL_RATIO), notchColor);
 			}
-			matrixStack.pop();
+			matrixStack.popPose();
 
 			// Draw ATO status
-			matrixStack.push();
+			matrixStack.pushPose();
 			matrixStack.translate(0, -TOOL_SIZE * 0.15F - SMALL_LINE_SPACING, 0);
 			drawCenteredText(context, "ATO", vehicleExtraData.getIsCurrentlyManual() ? 0xFF222222 : 0xFF00FF00);
-			matrixStack.pop();
+			matrixStack.popPose();
 
 			// Draw door status
-			matrixStack.push();
+			matrixStack.pushPose();
 			matrixStack.translate(radius * 0.3F, -TOOL_SIZE * 0.05F - SMALL_LINE_SPACING, 0);
 			drawCenteredText(context, vehicleExtraData.getDoorMultiplier() > 0 ? "DO" : "DC", IGui.ARGB_WHITE);
 			matrixStack.translate(0, SMALL_LINE_SPACING, 0);
 			matrixStack.scale(0.5F, 0.5F, 1);
 			drawCenteredText(context, String.format("(%s%%)", (int) Math.round(vehicle.persistentVehicleData.getDoorValue() * 100)), IGui.ARGB_WHITE);
-			matrixStack.pop();
+			matrixStack.popPose();
 
 			// Draw digital speed
-			matrixStack.push();
+			matrixStack.pushPose();
 			matrixStack.translate(0, TOOL_SIZE * 0.1F, 0);
 			final double speedKilometersPerHour = vehicle.getSpeed() * 3600;
 			final int speedColor = vehicle.getSpeedLimitKilometersPerHour() > 0 && speedKilometersPerHour > vehicle.getSpeedLimitKilometersPerHour() ? ORANGE_COLOR : IGui.ARGB_WHITE;
@@ -183,42 +183,42 @@ public final class DrivingGuiRenderer {
 			matrixStack.translate(0, SMALL_LINE_SPACING, 0);
 			matrixStack.scale(0.5F, 0.5F, 1);
 			drawCenteredText(context, "km/h", speedColor);
-			matrixStack.pop();
+			matrixStack.popPose();
 
 			// Draw speedometer needle
-			matrixStack.push();
+			matrixStack.pushPose();
 			Drawing.rotateZDegrees(matrixStack, SPEEDOMETER_START_ANGLE + (float) speedKilometersPerHour * SPEEDOMETER_SPAN / maxSpeedKilometersPerHour);
-			new Drawing(matrixStack, RenderLayer.getGui()).setVertices(
+			new Drawing(matrixStack, RenderType.gui()).setVertices(
 				-radius + 4, -0.5F,
 				0, 0.5F
 			).setColor(0xFFFF0000).draw();
-			matrixStack.pop();
+			matrixStack.popPose();
 
-			matrixStack.pop();
+			matrixStack.popPose();
 
 			// Draw platform stopping indicator
 			final DoubleObjectImmutablePair<DoubleDoubleImmutablePair> platformStoppingDetails = vehicle.getPlatformStoppingDetails();
 			if (platformStoppingDetails != null) {
 				final double platformLength = platformStoppingDetails.right().leftDouble();
 				final double vehicleLength = platformStoppingDetails.right().rightDouble();
-				final int platformIndicatorX = window.getScaledWidth() - EDGE_PADDING - PLATFORM_BAR_SIZE;
-				final int platformIndicatorY = window.getScaledHeight() - TOOL_SIZE * 2 - EDGE_PADDING - PADDING;
+				final int platformIndicatorX = window.getGuiScaledWidth() - EDGE_PADDING - PLATFORM_BAR_SIZE;
+				final int platformIndicatorY = window.getGuiScaledHeight() - TOOL_SIZE * 2 - EDGE_PADDING - PADDING;
 				final double targetY = vehicleLength / (platformLength + vehicleLength) * (TOOL_SIZE - 1);
 				final double positionY = (vehicleLength + platformStoppingDetails.leftDouble()) / (platformLength + vehicleLength) * (TOOL_SIZE - 1);
-				final TextRenderer textRenderer = minecraftClient.textRenderer;
+				final Font textRenderer = minecraftClient.font;
 
-				final Drawing drawing2 = new Drawing(matrixStack, RenderLayer.getGui());
+				final Drawing drawing2 = new Drawing(matrixStack, RenderType.gui());
 				drawing2.setVertices(platformIndicatorX, platformIndicatorY, platformIndicatorX + PLATFORM_BAR_SIZE, platformIndicatorY + TOOL_SIZE).setColor(BLUE_COLOR).draw();
 				drawing2.setVertices(platformIndicatorX, platformIndicatorY + (float) targetY, platformIndicatorX + PLATFORM_BAR_SIZE, platformIndicatorY + (float) targetY + 1).setColor(0xFF001F4D).draw();
 				drawing2.setVertices(platformIndicatorX, platformIndicatorY + (float) positionY, platformIndicatorX + PLATFORM_BAR_SIZE, platformIndicatorY + (float) positionY + 1).setColor(0xFFFF0000).draw();
 
 				final String text = Utilities.round(platformStoppingDetails.leftDouble(), 1) + " m";
-				final int textWidth = textRenderer.getWidth(text);
-				matrixStack.push();
+				final int textWidth = textRenderer.width(text);
+				matrixStack.pushPose();
 				matrixStack.translate(platformIndicatorX - PADDING / 2F, platformIndicatorY + positionY + 0.5, 0);
 				matrixStack.scale(0.5F, 0.5F, 1);
-				context.drawText(textRenderer, text, -textWidth, -IGui.TEXT_HEIGHT / 2, IGui.ARGB_WHITE, true);
-				matrixStack.pop();
+				context.drawString(textRenderer, text, -textWidth, -IGui.TEXT_HEIGHT / 2, IGui.ARGB_WHITE, true);
+				matrixStack.popPose();
 			}
 		}
 
@@ -229,8 +229,8 @@ public final class DrivingGuiRenderer {
 		DrivingGuiRenderer.vehicle = vehicle;
 	}
 
-	private static void drawCenteredText(DrawContext context, String text, int color) {
-		final TextRenderer textRenderer = MinecraftClient.getInstance().textRenderer;
-		context.drawText(textRenderer, text, -textRenderer.getWidth(text) / 2, -IGui.TEXT_HEIGHT / 2, color, false);
+	private static void drawCenteredText(GuiGraphics context, String text, int color) {
+		final Font textRenderer = Minecraft.getInstance().font;
+		context.drawString(textRenderer, text, -textRenderer.width(text) / 2, -IGui.TEXT_HEIGHT / 2, color, false);
 	}
 }

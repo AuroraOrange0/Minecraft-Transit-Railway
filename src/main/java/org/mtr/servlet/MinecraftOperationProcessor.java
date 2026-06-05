@@ -1,9 +1,8 @@
 package org.mtr.servlet;
 
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.player.Player;
 import org.mtr.core.operation.DynamicDataResponse;
 import org.mtr.core.operation.PlayerPresentResponse;
 import org.mtr.core.operation.UpdateDataResponse;
@@ -15,15 +14,15 @@ import org.mtr.registry.RegistryServer;
 
 public final class MinecraftOperationProcessor {
 
-	public static void process(QueueObject queueObject, ServerWorld serverWorld, String dimension) {
+	public static void process(QueueObject queueObject, ServerLevel serverWorld, String dimension) {
 		switch (queueObject.key) {
 			case OperationProcessor.VEHICLES_LIFTS:
 				if (queueObject.data instanceof DynamicDataResponse) {
-					final PlayerEntity playerEntity = serverWorld.getPlayerByUuid(((DynamicDataResponse) queueObject.data).uuid);
+					final Player playerEntity = serverWorld.getPlayerByUUID(((DynamicDataResponse) queueObject.data).uuid);
 					if (playerEntity == null) {
 						queueObject.runCallback(new PlayerPresentResponse(""));
 					} else {
-						RegistryServer.sendPacketToClient((ServerPlayerEntity) playerEntity, new PacketUpdateDynamicData((DynamicDataResponse) queueObject.data));
+						RegistryServer.sendPacketToClient((ServerPlayer) playerEntity, new PacketUpdateDynamicData((DynamicDataResponse) queueObject.data));
 						queueObject.runCallback(new PlayerPresentResponse(dimension));
 					}
 				}

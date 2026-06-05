@@ -1,18 +1,18 @@
 package org.mtr.data;
 
 import lombok.Getter;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.client.world.ClientWorld;
-import net.minecraft.text.MutableText;
-import net.minecraft.text.Style;
-import net.minecraft.text.Text;
-import net.minecraft.text.TextColor;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.chat.Style;
+import net.minecraft.network.chat.TextColor;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
 import org.jspecify.annotations.Nullable;
 import org.mtr.block.BlockTrainAnnouncer;
 import org.mtr.block.BlockTrainRedstoneSensor;
@@ -75,9 +75,9 @@ public class VehicleExtension extends Vehicle implements Utilities {
 		oldSpeed = speed;
 		simulate(millisElapsed, null, null);
 		persistentVehicleData.tick(railProgress, millisElapsed, vehicleExtraData);
-		final MinecraftClient minecraftClient = MinecraftClient.getInstance();
-		final ClientWorld clientWorld = minecraftClient.world;
-		final ClientPlayerEntity clientPlayerEntity = minecraftClient.player;
+		final Minecraft minecraftClient = Minecraft.getInstance();
+		final ClientLevel clientWorld = minecraftClient.level;
+		final LocalPlayer clientPlayerEntity = minecraftClient.player;
 
 		if (clientWorld == null || clientPlayerEntity == null) {
 			return;
@@ -97,9 +97,9 @@ public class VehicleExtension extends Vehicle implements Utilities {
 			// Render client action bar floating text
 			if (VehicleRidingMovement.showShiftProgressBar()) {
 				if (speed * MILLIS_PER_SECOND > 5 || thisRouteName.isEmpty() || thisStationName.isEmpty() || thisRouteDestination.isEmpty()) {
-					clientPlayerEntity.sendMessage(TranslationProvider.GUI_MTR_VEHICLE_SPEED.getText(Utilities.round(speed * MILLIS_PER_SECOND, 1), Utilities.round(speed * 3.6F * MILLIS_PER_SECOND, 1)), true);
+					clientPlayerEntity.displayClientMessage(TranslationProvider.GUI_MTR_VEHICLE_SPEED.getText(Utilities.round(speed * MILLIS_PER_SECOND, 1), Utilities.round(speed * 3.6F * MILLIS_PER_SECOND, 1)), true);
 				} else {
-					final MutableText text;
+					final MutableComponent text;
 					switch ((int) ((System.currentTimeMillis() / 1000) % 3)) {
 						case 1:
 							if (nextStationName.isEmpty()) {
@@ -120,7 +120,7 @@ public class VehicleExtension extends Vehicle implements Utilities {
 							text = getStationText(thisStationName, TranslationProvider.GUI_MTR_THIS_STATION_CJK, TranslationProvider.GUI_MTR_THIS_STATION);
 							break;
 					}
-					clientPlayerEntity.sendMessage(text, true);
+					clientPlayerEntity.displayClientMessage(text, true);
 				}
 			}
 
@@ -129,18 +129,18 @@ public class VehicleExtension extends Vehicle implements Utilities {
 				RegistryClient.sendPacketToServer(new PacketCheckRouteIdHasDisabledAnnouncements(thisRouteId, routeIdHasDisabledAnnouncements -> {
 					if (!routeIdHasDisabledAnnouncements) {
 						final ObjectArrayList<String> narrateText = new ObjectArrayList<>();
-						final ObjectArrayList<MutableText> chatText = new ObjectArrayList<>();
+						final ObjectArrayList<MutableComponent> chatText = new ObjectArrayList<>();
 
 						if (!nextStationName.isEmpty()) {
 							final String nextStationFormatted = IGui.insertTranslation(TranslationProvider.GUI_MTR_NEXT_STATION_ANNOUNCEMENT_CJK, TranslationProvider.GUI_MTR_NEXT_STATION_ANNOUNCEMENT, 1, nextStationName);
 							narrateText.add(nextStationFormatted);
-							chatText.add(Text.literal(IGui.formatStationName(nextStationFormatted)));
+							chatText.add(Component.literal(IGui.formatStationName(nextStationFormatted)));
 						}
 
 						final ObjectArrayList<String> narrateTextThisStation = new ObjectArrayList<>();
 						final ObjectArrayList<String> narrateTextOtherStations = new ObjectArrayList<>();
-						final ObjectArrayList<MutableText> chatTextThisStation = new ObjectArrayList<>();
-						final ObjectArrayList<MutableText> chatTextOtherStations = new ObjectArrayList<>();
+						final ObjectArrayList<MutableComponent> chatTextThisStation = new ObjectArrayList<>();
+						final ObjectArrayList<MutableComponent> chatTextOtherStations = new ObjectArrayList<>();
 
 						vehicleExtraData.iterateInterchanges((stationName, interchangeColors) -> {
 							final ObjectArrayList<String> combinedRouteNames = new ObjectArrayList<>();
@@ -155,14 +155,14 @@ public class VehicleExtension extends Vehicle implements Utilities {
 									final String routeNameFormatted = formatRouteName(routeName);
 									if (!routeName.isEmpty() && !visitedRouteNames.contains(routeNameFormatted) && (color != thisRouteColor || !routeNameFormatted.equals(thisRouteName)) && (color != nextRouteColor || !routeNameFormatted.equals(nextRouteName))) {
 										if (!isThisStation && !addedStationName[0]) {
-											chatTextOtherStations.add(Text.literal(IGui.formatStationName(IGui.insertTranslation(TranslationProvider.GUI_MTR_CONNECTING_STATION_ANNOUNCEMENT_CJK, TranslationProvider.GUI_MTR_CONNECTING_STATION_ANNOUNCEMENT, 1, stationName))));
+											chatTextOtherStations.add(Component.literal(IGui.formatStationName(IGui.insertTranslation(TranslationProvider.GUI_MTR_CONNECTING_STATION_ANNOUNCEMENT_CJK, TranslationProvider.GUI_MTR_CONNECTING_STATION_ANNOUNCEMENT, 1, stationName))));
 										}
 
 										if (!globalVisitedRouteNames.contains(routeNameFormatted)) {
 											combinedRouteNames.add(routeNameFormatted);
 										}
 
-										(isThisStation ? chatTextThisStation : chatTextOtherStations).add(Text.literal("-").setStyle(Style.EMPTY.withColor(TextColor.fromRgb(color))).append(Text.literal(" " + IGui.formatStationName(routeNameFormatted)).setStyle(Style.EMPTY.withColor(Formatting.WHITE))));
+										(isThisStation ? chatTextThisStation : chatTextOtherStations).add(Component.literal("-").setStyle(Style.EMPTY.withColor(TextColor.fromRgb(color))).append(Component.literal(" " + IGui.formatStationName(routeNameFormatted)).setStyle(Style.EMPTY.withColor(ChatFormatting.WHITE))));
 
 										addedStationName[0] = true;
 										globalVisitedRouteNames.add(routeNameFormatted);
@@ -187,7 +187,7 @@ public class VehicleExtension extends Vehicle implements Utilities {
 
 						if (!nextRouteName.isEmpty() && (nextRouteColor != thisRouteColor || !nextRouteName.equals(thisRouteName))) {
 							final String changeRouteText = IGui.insertTranslation(TranslationProvider.GUI_MTR_NEXT_ROUTE_TRAIN_ANNOUNCEMENT_CJK, TranslationProvider.GUI_MTR_NEXT_ROUTE_TRAIN_ANNOUNCEMENT, 2, nextRouteName, nextRouteDestination);
-							chatText.add(Text.literal("*").setStyle(Style.EMPTY.withColor(TextColor.fromRgb(nextRouteColor))).append(Text.literal(" " + IGui.formatStationName(changeRouteText)).setStyle(Style.EMPTY.withColor(Formatting.WHITE))));
+							chatText.add(Component.literal("*").setStyle(Style.EMPTY.withColor(TextColor.fromRgb(nextRouteColor))).append(Component.literal(" " + IGui.formatStationName(changeRouteText)).setStyle(Style.EMPTY.withColor(ChatFormatting.WHITE))));
 							narrateText.add(changeRouteText);
 						}
 
@@ -204,7 +204,7 @@ public class VehicleExtension extends Vehicle implements Utilities {
 		for (int xOffset = -1; xOffset <= 1; xOffset++) {
 			for (int yOffset = -1; yOffset <= 1; yOffset++) {
 				for (int zOffset = -1; zOffset <= 1; zOffset++) {
-					final BlockPos offsetBlockPos = BlockPos.ofFloored(headPosition.x() + xOffset, headPosition.y() + yOffset, headPosition.z() + zOffset);
+					final BlockPos offsetBlockPos = BlockPos.containing(headPosition.x() + xOffset, headPosition.y() + yOffset, headPosition.z() + zOffset);
 					final BlockState blockState = clientWorld.getBlockState(offsetBlockPos);
 					final Block block = blockState.getBlock();
 					if (BlockTrainSensorBase.matchesFilter(clientWorld, offsetBlockPos, thisRouteId, speed)) {
@@ -297,11 +297,11 @@ public class VehicleExtension extends Vehicle implements Utilities {
 	}
 
 	public void playMotorSound(VehicleResource vehicleResource, int carNumber, Vector bogiePosition) {
-		persistentVehicleData.playMotorSound(vehicleResource, carNumber, BlockPos.ofFloored(bogiePosition.x(), bogiePosition.y(), bogiePosition.z()), (float) speed, (float) (speed - oldSpeed), (float) vehicleExtraData.getAcceleration(), getIsOnRoute());
+		persistentVehicleData.playMotorSound(vehicleResource, carNumber, BlockPos.containing(bogiePosition.x(), bogiePosition.y(), bogiePosition.z()), (float) speed, (float) (speed - oldSpeed), (float) vehicleExtraData.getAcceleration(), getIsOnRoute());
 	}
 
 	public void playDoorSound(VehicleResource vehicleResource, int carNumber, Vector vehiclePosition) {
-		persistentVehicleData.playDoorSound(vehicleResource, carNumber, BlockPos.ofFloored(vehiclePosition.x(), vehiclePosition.y(), vehiclePosition.z()));
+		persistentVehicleData.playDoorSound(vehicleResource, carNumber, BlockPos.containing(vehiclePosition.x(), vehiclePosition.y(), vehiclePosition.z()));
 	}
 
 	public double getSpeed() {
@@ -317,8 +317,8 @@ public class VehicleExtension extends Vehicle implements Utilities {
 		return platformStoppingDetails;
 	}
 
-	private static MutableText getStationText(String text, TranslationProvider.TranslationHolder keyCjk, TranslationProvider.TranslationHolder key) {
-		return Text.literal(text.isEmpty() ? "" : IGui.formatStationName(IGui.insertTranslation(keyCjk, key, 1, IGui.textOrUntitled(text))));
+	private static MutableComponent getStationText(String text, TranslationProvider.TranslationHolder keyCjk, TranslationProvider.TranslationHolder key) {
+		return Component.literal(text.isEmpty() ? "" : IGui.formatStationName(IGui.insertTranslation(keyCjk, key, 1, IGui.textOrUntitled(text))));
 	}
 
 	private static String formatRouteName(String routeName) {

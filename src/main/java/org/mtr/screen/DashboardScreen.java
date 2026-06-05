@@ -1,14 +1,14 @@
 package org.mtr.screen;
 
 import gg.essential.universal.UMinecraft;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.render.RenderLayer;
-import net.minecraft.text.OrderedText;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.Util;
-import net.minecraft.util.math.ColorHelper;
+import net.minecraft.Util;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.ARGB;
+import net.minecraft.util.FormattedCharSequence;
 import org.jspecify.annotations.Nullable;
 import org.mtr.MTRClient;
 import org.mtr.client.MinecraftClientData;
@@ -82,14 +82,14 @@ public final class DashboardScreen extends ScreenBase {
 	private final BetterTextFieldWidget depotNameTextField;
 	private final BetterTextFieldWidget routeDestinationTextField;
 
-	private final BetterButtonWidget transportSystemMapButton = new BetterButtonWidget(GuiHelper.MAP_TEXTURE_ID, null, GuiHelper.DEFAULT_LINE_SIZE, () -> Util.getOperatingSystem().open(String.format("http://localhost:%s", MTRClient.getServerPort())));
-	private final BetterButtonWidget resourcePackCreatorButton = new BetterButtonWidget(GuiHelper.EDITOR_TEXTURE_ID, null, GuiHelper.DEFAULT_LINE_SIZE, () -> Util.getOperatingSystem().open(String.format("http://localhost:%s/creator/", MTRClient.getServerPort())));
+	private final BetterButtonWidget transportSystemMapButton = new BetterButtonWidget(GuiHelper.MAP_TEXTURE_ID, null, GuiHelper.DEFAULT_LINE_SIZE, () -> Util.getPlatform().openUri(String.format("http://localhost:%s", MTRClient.getServerPort())));
+	private final BetterButtonWidget resourcePackCreatorButton = new BetterButtonWidget(GuiHelper.EDITOR_TEXTURE_ID, null, GuiHelper.DEFAULT_LINE_SIZE, () -> Util.getPlatform().openUri(String.format("http://localhost:%s/creator/", MTRClient.getServerPort())));
 	private final BetterButtonWidget optionsButton = new BetterButtonWidget(GuiHelper.SETTINGS_TEXTURE_ID, null, GuiHelper.DEFAULT_LINE_SIZE, () -> UMinecraft.setCurrentScreenObj(new ConfigScreen(this)));
 	private final BetterButtonWidget zoomInButton;
 	private final BetterButtonWidget zoomOutButton;
 
-	private final ObjectImmutableList<OrderedText> editAreaText;
-	private final ObjectImmutableList<OrderedText> editRouteText;
+	private final ObjectImmutableList<FormattedCharSequence> editAreaText;
+	private final ObjectImmutableList<FormattedCharSequence> editRouteText;
 
 	private static String STATIONS_SEARCH_TEXT = "";
 	private static String ROUTES_SEARCH_TEXT = "";
@@ -124,10 +124,10 @@ public final class DashboardScreen extends ScreenBase {
 		addRouteButton = new BetterButtonWidget(GuiHelper.ADD_TEXTURE_ID, TranslationProvider.GUI_MTR_ADD_ROUTE.getString(), tabGroupWidget.getWidth(), () -> startEditingDataNew(new Route(transportMode, MinecraftClientData.getDashboardInstance())));
 		addDepotButton = new BetterButtonWidget(GuiHelper.ADD_TEXTURE_ID, TranslationProvider.GUI_MTR_ADD_DEPOT.getString(), tabGroupWidget.getWidth(), () -> startEditingDataNew(new Depot(transportMode, MinecraftClientData.getDashboardInstance())));
 
-		doneEditingStationButton = new BetterButtonWidget(GuiHelper.CHECK_TEXTURE_ID, Text.translatable("gui.done").getString(), tabGroupWidget.getWidth(), this::stopEditing);
-		doneEditingRouteButton = new BetterButtonWidget(GuiHelper.CHECK_TEXTURE_ID, Text.translatable("gui.done").getString(), tabGroupWidget.getWidth(), this::stopEditing);
-		doneEditingDepotButton = new BetterButtonWidget(GuiHelper.CHECK_TEXTURE_ID, Text.translatable("gui.done").getString(), tabGroupWidget.getWidth(), this::stopEditing);
-		doneEditingRouteDestinationButton = new BetterButtonWidget(GuiHelper.CHECK_TEXTURE_ID, Text.translatable("gui.done").getString(), tabGroupWidget.getWidth(), this::onDoneEditingRouteDestination);
+		doneEditingStationButton = new BetterButtonWidget(GuiHelper.CHECK_TEXTURE_ID, Component.translatable("gui.done").getString(), tabGroupWidget.getWidth(), this::stopEditing);
+		doneEditingRouteButton = new BetterButtonWidget(GuiHelper.CHECK_TEXTURE_ID, Component.translatable("gui.done").getString(), tabGroupWidget.getWidth(), this::stopEditing);
+		doneEditingDepotButton = new BetterButtonWidget(GuiHelper.CHECK_TEXTURE_ID, Component.translatable("gui.done").getString(), tabGroupWidget.getWidth(), this::stopEditing);
+		doneEditingRouteDestinationButton = new BetterButtonWidget(GuiHelper.CHECK_TEXTURE_ID, Component.translatable("gui.done").getString(), tabGroupWidget.getWidth(), this::onDoneEditingRouteDestination);
 
 		stationNameTextField = new BetterTextFieldWidget("", 256, TextCase.DEFAULT, null, TranslationProvider.GUI_MTR_STATION_NAME.getString(), tabGroupWidget.getWidth() - GuiHelper.DEFAULT_PADDING * 3 - GuiHelper.DEFAULT_LINE_SIZE, text -> {
 			if (editingArea != null) {
@@ -151,9 +151,9 @@ public final class DashboardScreen extends ScreenBase {
 		zoomOutButton = new BetterButtonWidget(GuiHelper.ZOOM_OUT_TEXTURE_ID, null, GuiHelper.DEFAULT_LINE_SIZE, () -> mapWidget.scale(-1));
 
 		tabGroupWidget.selectTab(0);
-		textRenderer = MinecraftClient.getInstance().textRenderer;
-		editAreaText = new ObjectImmutableList<>(textRenderer.wrapLines(TranslationProvider.GUI_MTR_EDIT_AREA.getText(), tabGroupWidget.getWidth() - GuiHelper.DEFAULT_PADDING * 2));
-		editRouteText = new ObjectImmutableList<>(textRenderer.wrapLines(TranslationProvider.GUI_MTR_EDIT_ROUTE.getText(), tabGroupWidget.getWidth() - GuiHelper.DEFAULT_PADDING * 2));
+		font = Minecraft.getInstance().font;
+		editAreaText = new ObjectImmutableList<>(font.split(TranslationProvider.GUI_MTR_EDIT_AREA.getText(), tabGroupWidget.getWidth() - GuiHelper.DEFAULT_PADDING * 2));
+		editRouteText = new ObjectImmutableList<>(font.split(TranslationProvider.GUI_MTR_EDIT_ROUTE.getText(), tabGroupWidget.getWidth() - GuiHelper.DEFAULT_PADDING * 2));
 	}
 
 	@SuppressWarnings("DuplicatedCode")
@@ -162,7 +162,7 @@ public final class DashboardScreen extends ScreenBase {
 		super.init();
 
 		mapWidget.setPosition(tabGroupWidget.getWidth(), GuiHelper.DEFAULT_LINE_SIZE);
-		mapWidget.setDimensions(width - tabGroupWidget.getWidth(), height - GuiHelper.DEFAULT_LINE_SIZE);
+		mapWidget.setSize(width - tabGroupWidget.getWidth(), height - GuiHelper.DEFAULT_LINE_SIZE);
 
 		final int listY1 = GuiHelper.DEFAULT_LINE_SIZE * 2 + GuiHelper.DEFAULT_PADDING * 2;
 		final int listY2 = GuiHelper.DEFAULT_LINE_SIZE + GuiHelper.DEFAULT_PADDING * 2 + (editAreaText.size() - 1) * GuiHelper.MINECRAFT_TEXT_LINE_HEIGHT + GuiHelper.MINECRAFT_FONT_SIZE;
@@ -211,72 +211,72 @@ public final class DashboardScreen extends ScreenBase {
 		zoomInButton.setX(width - GuiHelper.DEFAULT_LINE_SIZE * 2);
 		zoomOutButton.setX(width - GuiHelper.DEFAULT_LINE_SIZE);
 
-		addDrawableChild(mapWidget);
-		addDrawableChild(tabGroupWidget);
+		addRenderableWidget(mapWidget);
+		addRenderableWidget(tabGroupWidget);
 
-		addDrawableChild(stationsListWidget);
-		addDrawableChild(stationPlatformsListWidget);
-		addDrawableChild(routesListWidget);
-		addDrawableChild(routePlatformsListWidget);
-		addDrawableChild(depotsListWidget);
-		addDrawableChild(depotSidingsListWidget);
+		addRenderableWidget(stationsListWidget);
+		addRenderableWidget(stationPlatformsListWidget);
+		addRenderableWidget(routesListWidget);
+		addRenderableWidget(routePlatformsListWidget);
+		addRenderableWidget(depotsListWidget);
+		addRenderableWidget(depotSidingsListWidget);
 
-		addDrawableChild(stationsFilterTextField);
-		addDrawableChild(routesFilterTextField);
-		addDrawableChild(depotsFilterTextField);
+		addRenderableWidget(stationsFilterTextField);
+		addRenderableWidget(routesFilterTextField);
+		addRenderableWidget(depotsFilterTextField);
 
-		addDrawableChild(expandAllButton);
-		addDrawableChild(collapseAllButton);
-		addDrawableChild(openColorSelectorButton);
+		addRenderableWidget(expandAllButton);
+		addRenderableWidget(collapseAllButton);
+		addRenderableWidget(openColorSelectorButton);
 
-		addDrawableChild(addStationButton);
-		addDrawableChild(addRouteButton);
-		addDrawableChild(addDepotButton);
+		addRenderableWidget(addStationButton);
+		addRenderableWidget(addRouteButton);
+		addRenderableWidget(addDepotButton);
 
-		addDrawableChild(doneEditingStationButton);
-		addDrawableChild(doneEditingRouteButton);
-		addDrawableChild(doneEditingDepotButton);
-		addDrawableChild(doneEditingRouteDestinationButton);
+		addRenderableWidget(doneEditingStationButton);
+		addRenderableWidget(doneEditingRouteButton);
+		addRenderableWidget(doneEditingDepotButton);
+		addRenderableWidget(doneEditingRouteDestinationButton);
 
-		addDrawableChild(stationNameTextField);
-		addDrawableChild(routeNameTextField);
-		addDrawableChild(depotNameTextField);
-		addDrawableChild(routeDestinationTextField);
+		addRenderableWidget(stationNameTextField);
+		addRenderableWidget(routeNameTextField);
+		addRenderableWidget(depotNameTextField);
+		addRenderableWidget(routeDestinationTextField);
 
-		addDrawableChild(transportSystemMapButton);
-		addDrawableChild(resourcePackCreatorButton);
-		addDrawableChild(optionsButton);
-		addDrawableChild(zoomInButton);
-		addDrawableChild(zoomOutButton);
+		addRenderableWidget(transportSystemMapButton);
+		addRenderableWidget(resourcePackCreatorButton);
+		addRenderableWidget(optionsButton);
+		addRenderableWidget(zoomInButton);
+		addRenderableWidget(zoomOutButton);
 
-		colorSelector = new ColorSelectorWidget(width / 2, () -> enableControls(true), this::applyBlur);
+		colorSelector = new ColorSelectorWidget(width / 2, () -> enableControls(true), this::renderBlurredBackground);
 		colorSelector.setPosition(width / 4, height * 2);
-		addDrawableChild(colorSelector);
+		addRenderableWidget(colorSelector);
 
-		deleteConfirmationWidget = new DeleteConfirmationWidget(width / 2, () -> enableControls(true), this::applyBlur);
+		deleteConfirmationWidget = new DeleteConfirmationWidget(width / 2, () -> enableControls(true), this::renderBlurredBackground);
 		deleteConfirmationWidget.setPosition(width / 4, height * 2);
-		addDrawableChild(deleteConfirmationWidget);
+		addRenderableWidget(deleteConfirmationWidget);
 	}
 
 	@Override
-	public void renderBackground(DrawContext context, int mouseX, int mouseY, float delta) {
+	public void renderBackground(GuiGraphics context, int mouseX, int mouseY, float delta) {
 		context.fill(0, 0, width, height, GuiHelper.BACKGROUND_COLOR);
 	}
 
 	@Override
-	public void render(DrawContext context, int mouseX, int mouseY, float delta) {
+	public void render(GuiGraphics context, int mouseX, int mouseY, float delta) {
 		super.render(context, mouseX, mouseY, delta);
 
 		// Draw menu separator lines
-		final Drawing drawing = new Drawing(context.getMatrices(), RenderLayer.getGui());
+		final Drawing drawing = new Drawing(context.pose(), RenderType.gui());
 		drawing.setVerticesWH(width - GuiHelper.DEFAULT_LINE_SIZE * 5 - 2, 0, 1, GuiHelper.DEFAULT_LINE_SIZE).setColor(GuiHelper.BACKGROUND_ACCENT_COLOR).draw();
 		drawing.setVerticesWH(width - GuiHelper.DEFAULT_LINE_SIZE * 2 - 1, 0, 1, GuiHelper.DEFAULT_LINE_SIZE).setColor(GuiHelper.BACKGROUND_ACCENT_COLOR).draw();
 
 		// Draw help text
 		final int[] textY = {GuiHelper.DEFAULT_LINE_SIZE + GuiHelper.DEFAULT_PADDING};
 		if (editingArea != null || editingRoute != null) {
-			textRenderer.wrapLines(editingRoute == null ? TranslationProvider.GUI_MTR_EDIT_AREA.getText() : TranslationProvider.GUI_MTR_EDIT_ROUTE.getText(), tabGroupWidget.getWidth() - GuiHelper.DEFAULT_PADDING * 2).forEach(text -> {
-				context.drawText(textRenderer, text, GuiHelper.DEFAULT_PADDING, textY[0], GuiHelper.WHITE_COLOR, false);
+			font.split(editingRoute == null ? TranslationProvider.GUI_MTR_EDIT_AREA.getText() : TranslationProvider.GUI_MTR_EDIT_ROUTE.getText(), tabGroupWidget.getWidth() - GuiHelper.DEFAULT_PADDING * 2).forEach(text -> {
+				context.drawString(font, text, GuiHelper.DEFAULT_PADDING, textY[0], GuiHelper.WHITE_COLOR, false);
 				textY[0] += GuiHelper.MINECRAFT_TEXT_LINE_HEIGHT;
 			});
 		}
@@ -324,7 +324,7 @@ public final class DashboardScreen extends ScreenBase {
 		switch (selectedIndex) {
 			case 0 -> {
 				if (editingArea == null) {
-					final ObjectArrayList<ObjectObjectImmutablePair<Identifier, ListItem.ActionConsumer<Station>>> actions = ObjectArrayList.of(new ObjectObjectImmutablePair<>(GuiHelper.FIND_TEXTURE_ID, (indexList, station) -> mapWidget.find(station)));
+					final ObjectArrayList<ObjectObjectImmutablePair<ResourceLocation, ListItem.ActionConsumer<Station>>> actions = ObjectArrayList.of(new ObjectObjectImmutablePair<>(GuiHelper.FIND_TEXTURE_ID, (indexList, station) -> mapWidget.find(station)));
 					if (hasPermission) {
 						actions.add(new ObjectObjectImmutablePair<>(GuiHelper.SELECT_TEXTURE_ID, (indexList, station) -> startEditingArea(station)));
 						actions.add(new ObjectObjectImmutablePair<>(GuiHelper.EDIT_TEXTURE_ID, (indexList, station) -> UMinecraft.setCurrentScreenObj(new StationScreen(station, this))));
@@ -337,7 +337,7 @@ public final class DashboardScreen extends ScreenBase {
 			}
 			case 1 -> {
 				if (editingRoute == null) {
-					final ObjectArrayList<ObjectObjectImmutablePair<Identifier, ListItem.ActionConsumer<Route>>> actions = ObjectArrayList.of(new ObjectObjectImmutablePair<>(GuiHelper.EDIT_TEXTURE_ID, (indexList, route) -> UMinecraft.setCurrentScreenObj(new RouteScreen(route, this))));
+					final ObjectArrayList<ObjectObjectImmutablePair<ResourceLocation, ListItem.ActionConsumer<Route>>> actions = ObjectArrayList.of(new ObjectObjectImmutablePair<>(GuiHelper.EDIT_TEXTURE_ID, (indexList, route) -> UMinecraft.setCurrentScreenObj(new RouteScreen(route, this))));
 					if (hasPermission) {
 						actions.add(new ObjectObjectImmutablePair<>(GuiHelper.SELECT_TEXTURE_ID, (indexList, route) -> startEditingRoute(route)));
 						actions.add(new ObjectObjectImmutablePair<>(GuiHelper.DELETE_TEXTURE_ID, (indexList, route) -> onDeleteData(route, new DeleteDataRequest().addRouteId(route.getId()))));
@@ -353,7 +353,7 @@ public final class DashboardScreen extends ScreenBase {
 				}
 			}
 			case 2 -> {
-				final ObjectArrayList<ObjectObjectImmutablePair<Identifier, ListItem.ActionConsumer<Depot>>> actions = ObjectArrayList.of(new ObjectObjectImmutablePair<>(GuiHelper.FIND_TEXTURE_ID, (indexList, depot) -> mapWidget.find(depot)));
+				final ObjectArrayList<ObjectObjectImmutablePair<ResourceLocation, ListItem.ActionConsumer<Depot>>> actions = ObjectArrayList.of(new ObjectObjectImmutablePair<>(GuiHelper.FIND_TEXTURE_ID, (indexList, depot) -> mapWidget.find(depot)));
 				if (hasPermission) {
 					actions.add(new ObjectObjectImmutablePair<>(GuiHelper.SELECT_TEXTURE_ID, (indexList, depot) -> startEditingArea(depot)));
 					actions.add(new ObjectObjectImmutablePair<>(GuiHelper.EDIT_TEXTURE_ID, (indexList, depot) -> UMinecraft.setCurrentScreenObj(new DepotScreen(depot, this))));
@@ -376,7 +376,7 @@ public final class DashboardScreen extends ScreenBase {
 		if (colorSelector != null && data != null) {
 			colorSelector.setColorCallback(color -> {
 				data.setColor(color);
-				openColorSelectorButton.setBackgroundColor(ColorHelper.fullAlpha(color));
+				openColorSelectorButton.setBackgroundColor(ARGB.opaque(color));
 			}, data.getColor());
 			colorSelector.setY((height - colorSelector.getHeight()) / 2);
 			enableControls(false);
@@ -441,7 +441,7 @@ public final class DashboardScreen extends ScreenBase {
 
 		stationNameTextField.setText(editingArea.getName());
 		depotNameTextField.setText(editingArea.getName());
-		openColorSelectorButton.setBackgroundColor(ColorHelper.fullAlpha(editingArea.getColor()));
+		openColorSelectorButton.setBackgroundColor(ARGB.opaque(editingArea.getColor()));
 
 		final boolean isStation = editingArea instanceof Station;
 		tabGroupWidget.selectTab(isStation ? 0 : 2);
@@ -453,7 +453,7 @@ public final class DashboardScreen extends ScreenBase {
 		setEditingData(null, editingRoute);
 
 		routeNameTextField.setText(editingRoute.getName());
-		openColorSelectorButton.setBackgroundColor(ColorHelper.fullAlpha(editingRoute.getColor()));
+		openColorSelectorButton.setBackgroundColor(ARGB.opaque(editingRoute.getColor()));
 
 		tabGroupWidget.selectTab(1);
 		mapWidget.setShowStations(true);

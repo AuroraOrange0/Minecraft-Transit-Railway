@@ -1,13 +1,13 @@
 package org.mtr.render;
 
-import net.minecraft.block.BlockState;
-import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.client.render.VertexConsumerProvider;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.client.world.ClientWorld;
-import net.minecraft.state.property.Properties;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
+import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import org.mtr.MTRClient;
 import org.mtr.block.BlockRouteSignBase;
 import org.mtr.block.IBlock;
@@ -30,10 +30,10 @@ public class RenderRouteSign<T extends BlockRouteSignBase.BlockEntityBase> exten
 	private static final float TEXTURE_BREAK = MIDDLE / HEIGHT_BOTTOM;
 
 	@Override
-	public void render(T blockEntity, MatrixStack matrixStack2, VertexConsumerProvider vertexConsumerProvider, ClientWorld world, ClientPlayerEntity player, float tickDelta, int light, int overlay) {
-		final BlockPos pos = blockEntity.getPos();
+	public void render(T blockEntity, PoseStack matrixStack2, MultiBufferSource vertexConsumerProvider, ClientLevel world, LocalPlayer player, float tickDelta, int light, int overlay) {
+		final BlockPos pos = blockEntity.getBlockPos();
 		final BlockState state = world.getBlockState(pos);
-		final Direction facing = IBlock.getStatePropertySafe(state, Properties.HORIZONTAL_FACING);
+		final Direction facing = IBlock.getStatePropertySafe(state, BlockStateProperties.HORIZONTAL_FACING);
 		final boolean isTop = IBlock.getStatePropertySafe(state, HALF) == DoubleBlockHalf.UPPER;
 		final int arrowDirection = IBlock.getStatePropertySafe(state, BlockRouteSignBase.ARROW_DIRECTION);
 
@@ -53,7 +53,7 @@ public class RenderRouteSign<T extends BlockRouteSignBase.BlockEntityBase> exten
 
 		final StoredMatrixTransformations storedMatrixTransformations = new StoredMatrixTransformations(pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5);
 		storedMatrixTransformations.add(matrixStack -> {
-			Drawing.rotateYDegrees(matrixStack, -facing.getPositiveHorizontalDegrees());
+			Drawing.rotateYDegrees(matrixStack, -facing.toYRot());
 			matrixStack.translate(-0.5, 0, 0.4375 - SMALL_OFFSET * 2);
 		});
 
@@ -64,7 +64,7 @@ public class RenderRouteSign<T extends BlockRouteSignBase.BlockEntityBase> exten
 			(matrixStack, vertexConsumer, offset) -> {
 				storedMatrixTransformations.transform(matrixStack, offset);
 				IDrawing.drawTexture(matrixStack, vertexConsumer, 1 - SIDE, TOP + (isTop ? 0 : 1), 0, SIDE, MIDDLE + (isTop ? 0 : 1), 0, 0, 0, 1, 1, facing.getOpposite(), -1, light);
-				matrixStack.pop();
+				matrixStack.popPose();
 			}
 		);
 
@@ -75,13 +75,13 @@ public class RenderRouteSign<T extends BlockRouteSignBase.BlockEntityBase> exten
 			(matrixStack, vertexConsumer, offset) -> {
 				storedMatrixTransformations.transform(matrixStack, offset);
 				IDrawing.drawTexture(matrixStack, vertexConsumer, SIDE, MIDDLE + (isTop ? 0 : 1), 0, 1 - SIDE, MIDDLE + (isTop ? 0 : 1), 0, 1 - SIDE, isTop ? 0 : BOTTOM, 0, SIDE, isTop ? 0 : BOTTOM, 0, 0, 0, isTop ? TEXTURE_BREAK : 1, 1, facing.getOpposite(), -1, light);
-				matrixStack.pop();
+				matrixStack.popPose();
 			}
 		);
 	}
 
 	@Override
-	public boolean rendersOutsideBoundingBox(T blockEntity) {
+	public boolean shouldRenderOffScreen(T blockEntity) {
 		return true;
 	}
 }

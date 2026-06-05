@@ -1,8 +1,8 @@
 package org.mtr.render;
 
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.world.ClientWorld;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.core.BlockPos;
 import org.mtr.core.data.VehicleCar;
 import org.mtr.core.tool.Utilities;
 import org.mtr.core.tool.Vector;
@@ -74,11 +74,11 @@ public final class PositionAndRotation {
 	}
 
 	private static int getLight(Vector position) {
-		final ClientWorld clientWorld = MinecraftClient.getInstance().world;
+		final ClientLevel clientWorld = Minecraft.getInstance().level;
 		if (clientWorld == null) {
 			return 0;
 		} else {
-			return clientWorld.getLightLevel(BlockPos.ofFloored(position.x(), position.y() + 1, position.z()));
+			return clientWorld.getMaxLocalRawBrightness(BlockPos.containing(position.x(), position.y() + 1, position.z()));
 		}
 	}
 

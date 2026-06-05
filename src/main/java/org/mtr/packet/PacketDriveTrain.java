@@ -1,7 +1,7 @@
 package org.mtr.packet;
 
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.server.level.ServerPlayer;
 
 public final class PacketDriveTrain extends PacketHandler {
 
@@ -29,7 +29,7 @@ public final class PacketDriveTrain extends PacketHandler {
 	}
 
 	@Override
-	public void runServer(MinecraftServer minecraftServer, ServerPlayerEntity serverPlayerEntity) {
+	public void runServer(MinecraftServer minecraftServer, ServerPlayer serverPlayerEntity) {
 		// TODO
 	}
 }

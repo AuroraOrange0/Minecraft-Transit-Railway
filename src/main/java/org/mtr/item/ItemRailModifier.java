@@ -1,16 +1,16 @@
 package org.mtr.item;
 
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.tooltip.TooltipType;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
+import net.minecraft.ChatFormatting;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
 import org.jspecify.annotations.Nullable;
 import org.mtr.MTR;
 import org.mtr.block.BlockNode;
@@ -35,43 +35,43 @@ public class ItemRailModifier extends ItemNodeModifierBase {
 	@Nullable
 	private final RailType railType;
 
-	public ItemRailModifier(Item.Settings settings) {
+	public ItemRailModifier(Item.Properties settings) {
 		super(true, true, true, false, settings);
 		isOneWay = false;
 		railType = null;
 	}
 
-	public ItemRailModifier(boolean forNonContinuousMovementNode, boolean forContinuousMovementNode, boolean forAirplaneNode, boolean isOneWay, RailType railType, Item.Settings settings) {
+	public ItemRailModifier(boolean forNonContinuousMovementNode, boolean forContinuousMovementNode, boolean forAirplaneNode, boolean isOneWay, RailType railType, Item.Properties settings) {
 		super(forNonContinuousMovementNode, forContinuousMovementNode, forAirplaneNode, true, settings);
 		this.isOneWay = isOneWay;
 		this.railType = railType;
 	}
 
 	@Override
-	public void appendTooltip(ItemStack stack, TooltipContext context, List<Text> tooltip, TooltipType type) {
+	public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltip, TooltipFlag type) {
 		if (isConnector && railType != null && railType.canAccelerate) {
-			tooltip.add(TranslationProvider.TOOLTIP_MTR_RAIL_SPEED_LIMIT.getMutableText(railType.speedLimit).formatted(Formatting.GRAY));
+			tooltip.add(TranslationProvider.TOOLTIP_MTR_RAIL_SPEED_LIMIT.getMutableText(railType.speedLimit).withStyle(ChatFormatting.GRAY));
 		}
-		super.appendTooltip(stack, context, tooltip, type);
+		super.appendHoverText(stack, context, tooltip, type);
 	}
 
 	@Override
-	protected void onConnect(World world, ItemStack stack, TransportMode transportMode, BlockState stateStart, BlockState stateEnd, BlockPos posStart, BlockPos posEnd, Angle facingStart, Angle facingEnd, @Nullable ServerPlayerEntity player) {
+	protected void onConnect(Level world, ItemStack stack, TransportMode transportMode, BlockState stateStart, BlockState stateEnd, BlockPos posStart, BlockPos posEnd, Angle facingStart, Angle facingEnd, @Nullable ServerPlayer player) {
 		if (railType != null) {
-			final Rail rail = createRail(player == null ? null : player.getUuid(), transportMode, stateStart, stateEnd, posStart, posEnd, facingStart, facingEnd);
+			final Rail rail = createRail(player == null ? null : player.getUUID(), transportMode, stateStart, stateEnd, posStart, posEnd, facingStart, facingEnd);
 			if (rail != null) {
-				world.setBlockState(posStart, stateStart.with(BlockNode.IS_CONNECTED, true));
-				world.setBlockState(posEnd, stateEnd.with(BlockNode.IS_CONNECTED, true));
-				PacketUpdateData.sendDirectlyToServerRail((ServerWorld) world, rail);
+				world.setBlockAndUpdate(posStart, stateStart.setValue(BlockNode.IS_CONNECTED, true));
+				world.setBlockAndUpdate(posEnd, stateEnd.setValue(BlockNode.IS_CONNECTED, true));
+				PacketUpdateData.sendDirectlyToServerRail((ServerLevel) world, rail);
 			} else if (player != null) {
-				player.sendMessage(TranslationProvider.GUI_MTR_INVALID_ORIENTATION.getText(), true);
+				player.displayClientMessage(TranslationProvider.GUI_MTR_INVALID_ORIENTATION.getText(), true);
 			}
 		}
 	}
 
 	@Override
-	protected void onRemove(World world, BlockPos posStart, BlockPos posEnd, @Nullable ServerPlayerEntity player) {
-		PacketDeleteData.sendDirectlyToServerRailId((ServerWorld) world, TwoPositionsBase.getHexId(MTR.blockPosToPosition(posStart), MTR.blockPosToPosition(posEnd)));
+	protected void onRemove(Level world, BlockPos posStart, BlockPos posEnd, @Nullable ServerPlayer player) {
+		PacketDeleteData.sendDirectlyToServerRailId((ServerLevel) world, TwoPositionsBase.getHexId(MTR.blockPosToPosition(posStart), MTR.blockPosToPosition(posEnd)));
 	}
 
 	@Nullable

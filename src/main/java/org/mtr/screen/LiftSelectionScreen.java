@@ -2,9 +2,9 @@ package org.mtr.screen;
 
 import gg.essential.elementa.components.UIWrappedText;
 import gg.essential.elementa.constraints.*;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.world.ClientWorld;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.core.BlockPos;
 import org.mtr.MTR;
 import org.mtr.client.MinecraftClientData;
 import org.mtr.core.data.Lift;
@@ -40,7 +40,7 @@ public final class LiftSelectionScreen extends WindowBase {
 	public LiftSelectionScreen(long liftId) {
 		this.liftId = liftId;
 		final Lift lift = MinecraftClientData.getLift(liftId);
-		final ClientWorld clientWorld = MinecraftClient.getInstance().world;
+		final ClientLevel clientWorld = Minecraft.getInstance().level;
 
 		if (lift != null && clientWorld != null) {
 			lift.iterateFloors(floor -> {
@@ -71,7 +71,7 @@ public final class LiftSelectionScreen extends WindowBase {
 		super.onTick();
 		final Lift lift = MinecraftClientData.getLift(liftId);
 		if (lift == null) {
-			MinecraftClient.getInstance().setScreen(null);
+			Minecraft.getInstance().setScreen(null);
 			return;
 		}
 
@@ -98,6 +98,6 @@ public final class LiftSelectionScreen extends WindowBase {
 		final PressLift pressLift = new PressLift();
 		pressLift.add(MTR.blockPosToPosition(floorLevels.get(floorIndexFromTop)), LiftDirection.NONE);
 		RegistryClient.sendPacketToServer(new PacketPressLiftButton(pressLift));
-		MinecraftClient.getInstance().setScreen(null);
+		Minecraft.getInstance().setScreen(null);
 	}
 }

@@ -1,6 +1,6 @@
 package org.mtr.packet;
 
-import net.minecraft.server.world.ServerWorld;
+import net.minecraft.server.level.ServerLevel;
 import org.mtr.MTR;
 import org.mtr.block.BlockNode;
 import org.mtr.client.MinecraftClientData;
@@ -28,7 +28,7 @@ public final class PacketDeleteData extends PacketRequestResponseBase {
 	}
 
 	@Override
-	protected void runServerInbound(ServerWorld serverWorld, JsonObject jsonObject) {
+	protected void runServerInbound(ServerLevel serverWorld, JsonObject jsonObject) {
 		// Check if there are any rail nodes that need to be reset
 		new DeleteDataResponse(new JsonReader(jsonObject)).iterateRailNodePosition(railNodePosition -> BlockNode.resetRailNode(serverWorld, MTR.positionToBlockPos(railNodePosition)));
 	}
@@ -60,15 +60,15 @@ public final class PacketDeleteData extends PacketRequestResponseBase {
 		return ResponseType.ALL;
 	}
 
-	public static void sendDirectlyToServerLiftFloorPosition(ServerWorld serverWorld, Position liftFloorPositions) {
+	public static void sendDirectlyToServerLiftFloorPosition(ServerLevel serverWorld, Position liftFloorPositions) {
 		new PacketDeleteData(new DeleteDataRequest().addLiftFloorPosition(liftFloorPositions)).runServerOutbound(serverWorld, null);
 	}
 
-	public static void sendDirectlyToServerRailNodePosition(ServerWorld serverWorld, Position railNodePosition) {
+	public static void sendDirectlyToServerRailNodePosition(ServerLevel serverWorld, Position railNodePosition) {
 		new PacketDeleteData(new DeleteDataRequest().addRailNodePosition(railNodePosition)).runServerOutbound(serverWorld, null);
 	}
 
-	public static void sendDirectlyToServerRailId(ServerWorld serverWorld, String railId) {
+	public static void sendDirectlyToServerRailId(ServerLevel serverWorld, String railId) {
 		new PacketDeleteData(new DeleteDataRequest().addRailId(railId)).runServerOutbound(serverWorld, null);
 	}
 }

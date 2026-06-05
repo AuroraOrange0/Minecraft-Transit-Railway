@@ -86,7 +86,7 @@ public final class PlatformScreen extends NameColorDataScreenBase<Platform> {
 	}
 
 	@Override
-	protected void onClose() {
+	protected void close() {
 		if (dwellTimeMinutesNumberInput != null && dwellTimeSecondsNumberInput != null) {
 			data.setDwellTime((long) (dwellTimeMinutesNumberInput.getValue() * Utilities.MILLIS_PER_MINUTE + dwellTimeSecondsNumberInput.getValue() * Utilities.MILLIS_PER_SECOND));
 		}

@@ -1,15 +1,15 @@
 package org.mtr.model;
 
-import net.minecraft.util.math.Box;
+import net.minecraft.world.phys.AABB;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
 public final class MutableBox {
 
 	private final double[] min = {Double.MAX_VALUE, Double.MAX_VALUE, Double.MAX_VALUE};
 	private final double[] max = {-Double.MAX_VALUE, -Double.MAX_VALUE, -Double.MAX_VALUE};
-	private final ObjectArrayList<Box> boxes = new ObjectArrayList<>();
+	private final ObjectArrayList<AABB> boxes = new ObjectArrayList<>();
 
-	public void add(Box box) {
+	public void add(AABB box) {
 		min[0] = Math.min(box.minX, min[0]);
 		min[1] = Math.min(box.minY, min[1]);
 		min[2] = Math.min(box.minZ, min[2]);
@@ -29,11 +29,11 @@ public final class MutableBox {
 		boxes.addAll(mutableBox.boxes);
 	}
 
-	public Box get() {
-		return new Box(min[0], min[1], min[2], max[0], max[1], max[2]);
+	public AABB get() {
+		return new AABB(min[0], min[1], min[2], max[0], max[1], max[2]);
 	}
 
-	public ObjectArrayList<Box> getAll() {
+	public ObjectArrayList<AABB> getAll() {
 		return boxes;
 	}
 }

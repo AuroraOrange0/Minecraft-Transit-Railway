@@ -3,9 +3,9 @@ package org.mtr.screen;
 import gg.essential.elementa.constraints.PixelConstraint;
 import gg.essential.elementa.constraints.RelativeConstraint;
 import gg.essential.elementa.constraints.SiblingConstraint;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.world.ClientWorld;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.core.BlockPos;
 import org.mtr.block.BlockLiftTrackFloor;
 import org.mtr.data.IGui;
 import org.mtr.generated.lang.TranslationProvider;
@@ -28,7 +28,7 @@ public final class LiftTrackFloorScreen extends SingleTabBackgroundScreenBase im
 	public LiftTrackFloorScreen(BlockPos blockPos, BlockLiftTrackFloor.LiftTrackFloorBlockEntity blockEntity) {
 		super(TranslationProvider.BLOCK_MTR_LIFT_TRACK_FLOOR_1.getString());
 		this.blockPos = blockPos;
-		final ClientWorld clientWorld = MinecraftClient.getInstance().world;
+		final ClientLevel clientWorld = Minecraft.getInstance().level;
 		final String initialFloorNumber;
 		final String initialFloorDescription;
 		final boolean initialShouldDing;
@@ -74,7 +74,7 @@ public final class LiftTrackFloorScreen extends SingleTabBackgroundScreenBase im
 
 	@Override
 	public void onScreenClose() {
-		new PacketUpdateLiftTrackFloorConfig(blockPos, textFieldFloorNumber.getText(), textFieldFloorDescription.getText(), checkboxShouldDing.isChecked()).send(MinecraftClient.getInstance().world);
+		new PacketUpdateLiftTrackFloorConfig(blockPos, textFieldFloorNumber.getText(), textFieldFloorDescription.getText(), checkboxShouldDing.isChecked()).send(Minecraft.getInstance().level);
 		super.onScreenClose();
 	}
 }

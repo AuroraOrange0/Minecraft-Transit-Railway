@@ -6,8 +6,8 @@ import gg.essential.elementa.components.UIWrappedText;
 import gg.essential.elementa.constraints.*;
 import gg.essential.universal.UMinecraft;
 import gg.essential.universal.utils.ReleasedDynamicTexture;
-import net.minecraft.text.MutableText;
-import net.minecraft.util.math.ColorHelper;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.util.ARGB;
 import org.jspecify.annotations.Nullable;
 import org.mtr.MTR;
 import org.mtr.client.MinecraftClientData;
@@ -231,7 +231,7 @@ public final class DepotScreen extends NameColorDataScreenBase<Depot> {
 	}
 
 	@Override
-	protected void onClose() {
+	protected void close() {
 		data.setRepeatInfinitely(shouldShowRepeatIndefinitelyCheckbox() && repeatIndefinitelyCheckbox.isChecked());
 		data.setUseRealTime(useRealTimeCheckbox.isChecked());
 
@@ -339,7 +339,7 @@ public final class DepotScreen extends NameColorDataScreenBase<Depot> {
 			final int second = calendar.get(Calendar.SECOND);
 			final String departureString = String.format("%02d:%02d:%02d", hour, minute, second);
 			realTimeDeparturesForList.add(ListItem.createChild(
-				(drawing, x, y) -> drawing.setVerticesWH(x + GuiHelper.DEFAULT_PADDING, y + GuiHelper.DEFAULT_PADDING, GuiHelper.MINECRAFT_FONT_SIZE, GuiHelper.MINECRAFT_FONT_SIZE).setColor(ColorHelper.fullAlpha(data.getColor())).draw(),
+				(drawing, x, y) -> drawing.setVerticesWH(x + GuiHelper.DEFAULT_PADDING, y + GuiHelper.DEFAULT_PADDING, GuiHelper.MINECRAFT_FONT_SIZE, GuiHelper.MINECRAFT_FONT_SIZE).setColor(ARGB.opaque(data.getColor())).draw(),
 				null,
 				GuiHelper.DEFAULT_PADDING + GuiHelper.MINECRAFT_FONT_SIZE,
 				new RealTimeDepartureForList(calendar.getTimeInMillis() - offset, departureString, i),
@@ -442,7 +442,7 @@ public final class DepotScreen extends NameColorDataScreenBase<Depot> {
 	}
 
 	private static String getTimeDifferenceString(long timeDifference) {
-		final MutableText mutableText;
+		final MutableComponent mutableText;
 		final long newTimeDifference = Math.abs(timeDifference);
 		if (newTimeDifference >= Utilities.MILLIS_PER_DAY) {
 			mutableText = TranslationProvider.GUI_MTR_DAYS.getMutableText(newTimeDifference / Utilities.MILLIS_PER_DAY);

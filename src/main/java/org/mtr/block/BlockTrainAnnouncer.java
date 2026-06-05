@@ -1,16 +1,16 @@
 package org.mtr.block;
 
 import lombok.Getter;
-import net.minecraft.block.AbstractBlock;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.sound.SoundEvent;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockBehaviour;
+import net.minecraft.world.level.block.state.BlockState;
 import org.mtr.client.IDrawing;
 import org.mtr.core.tool.Utilities;
 import org.mtr.libraries.it.unimi.dsi.fastutil.longs.Long2ObjectAVLTreeMap;
@@ -26,12 +26,12 @@ public class BlockTrainAnnouncer extends BlockTrainSensorBase {
 
 	private static final Long2ObjectAVLTreeMap<ObjectArrayList<Runnable>> QUEUE = new Long2ObjectAVLTreeMap<>();
 
-	public BlockTrainAnnouncer(AbstractBlock.Settings settings) {
+	public BlockTrainAnnouncer(BlockBehaviour.Properties settings) {
 		super(settings);
 	}
 
 	@Override
-	public BlockEntity createBlockEntity(BlockPos blockPos, BlockState blockState) {
+	public BlockEntity newBlockEntity(BlockPos blockPos, BlockState blockState) {
 		return new TrainAnnouncerBlockEntity(blockPos, blockState);
 	}
 
@@ -66,14 +66,14 @@ public class BlockTrainAnnouncer extends BlockTrainSensorBase {
 		}
 
 		@Override
-		protected void readNbt(NbtCompound nbtCompound) {
+		protected void readNbt(CompoundTag nbtCompound) {
 			message = nbtCompound.getString(KEY_MESSAGE);
 			soundId = nbtCompound.getString(KEY_SOUND_ID);
 			delay = nbtCompound.getInt(KEY_DELAY);
 		}
 
 		@Override
-		protected void writeNbt(NbtCompound nbtCompound) {
+		protected void writeNbt(CompoundTag nbtCompound) {
 			nbtCompound.putString(KEY_MESSAGE, message);
 			nbtCompound.putString(KEY_SOUND_ID, soundId);
 			nbtCompound.putInt(KEY_DELAY, delay);
@@ -92,13 +92,13 @@ public class BlockTrainAnnouncer extends BlockTrainSensorBase {
 				final ObjectArrayList<Runnable> tasks = new ObjectArrayList<>();
 				QUEUE.put(currentMillis + (long) delay * MILLIS_PER_SECOND, tasks);
 				if (!message.isEmpty()) {
-					tasks.add(() -> IDrawing.narrateOrAnnounce(Utilities.formatName(message), Arrays.stream(message.split("\\|")).map(Text::literal).collect(Collectors.toCollection(ObjectArrayList::new))));
+					tasks.add(() -> IDrawing.narrateOrAnnounce(Utilities.formatName(message), Arrays.stream(message.split("\\|")).map(Component::literal).collect(Collectors.toCollection(ObjectArrayList::new))));
 				}
 				if (!soundId.isEmpty()) {
 					tasks.add(() -> {
-						final ClientPlayerEntity clientPlayerEntity = MinecraftClient.getInstance().player;
+						final LocalPlayer clientPlayerEntity = Minecraft.getInstance().player;
 						if (clientPlayerEntity != null) {
-							clientPlayerEntity.playSound(SoundEvent.of(Identifier.of(soundId)), 1000, 1);
+							clientPlayerEntity.playSound(SoundEvent.createVariableRangeEvent(ResourceLocation.parse(soundId)), 1000, 1);
 						}
 					});
 				}

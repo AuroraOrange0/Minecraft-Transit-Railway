@@ -1,11 +1,11 @@
 package org.mtr.resource;
 
-import net.minecraft.client.render.RenderLayer;
-import net.minecraft.client.render.VertexConsumerProvider;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.BlockPos;
+import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import org.jspecify.annotations.Nullable;
 import org.mtr.MTRClient;
 import org.mtr.cache.GenericLongCache;
@@ -38,7 +38,7 @@ import java.util.stream.Collectors;
 
 public final class SignResource extends SignResourceSchema {
 
-	public final Identifier textureId;
+	public final ResourceLocation textureId;
 	public final boolean hasCustomText;
 	/**
 	 * Default signs (the ones bundled with Minecraft Transit Railway) have IDs starting with {@code !}
@@ -77,7 +77,7 @@ public final class SignResource extends SignResourceSchema {
 	}
 
 	public String getCustomText() {
-		return customText.isEmpty() ? "" : Text.translatable(customText).getString();
+		return customText.isEmpty() ? "" : Component.translatable(customText).getString();
 	}
 
 	public boolean getFlipCustomText() {
@@ -92,7 +92,7 @@ public final class SignResource extends SignResourceSchema {
 		return CustomResourceTools.colorStringToInt(backgroundColor);
 	}
 
-	public static void render(MatrixStack matrixStack, VertexConsumerProvider vertexConsumerProvider, BlockPos blockPos, LongAVLTreeSet[] selectedIds, @Nullable String[] signIds, float signSize, float zOffset, boolean renderPlaceholder) {
+	public static void render(PoseStack matrixStack, MultiBufferSource vertexConsumerProvider, BlockPos blockPos, LongAVLTreeSet[] selectedIds, @Nullable String[] signIds, float signSize, float zOffset, boolean renderPlaceholder) {
 		final @Nullable SignResource[] signResources = new SignResource[signIds.length];
 		for (int i = 0; i < signIds.length; i++) {
 			signResources[i] = CustomResourceLoader.getSignById(signIds[i]);
@@ -100,7 +100,7 @@ public final class SignResource extends SignResourceSchema {
 		render(matrixStack, vertexConsumerProvider, blockPos, 0, 0, selectedIds, signResources, signSize, zOffset, renderPlaceholder);
 	}
 
-	public static void render(MatrixStack matrixStack, VertexConsumerProvider vertexConsumerProvider, BlockPos blockPos, float x, float y, LongAVLTreeSet[] selectedIds, @Nullable SignResource[] signResources, float signSize, float zOffset, boolean renderPlaceholder) {
+	public static void render(PoseStack matrixStack, MultiBufferSource vertexConsumerProvider, BlockPos blockPos, float x, float y, LongAVLTreeSet[] selectedIds, @Nullable SignResource[] signResources, float signSize, float zOffset, boolean renderPlaceholder) {
 		final float signPadding = SMALL_SIGN_PADDING * signSize;
 		boolean renderBackground = false;
 		int backgroundColor = 0;
@@ -118,18 +118,18 @@ public final class SignResource extends SignResourceSchema {
 
 		// Draw background
 		if (renderBackground) {
-			new Drawing(matrixStack, vertexConsumerProvider.getBuffer(RenderLayer.getGui())).setVerticesWH(x, y, signResources.length * signSize, signSize).setColor(GuiHelper.BLACK_COLOR | backgroundColor).draw();
+			new Drawing(matrixStack, vertexConsumerProvider.getBuffer(RenderType.gui())).setVerticesWH(x, y, signResources.length * signSize, signSize).setColor(GuiHelper.BLACK_COLOR | backgroundColor).draw();
 		}
 
-		final ObjectArrayList<Consumer<MatrixStack>> deferredRenders = new ObjectArrayList<>();
+		final ObjectArrayList<Consumer<PoseStack>> deferredRenders = new ObjectArrayList<>();
 
 		// Draw sign tiles and text
 		for (int i = 0; i < signResources.length; i++) {
 			final SignResource signResource = signResources[i];
 
 			if (signResource != null) {
-				final Drawing textureDrawing = new Drawing(matrixStack, vertexConsumerProvider.getBuffer(RenderLayer.getGuiTextured(signResource.textureId)));
-				final Identifier font = signResource.font.isEmpty() ? FontRenderHelper.MTR_FONT : Identifier.of(signResource.font);
+				final Drawing textureDrawing = new Drawing(matrixStack, vertexConsumerProvider.getBuffer(RenderType.guiTextured(signResource.textureId)));
+				final ResourceLocation font = signResource.font.isEmpty() ? FontRenderHelper.MTR_FONT : ResourceLocation.parse(signResource.font);
 
 				if (signResource.signType == SignType.NORMAL) {
 					textureDrawing.setVertices(

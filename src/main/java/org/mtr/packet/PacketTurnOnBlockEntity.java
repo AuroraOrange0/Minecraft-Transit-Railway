@@ -1,11 +1,11 @@
 package org.mtr.packet;
 
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
+import net.minecraft.core.BlockPos;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockState;
 import org.mtr.MTR;
 import org.mtr.block.BlockSignalBase;
 import org.mtr.block.BlockTrainPoweredSensorBase;
@@ -16,7 +16,7 @@ public final class PacketTurnOnBlockEntity extends PacketHandler {
 	private final int level;
 
 	public PacketTurnOnBlockEntity(PacketBufferReceiver packetBufferReceiver) {
-		blockPos = BlockPos.fromLong(packetBufferReceiver.readLong());
+		blockPos = BlockPos.of(packetBufferReceiver.readLong());
 		level = packetBufferReceiver.readInt();
 	}
 
@@ -36,8 +36,8 @@ public final class PacketTurnOnBlockEntity extends PacketHandler {
 	}
 
 	@Override
-	public void runServer(MinecraftServer minecraftServer, ServerPlayerEntity serverPlayerEntity) {
-		final World world = serverPlayerEntity.getServerWorld();
+	public void runServer(MinecraftServer minecraftServer, ServerPlayer serverPlayerEntity) {
+		final Level world = serverPlayerEntity.serverLevel();
 		if (!MTR.isChunkLoaded(world, blockPos)) {
 			return;
 		}

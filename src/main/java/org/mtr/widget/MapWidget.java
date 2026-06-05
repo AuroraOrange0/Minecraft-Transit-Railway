@@ -1,17 +1,17 @@
 package org.mtr.widget;
 
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexBuffer;
 import gg.essential.universal.UMinecraft;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gl.VertexBuffer;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.client.render.RenderLayer;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.ColorHelper;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.core.BlockPos;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.ARGB;
 import org.joml.Matrix4f;
 import org.jspecify.annotations.Nullable;
 import org.mtr.MTRClient;
@@ -61,7 +61,7 @@ public final class MapWidget extends ClickableWidgetBase {
 	private final Consumer<AreaBase<?, ?>> onStartEditingArea;
 	private final BiConsumer<NameColorDataBase, DeleteDataRequest> onDeleteData;
 	@Nullable
-	private final ClientPlayerEntity player;
+	private final LocalPlayer player;
 	private final Object2ObjectAVLTreeMap<Position, ObjectArrayList<Platform>> flatPositionToPlatformsMap;
 	private final Object2ObjectAVLTreeMap<Position, ObjectArrayList<Siding>> flatPositionToSidingsMap;
 
@@ -93,7 +93,7 @@ public final class MapWidget extends ClickableWidgetBase {
 		this.onStartEditingArea = onStartEditingArea;
 		this.onDeleteData = onDeleteData;
 
-		player = MinecraftClient.getInstance().player;
+		player = Minecraft.getInstance().player;
 		if (player == null) {
 			guiAnimationX.setValue(0);
 			guiAnimationY.setValue(0);
@@ -110,7 +110,7 @@ public final class MapWidget extends ClickableWidgetBase {
 	}
 
 	@Override
-	protected void renderWidget(DrawContext context, int mouseX, int mouseY, float delta) {
+	protected void renderWidget(GuiGraphics context, int mouseX, int mouseY, float delta) {
 		// Draw layers (z):
 		// 0: Background
 		// 1: Map tile
@@ -137,12 +137,12 @@ public final class MapWidget extends ClickableWidgetBase {
 			final DoubleDoubleImmutablePair topLeftWorldCoords = coordsToWorldPos(0D, 0D);
 			final float offsetX = clampTileSize(topLeftWorldCoords.leftDouble()) - (float) topLeftWorldCoords.leftDouble();
 			final float offsetY = clampTileSize(topLeftWorldCoords.rightDouble()) - (float) topLeftWorldCoords.rightDouble();
-			RenderLayer.getGui().startDrawing();
+			RenderType.gui().setupRenderState();
 
 			for (double x = 0; x < width + tileSize; x += tileSize) {
 				for (double y = 0; y < height + tileSize; y += tileSize) {
 					final DoubleDoubleImmutablePair worldCoords = coordsToWorldPos(x, y);
-					final BlockPos tilePos = new BlockPos(clampTileSize(worldCoords.leftDouble()), player == null ? 0 : player.getBlockPos().getY(), clampTileSize(worldCoords.rightDouble()));
+					final BlockPos tilePos = new BlockPos(clampTileSize(worldCoords.leftDouble()), player == null ? 0 : player.blockPosition().getY(), clampTileSize(worldCoords.rightDouble()));
 					final long key = tilePos.asLong();
 					final VertexBuffer vertexBuffer = mapTileProvider.getTile(tilePos);
 
@@ -160,7 +160,7 @@ public final class MapWidget extends ClickableWidgetBase {
 						final float newY = (float) y + getY();
 						IDrawing.changeShaderColor(new Color(newOpacity * DARKEN_MAP, newOpacity * DARKEN_MAP, newOpacity * DARKEN_MAP, 1), () -> {
 							vertexBuffer.bind();
-							vertexBuffer.draw(
+							vertexBuffer.drawWithShader(
 								new Matrix4f(RenderSystem.getModelViewMatrix()).translate(newX, newY, 0).scale((float) guiAnimationScale.getCurrentValue(), (float) guiAnimationScale.getCurrentValue(), 1).translate(offsetX, offsetY, 1),
 								RenderSystem.getProjectionMatrix(),
 								RenderSystem.getShader()
@@ -170,27 +170,27 @@ public final class MapWidget extends ClickableWidgetBase {
 				}
 			}
 
-			RenderLayer.getGui().endDrawing();
+			RenderType.gui().clearRenderState();
 		}
 
-		final MatrixStack matrixStack = context.getMatrices();
-		final ObjectArrayList<Consumer<MatrixStack>> deferredRenders = new ObjectArrayList<>();
+		final PoseStack matrixStack = context.pose();
+		final ObjectArrayList<Consumer<PoseStack>> deferredRenders = new ObjectArrayList<>();
 
 		// Player position indicator
 		if (player != null) {
 			drawFromWorldCoords(player.getX(), player.getZ(), PLAYER_ARROW_SIZE / 2F, PLAYER_ARROW_SIZE / 2F, (x, y) -> {
-				matrixStack.push();
+				matrixStack.pushPose();
 				matrixStack.translate(getX() + x, getY() + y, 5);
-				Drawing.rotateZDegrees(matrixStack, player.getYaw() + 180);
-				new Drawing(matrixStack, RenderLayer.getGuiTextured(Identifier.of("textures/gui/sprites/mtr/dashboard_player_arrow.png")))
+				Drawing.rotateZDegrees(matrixStack, player.getYRot() + 180);
+				new Drawing(matrixStack, RenderType.guiTextured(ResourceLocation.parse("textures/gui/sprites/mtr/dashboard_player_arrow.png")))
 					.setVerticesWH(-PLAYER_ARROW_SIZE / 2F, -PLAYER_ARROW_SIZE / 2F, PLAYER_ARROW_SIZE, PLAYER_ARROW_SIZE)
 					.setUv()
 					.draw();
-				matrixStack.pop();
+				matrixStack.popPose();
 			});
 		}
 
-		final Drawing drawing = new Drawing(matrixStack, RenderLayer.getGui()).setGuiBoundsWH(getX(), getY(), width, height);
+		final Drawing drawing = new Drawing(matrixStack, RenderType.gui()).setGuiBoundsWH(getX(), getY(), width, height);
 		hoverStations.clear();
 		hoverPlatforms.clear();
 		hoverDepots.clear();
@@ -235,10 +235,10 @@ public final class MapWidget extends ClickableWidgetBase {
 			drawing.setVerticesWH(scrollableListWidget.getX(), scrollableListWidget.getY(), scrollableListWidget.getWidth(), scrollableListWidget.getHeight(), 6).setColor(GuiHelper.BACKGROUND_COLOR).draw();
 			GuiHelper.drawShadowWH(drawing, scrollableListWidget.getX(), scrollableListWidget.getY(), scrollableListWidget.getWidth(), scrollableListWidget.getHeight(), 2, HOVER_WINDOW_SHADOW_RADIUS, 2);
 
-			matrixStack.push();
+			matrixStack.pushPose();
 			matrixStack.translate(0, 0, 6);
 			scrollableListWidget.renderWidget(context, newMouseX, newMouseY, delta);
-			matrixStack.pop();
+			matrixStack.popPose();
 
 			if (!Utilities.isBetween(
 				Math.clamp(newMouseX, leftBound, rightBound - 1),
@@ -415,7 +415,7 @@ public final class MapWidget extends ClickableWidgetBase {
 		}
 	}
 
-	private <T extends SavedRailBase<T, U>, U extends AreaBase<U, T>> void drawAreas(Drawing drawing, ObjectArrayList<Consumer<MatrixStack>> deferredRenders, ObjectArraySet<U> areas, @Nullable ObjectArraySet<U> hoverDataList, int mouseX, int mouseY) {
+	private <T extends SavedRailBase<T, U>, U extends AreaBase<U, T>> void drawAreas(Drawing drawing, ObjectArrayList<Consumer<PoseStack>> deferredRenders, ObjectArraySet<U> areas, @Nullable ObjectArraySet<U> hoverDataList, int mouseX, int mouseY) {
 		areas.forEach(area -> {
 			if (area.isTransportMode(transportMode) && AreaBase.validCorners(area)) {
 				final double areaWidth = (area.getMaxX() + 1 - area.getMinX()) * guiAnimationScale.getCurrentValue();
@@ -430,7 +430,7 @@ public final class MapWidget extends ClickableWidgetBase {
 
 					// Check for hover
 					final double borderSize;
-					final double minBorderSize = 1 / Math.min(2, MinecraftClient.getInstance().getWindow().getScaleFactor());
+					final double minBorderSize = 1 / Math.min(2, Minecraft.getInstance().getWindow().getGuiScale());
 					if (editingArea != null && area.getId() == editingArea.getId()) {
 						borderSize = minBorderSize + (AREA_NAME_PADDING - minBorderSize) * (Math.sin(Math.PI * System.currentTimeMillis() / 1000) + 1) / 2;
 					} else if (hoverDataList != null && Utilities.isBetween(mouseX, x1, x2 - 1) && Utilities.isBetween(mouseY, y1, y2 - 1)) {
@@ -446,10 +446,10 @@ public final class MapWidget extends ClickableWidgetBase {
 					GuiHelper.drawShadow(drawing, x1, y1, x2, y2, 2, shadowRadius, 1);
 
 					// Draw border
-					drawing.setVertices(x1, y1, x1 + borderSize, y2, 2).setColor(ColorHelper.fullAlpha(area.getColor())).draw();
-					drawing.setVertices(x2 - borderSize, y1, x2, y2, 2).setColor(ColorHelper.fullAlpha(area.getColor())).draw();
-					drawing.setVertices(x1, y1, x2, y1 + borderSize, 2).setColor(ColorHelper.fullAlpha(area.getColor())).draw();
-					drawing.setVertices(x1, y2 - borderSize, x2, y2, 2).setColor(ColorHelper.fullAlpha(area.getColor())).draw();
+					drawing.setVertices(x1, y1, x1 + borderSize, y2, 2).setColor(ARGB.opaque(area.getColor())).draw();
+					drawing.setVertices(x2 - borderSize, y1, x2, y2, 2).setColor(ARGB.opaque(area.getColor())).draw();
+					drawing.setVertices(x1, y1, x2, y1 + borderSize, 2).setColor(ARGB.opaque(area.getColor())).draw();
+					drawing.setVertices(x1, y2 - borderSize, x2, y2, 2).setColor(ARGB.opaque(area.getColor())).draw();
 
 					// Draw overlay text
 					final double clampedAreaWidth = areaWidth - Math.max(0, getX() - x1) - Math.max(0, x2 - getX() - width) - AREA_NAME_PADDING * 2;
@@ -471,7 +471,7 @@ public final class MapWidget extends ClickableWidgetBase {
 		});
 	}
 
-	private <T extends SavedRailBase<T, U>, U extends AreaBase<U, T>> void drawSavedRails(Drawing drawing, ObjectArrayList<Consumer<MatrixStack>> deferredRenders, Object2ObjectAVLTreeMap<Position, ObjectArrayList<T>> flatPositionToSavedRailsMap, @Nullable ObjectArraySet<T> hoverDataList, int mouseX, int mouseY) {
+	private <T extends SavedRailBase<T, U>, U extends AreaBase<U, T>> void drawSavedRails(Drawing drawing, ObjectArrayList<Consumer<PoseStack>> deferredRenders, Object2ObjectAVLTreeMap<Position, ObjectArrayList<T>> flatPositionToSavedRailsMap, @Nullable ObjectArraySet<T> hoverDataList, int mouseX, int mouseY) {
 		flatPositionToSavedRailsMap.forEach((position, savedRails) -> drawFromWorldCoords(position.getX() + 0.5, position.getZ() + 0.5, guiAnimationScale.getCurrentValue() / 2, guiAnimationScale.getCurrentValue() / 2, (x, y) -> {
 			final double x1 = getX() + x - guiAnimationScale.getCurrentValue() / 2;
 			final double y1 = getY() + y - guiAnimationScale.getCurrentValue() / 2;

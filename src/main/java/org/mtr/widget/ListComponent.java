@@ -1,15 +1,15 @@
 package org.mtr.widget;
 
+import com.mojang.blaze3d.vertex.PoseStack;
 import gg.essential.elementa.UIComponent;
 import gg.essential.elementa.constraints.PixelConstraint;
 import gg.essential.universal.UMatrixStack;
 import kotlin.Pair;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.render.RenderLayer;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.ColorHelper;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.ARGB;
 import org.jspecify.annotations.Nullable;
 import org.mtr.client.CustomResourceLoader;
 import org.mtr.core.data.*;
@@ -65,8 +65,8 @@ public final class ListComponent<T> extends UIComponent {
 			.verticalSpace(GuiHelper.DEFAULT_LINE_SIZE)
 			.verticalTextAlignment(FontRenderOptions.Alignment.CENTER);
 
-		final MatrixStack matrixStack = UConverters.convert(uMatrixStack);
-		final Drawing drawing = new Drawing(matrixStack, RenderLayer.getGui());
+		final PoseStack matrixStack = UConverters.convert(uMatrixStack);
+		final Drawing drawing = new Drawing(matrixStack, RenderType.gui());
 		final ObjectArrayList<Runnable> deferredRenders = new ObjectArrayList<>();
 		final float left = getLeft();
 		final float right = getRight();
@@ -92,7 +92,7 @@ public final class ListComponent<T> extends UIComponent {
 					clickAction = listItem::toggle;
 
 					// Draw the action button
-					deferredRenders.add(() -> new Drawing(matrixStack, RenderLayer.getGuiTextured(listItem.isExpanded() ? GuiHelper.CHEVRON_UP_TEXTURE_ID : GuiHelper.CHEVRON_DOWN_TEXTURE_ID))
+					deferredRenders.add(() -> new Drawing(matrixStack, RenderType.guiTextured(listItem.isExpanded() ? GuiHelper.CHEVRON_UP_TEXTURE_ID : GuiHelper.CHEVRON_DOWN_TEXTURE_ID))
 						.setVerticesWH(leftBound + GuiHelper.DEFAULT_PADDING / 2F, startY + GuiHelper.DEFAULT_PADDING / 2F, GuiHelper.DEFAULT_ICON_SIZE, GuiHelper.DEFAULT_ICON_SIZE)
 						.setUv()
 						.draw()
@@ -112,7 +112,7 @@ public final class ListComponent<T> extends UIComponent {
 						}
 
 						// Draw the action button
-						deferredRenders.add(() -> new Drawing(matrixStack, RenderLayer.getGuiTextured(identifier))
+						deferredRenders.add(() -> new Drawing(matrixStack, RenderType.guiTextured(identifier))
 							.setVerticesWH(leftBound + GuiHelper.DEFAULT_PADDING / 2F, startY + GuiHelper.DEFAULT_PADDING / 2F, GuiHelper.DEFAULT_ICON_SIZE, GuiHelper.DEFAULT_ICON_SIZE)
 							.setUv()
 							.draw()
@@ -145,7 +145,7 @@ public final class ListComponent<T> extends UIComponent {
 
 		setHeight(new PixelConstraint(Math.max(1, totalHeight[0])));
 		deferredRenders.forEach(Runnable::run);
-		MinecraftClient.getInstance().getBufferBuilders().getEntityVertexConsumers().draw();
+		Minecraft.getInstance().renderBuffers().bufferSource().endBatch();
 		super.draw(uMatrixStack);
 	}
 
@@ -183,11 +183,11 @@ public final class ListComponent<T> extends UIComponent {
 		}
 	}
 
-	public static <T> void setGeneric(ListComponent<T> listComponent, ObjectCollection<T> genericDataList, Function<T, String> getName, ToIntFunction<T> getColor, ObjectArrayList<ObjectObjectImmutablePair<Identifier, ListItem.ActionConsumer<T>>> actions) {
+	public static <T> void setGeneric(ListComponent<T> listComponent, ObjectCollection<T> genericDataList, Function<T, String> getName, ToIntFunction<T> getColor, ObjectArrayList<ObjectObjectImmutablePair<ResourceLocation, ListItem.ActionConsumer<T>>> actions) {
 		final ObjectArrayList<ListItem<T>> dataList = new ObjectArrayList<>();
 
 		genericDataList.forEach(genericData -> dataList.add(ListItem.createChild(
-			(drawing, x, y) -> drawing.setVerticesWH(x + GuiHelper.DEFAULT_PADDING, y + GuiHelper.DEFAULT_PADDING, GuiHelper.MINECRAFT_FONT_SIZE, GuiHelper.MINECRAFT_FONT_SIZE).setColor(ColorHelper.fullAlpha(getColor.applyAsInt(genericData))).draw(),
+			(drawing, x, y) -> drawing.setVerticesWH(x + GuiHelper.DEFAULT_PADDING, y + GuiHelper.DEFAULT_PADDING, GuiHelper.MINECRAFT_FONT_SIZE, GuiHelper.MINECRAFT_FONT_SIZE).setColor(ARGB.opaque(getColor.applyAsInt(genericData))).draw(),
 			null,
 			GuiHelper.DEFAULT_PADDING + GuiHelper.MINECRAFT_FONT_SIZE,
 			genericData,
@@ -198,7 +198,7 @@ public final class ListComponent<T> extends UIComponent {
 		listComponent.setData(dataList);
 	}
 
-	public static <T extends AreaBase<T, U>, U extends SavedRailBase<U, T>> void setAreas(ListComponent<T> listComponent, ObjectCollection<T> areas, @Nullable TransportMode transportMode, ObjectArrayList<ObjectObjectImmutablePair<Identifier, ListItem.ActionConsumer<T>>> actions) {
+	public static <T extends AreaBase<T, U>, U extends SavedRailBase<U, T>> void setAreas(ListComponent<T> listComponent, ObjectCollection<T> areas, @Nullable TransportMode transportMode, ObjectArrayList<ObjectObjectImmutablePair<ResourceLocation, ListItem.ActionConsumer<T>>> actions) {
 		final ObjectArrayList<T> sortedAreas = new ObjectArrayList<>();
 		areas.forEach(route -> {
 			if (transportMode == null || route.isTransportMode(transportMode)) {
@@ -209,7 +209,7 @@ public final class ListComponent<T> extends UIComponent {
 		setGeneric(listComponent, sortedAreas, NameColorDataBase::getName, NameColorDataBase::getColor, actions);
 	}
 
-	public static <T extends AreaBase<T, U>, U extends SavedRailBase<U, T>> void setSavedRails(ListComponent<U> listComponent, ObjectCollection<U> savedRails, ObjectArrayList<ObjectObjectImmutablePair<Identifier, ListItem.ActionConsumer<U>>> actions) {
+	public static <T extends AreaBase<T, U>, U extends SavedRailBase<U, T>> void setSavedRails(ListComponent<U> listComponent, ObjectCollection<U> savedRails, ObjectArrayList<ObjectObjectImmutablePair<ResourceLocation, ListItem.ActionConsumer<U>>> actions) {
 		final ObjectArrayList<U> sortedSavedRails = new ObjectArrayList<>(savedRails);
 		Collections.sort(sortedSavedRails);
 		final ObjectArrayList<ListItem<U>> dataList = new ObjectArrayList<>();
@@ -254,7 +254,7 @@ public final class ListComponent<T> extends UIComponent {
 		listComponent.setData(dataList);
 	}
 
-	public static void setRoutes(ListComponent<Route> listComponent, ObjectCollection<Route> routes, @Nullable TransportMode transportMode, boolean flattenRoutesByColor, ObjectArrayList<ObjectObjectImmutablePair<Identifier, ListItem.ActionConsumer<Route>>> actions) {
+	public static void setRoutes(ListComponent<Route> listComponent, ObjectCollection<Route> routes, @Nullable TransportMode transportMode, boolean flattenRoutesByColor, ObjectArrayList<ObjectObjectImmutablePair<ResourceLocation, ListItem.ActionConsumer<Route>>> actions) {
 		final ObjectArrayList<Route> sortedRoutes = new ObjectArrayList<>();
 		routes.forEach(route -> {
 			if (transportMode == null || route.isTransportMode(transportMode)) {
@@ -275,7 +275,7 @@ public final class ListComponent<T> extends UIComponent {
 					final int color = lastRoute.getColor();
 					Collections.sort(combinedRouteNames);
 					groupedRoutes.add(ListItem.createChild(
-						(drawing, x, y) -> drawing.setVerticesWH(x + GuiHelper.DEFAULT_PADDING, y + GuiHelper.DEFAULT_PADDING, GuiHelper.MINECRAFT_FONT_SIZE, GuiHelper.MINECRAFT_FONT_SIZE).setColor(ColorHelper.fullAlpha(color)).draw(),
+						(drawing, x, y) -> drawing.setVerticesWH(x + GuiHelper.DEFAULT_PADDING, y + GuiHelper.DEFAULT_PADDING, GuiHelper.MINECRAFT_FONT_SIZE, GuiHelper.MINECRAFT_FONT_SIZE).setColor(ARGB.opaque(color)).draw(),
 						null,
 						GuiHelper.DEFAULT_PADDING + GuiHelper.MINECRAFT_FONT_SIZE,
 						lastRoute,
@@ -306,7 +306,7 @@ public final class ListComponent<T> extends UIComponent {
 
 				if (lastListItem == null || !routeKey.equals(lastKey)) {
 					currentListItem = ListItem.createParent(
-						(drawing, x, y) -> drawing.setVerticesWH(x + GuiHelper.DEFAULT_PADDING, y + GuiHelper.DEFAULT_PADDING, GuiHelper.MINECRAFT_FONT_SIZE, GuiHelper.MINECRAFT_FONT_SIZE).setColor(ColorHelper.fullAlpha(route.getColor())).draw(),
+						(drawing, x, y) -> drawing.setVerticesWH(x + GuiHelper.DEFAULT_PADDING, y + GuiHelper.DEFAULT_PADDING, GuiHelper.MINECRAFT_FONT_SIZE, GuiHelper.MINECRAFT_FONT_SIZE).setColor(ARGB.opaque(route.getColor())).draw(),
 						null,
 						GuiHelper.DEFAULT_PADDING + GuiHelper.MINECRAFT_FONT_SIZE,
 						Utilities.formatName(routeNameSplit[0]),
@@ -326,12 +326,12 @@ public final class ListComponent<T> extends UIComponent {
 		listComponent.setData(groupedRoutes);
 	}
 
-	public static void setRoutePlatforms(ScrollableListWidget<RoutePlatformData> scrollableListWidget, ObjectArrayList<RoutePlatformData> routePlatforms, ObjectArrayList<ObjectObjectImmutablePair<Identifier, ListItem.ActionConsumer<RoutePlatformData>>> actions) {
+	public static void setRoutePlatforms(ScrollableListWidget<RoutePlatformData> scrollableListWidget, ObjectArrayList<RoutePlatformData> routePlatforms, ObjectArrayList<ObjectObjectImmutablePair<ResourceLocation, ListItem.ActionConsumer<RoutePlatformData>>> actions) {
 		final ObjectArrayList<ListItem<RoutePlatformData>> dataList = new ObjectArrayList<>();
 
 		routePlatforms.forEach(routePlatformData -> {
 			final Platform platform = routePlatformData.getPlatform();
-			final int stationColor = platform.area == null ? GuiHelper.BLACK_COLOR : ColorHelper.fullAlpha(platform.area.getColor());
+			final int stationColor = platform.area == null ? GuiHelper.BLACK_COLOR : ARGB.opaque(platform.area.getColor());
 			final String customDestinationPrefix = routePlatformData.getCustomDestination().isEmpty() ? "" : (Route.destinationIsReset(routePlatformData.getCustomDestination()) ? "\"" : "*");
 			final String stationName = platform.area == null ? "" : Utilities.formatName(platform.area.getName());
 
@@ -348,7 +348,7 @@ public final class ListComponent<T> extends UIComponent {
 		scrollableListWidget.setData(dataList);
 	}
 
-	public static void setStationExits(ListComponent<StationExit> listComponent, ObjectCollection<StationExit> stationExits, boolean flatten, ObjectArrayList<ObjectObjectImmutablePair<Identifier, ListItem.ActionConsumer<StationExit>>> actions) {
+	public static void setStationExits(ListComponent<StationExit> listComponent, ObjectCollection<StationExit> stationExits, boolean flatten, ObjectArrayList<ObjectObjectImmutablePair<ResourceLocation, ListItem.ActionConsumer<StationExit>>> actions) {
 		final ObjectArrayList<ListItem<StationExit>> dataList = new ObjectArrayList<>();
 
 		stationExits.forEach(stationExit -> {
@@ -394,11 +394,11 @@ public final class ListComponent<T> extends UIComponent {
 		listComponent.setData(dataList);
 	}
 
-	public static <T> ObjectObjectImmutablePair<Identifier, ListItem.ActionConsumer<T>> createUpButton(ObjectArrayList<T> dataList, @Nullable Runnable onSort) {
+	public static <T> ObjectObjectImmutablePair<ResourceLocation, ListItem.ActionConsumer<T>> createUpButton(ObjectArrayList<T> dataList, @Nullable Runnable onSort) {
 		return new ObjectObjectImmutablePair<>(GuiHelper.UP_TEXTURE_ID, (indexList, data) -> moveListItem(dataList, indexList, -1, onSort));
 	}
 
-	public static <T> ObjectObjectImmutablePair<Identifier, ListItem.ActionConsumer<T>> createDownButton(ObjectArrayList<T> dataList, @Nullable Runnable onSort) {
+	public static <T> ObjectObjectImmutablePair<ResourceLocation, ListItem.ActionConsumer<T>> createDownButton(ObjectArrayList<T> dataList, @Nullable Runnable onSort) {
 		return new ObjectObjectImmutablePair<>(GuiHelper.DOWN_TEXTURE_ID, (indexList, data) -> moveListItem(dataList, indexList, 1, onSort));
 	}
 
@@ -421,7 +421,7 @@ public final class ListComponent<T> extends UIComponent {
 		}
 	}
 
-	private static void drawPlatformNumber(MatrixStack matrixStack, double x, double y, String name) {
+	private static void drawPlatformNumber(PoseStack matrixStack, double x, double y, String name) {
 		FontRenderHelper.render(matrixStack, Utilities.formatName(name), FontRenderOptions.builder()
 			.horizontalPositioning(FontRenderOptions.Alignment.CENTER)
 			.verticalPositioning(FontRenderOptions.Alignment.CENTER)

@@ -1,8 +1,8 @@
 package org.mtr.resource;
 
-import net.minecraft.client.model.ModelPartBuilder;
-import net.minecraft.client.model.ModelPartData;
-import net.minecraft.client.model.ModelTransform;
+import net.minecraft.client.model.geom.PartPose;
+import net.minecraft.client.model.geom.builders.CubeListBuilder;
+import net.minecraft.client.model.geom.builders.PartDefinition;
 import org.mtr.MTR;
 import org.mtr.core.tool.Utilities;
 import org.mtr.libraries.it.unimi.dsi.fastutil.doubles.DoubleArrayList;
@@ -29,13 +29,13 @@ public final class GroupTransformations {
 		));
 	}
 
-	public ModelPartData create(ModelPartData rootModelPart, int textureX, int textureY) {
-		ModelPartData modelPart = rootModelPart;
+	public PartDefinition create(PartDefinition rootModelPart, int textureX, int textureY) {
+		PartDefinition modelPart = rootModelPart;
 		float combinedPivotX = 0;
 		float combinedPivotY = 0;
 		float combinedPivotZ = 0;
 		for (final GroupTransformation groupTransformation : groupTransformationList) {
-			modelPart = modelPart.addChild(MTR.randomString(), ModelPartBuilder.create().uv(textureX, textureY), ModelTransform.of(
+			modelPart = modelPart.addOrReplaceChild(MTR.randomString(), CubeListBuilder.create().texOffs(textureX, textureY), PartPose.offsetAndRotation(
 				groupTransformation.pivotX - combinedPivotX,
 				groupTransformation.pivotY - combinedPivotY,
 				groupTransformation.pivotZ - combinedPivotZ,

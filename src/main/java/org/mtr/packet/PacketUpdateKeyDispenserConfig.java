@@ -1,8 +1,8 @@
 package org.mtr.packet;
 
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import org.jspecify.annotations.Nullable;
 import org.mtr.MTR;
 import org.mtr.block.BlockDriverKeyDispenser;
@@ -16,7 +16,7 @@ public final class PacketUpdateKeyDispenserConfig extends BlockEntityPacketHandl
 	private final long timeout;
 
 	public PacketUpdateKeyDispenserConfig(PacketBufferReceiver packetBufferReceiver) {
-		blockPos = BlockPos.fromLong(packetBufferReceiver.readLong());
+		blockPos = BlockPos.of(packetBufferReceiver.readLong());
 		dispenseBasicDriverKey = packetBufferReceiver.readBoolean();
 		dispenseAdvancedDriverKey = packetBufferReceiver.readBoolean();
 		dispenseGuardKey = packetBufferReceiver.readBoolean();
@@ -40,7 +40,7 @@ public final class PacketUpdateKeyDispenserConfig extends BlockEntityPacketHandl
 		packetBufferSender.writeLong(timeout);
 	}
 
-	protected void setData(@Nullable World world) {
+	protected void setData(@Nullable Level world) {
 		if (world == null || !MTR.isChunkLoaded(world, blockPos)) {
 			return;
 		}

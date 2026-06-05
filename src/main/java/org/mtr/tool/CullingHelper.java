@@ -1,8 +1,8 @@
 package org.mtr.tool;
 
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.render.Camera;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.client.Camera;
+import net.minecraft.client.Minecraft;
+import net.minecraft.world.phys.Vec3;
 
 /**
  * Camera-relative distance / cull helpers shared by every world-space renderer.
@@ -18,11 +18,11 @@ public final class CullingHelper {
 	 * @return the orthogonal distance of a point to the camera or {@code Integer.MAX_VALUE} if the point is beyond the render distance or behind the camera
 	 */
 	public static double getDistanceFromCamera(double x, double y, double z) {
-		final MinecraftClient minecraftClient = MinecraftClient.getInstance();
-		final double renderDistance = minecraftClient.worldRenderer.getViewDistance() * 16;
-		final Camera camera = minecraftClient.gameRenderer.getCamera();
+		final Minecraft minecraftClient = Minecraft.getInstance();
+		final double renderDistance = minecraftClient.levelRenderer.getLastViewDistance() * 16;
+		final Camera camera = minecraftClient.gameRenderer.getMainCamera();
 
-		final Vec3d cameraPosition = camera.getPos();
+		final Vec3 cameraPosition = camera.getPosition();
 		final double orthogonalDistanceFromCamera = Math.abs(x - cameraPosition.x) + Math.abs(y - cameraPosition.y) + Math.abs(z - cameraPosition.z);
 
 		final boolean inFrontOfCamera;
@@ -30,7 +30,7 @@ public final class CullingHelper {
 			inFrontOfCamera = true;
 		} else {
 			final double angleFromCamera = Math.atan2(z - cameraPosition.z, x - cameraPosition.x);
-			double cameraAngleDifference = angleFromCamera - Math.toRadians(camera.getYaw()) - Math.PI / 2;
+			double cameraAngleDifference = angleFromCamera - Math.toRadians(camera.getYRot()) - Math.PI / 2;
 			while (cameraAngleDifference < -Math.PI) {
 				cameraAngleDifference += Math.PI * 2;
 			}
@@ -63,9 +63,9 @@ public final class CullingHelper {
 	 * @return the closest-point orthogonal distance to the camera, or {@code Integer.MAX_VALUE} if beyond render distance
 	 */
 	public static double getDistanceFromCameraToBox(double minX, double minY, double minZ, double maxX, double maxY, double maxZ) {
-		final MinecraftClient minecraftClient = MinecraftClient.getInstance();
-		final double renderDistance = minecraftClient.worldRenderer.getViewDistance() * 16;
-		final Vec3d cameraPosition = minecraftClient.gameRenderer.getCamera().getPos();
+		final Minecraft minecraftClient = Minecraft.getInstance();
+		final double renderDistance = minecraftClient.levelRenderer.getLastViewDistance() * 16;
+		final Vec3 cameraPosition = minecraftClient.gameRenderer.getMainCamera().getPosition();
 
 		final double dx = Math.max(Math.max(minX - cameraPosition.x, 0), cameraPosition.x - maxX);
 		final double dy = Math.max(Math.max(minY - cameraPosition.y, 0), cameraPosition.y - maxY);

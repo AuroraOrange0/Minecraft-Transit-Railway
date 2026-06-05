@@ -1,15 +1,15 @@
 package org.mtr.client;
 
 import lombok.Getter;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.network.ClientPlayNetworkHandler;
-import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.client.network.PlayerListEntry;
-import net.minecraft.client.world.ClientWorld;
-import net.minecraft.util.hit.HitResult;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.GameMode;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.multiplayer.ClientPacketListener;
+import net.minecraft.client.multiplayer.PlayerInfo;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.GameType;
+import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.phys.Vec3;
 import org.jspecify.annotations.Nullable;
 import org.mtr.MTR;
 import org.mtr.block.BlockNode;
@@ -89,27 +89,27 @@ public final class MinecraftClientData extends ClientData {
 
 	@Nullable
 	public ObjectObjectImmutablePair<Rail, BlockPos> getFacingRailAndBlockPos(boolean includeCableType) {
-		final MinecraftClient minecraftClient = MinecraftClient.getInstance();
-		final ClientWorld clientWorld = minecraftClient.world;
+		final Minecraft minecraftClient = Minecraft.getInstance();
+		final ClientLevel clientWorld = minecraftClient.level;
 		if (clientWorld == null) {
 			return null;
 		}
 
-		final ClientPlayerEntity clientPlayerEntity = minecraftClient.player;
+		final LocalPlayer clientPlayerEntity = minecraftClient.player;
 		if (clientPlayerEntity == null) {
 			return null;
 		}
 
-		final HitResult hitResult = minecraftClient.crosshairTarget;
+		final HitResult hitResult = minecraftClient.hitResult;
 		if (hitResult == null) {
 			return null;
 		}
 
-		final Vec3d hitPos = hitResult.getPos();
-		final BlockPos blockPos = BlockPos.ofFloored(hitPos.x, hitPos.y, hitPos.z);
+		final Vec3 hitPos = hitResult.getLocation();
+		final BlockPos blockPos = BlockPos.containing(hitPos.x, hitPos.y, hitPos.z);
 
 		if (clientWorld.getBlockState(blockPos).getBlock() instanceof BlockNode) {
-			final float playerAngle = clientPlayerEntity.getYaw() + 90;
+			final float playerAngle = clientPlayerEntity.getYRot() + 90;
 			final @Nullable Rail[] closestRail = {null};
 			final double[] closestAngle = {720};
 
@@ -148,20 +148,20 @@ public final class MinecraftClientData extends ClientData {
 	}
 
 	public static boolean hasPermission() {
-		final ClientPlayerEntity player = MinecraftClient.getInstance().player;
+		final LocalPlayer player = Minecraft.getInstance().player;
 		if (player == null) {
 			return false;
 		}
-		final ClientPlayNetworkHandler clientPlayNetworkHandler = MinecraftClient.getInstance().getNetworkHandler();
+		final ClientPacketListener clientPlayNetworkHandler = Minecraft.getInstance().getConnection();
 		if (clientPlayNetworkHandler == null) {
 			return false;
 		}
-		final PlayerListEntry playerListEntry = clientPlayNetworkHandler.getPlayerListEntry(player.getUuid());
+		final PlayerInfo playerListEntry = clientPlayNetworkHandler.getPlayerInfo(player.getUUID());
 		if (playerListEntry == null) {
 			return false;
 		}
-		final GameMode gameMode = playerListEntry.getGameMode();
-		return gameMode == GameMode.CREATIVE || gameMode == GameMode.SURVIVAL;
+		final GameType gameMode = playerListEntry.getGameMode();
+		return gameMode == GameType.CREATIVE || gameMode == GameType.SURVIVAL;
 	}
 
 	@Nullable
@@ -225,16 +225,16 @@ public final class MinecraftClientData extends ClientData {
 
 		public boolean shouldRender;
 		public final String hexId;
-		public final Vec3d startVector;
-		public final Vec3d endVector;
+		public final Vec3 startVector;
+		public final Vec3 endVector;
 		@Getter
 		private Rail rail;
 
 		private RailWrapper(Rail rail, String hexId) {
 			this.rail = rail;
 			this.hexId = hexId;
-			startVector = new Vec3d(rail.railMath.minX, rail.railMath.minY, rail.railMath.minZ);
-			endVector = new Vec3d(rail.railMath.maxX, rail.railMath.maxY, rail.railMath.maxZ);
+			startVector = new Vec3(rail.railMath.minX, rail.railMath.minY, rail.railMath.minZ);
+			endVector = new Vec3(rail.railMath.maxX, rail.railMath.maxY, rail.railMath.maxZ);
 		}
 	}
 }

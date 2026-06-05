@@ -1,19 +1,19 @@
 package org.mtr.block;
 
-import net.minecraft.block.AbstractBlock;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockBehaviour;
+import net.minecraft.world.level.block.state.BlockState;
 import org.mtr.registry.BlockEntityTypes;
 
 public class BlockTrainRedstoneSensor extends BlockTrainPoweredSensorBase {
 
-	public BlockTrainRedstoneSensor(AbstractBlock.Settings settings) {
+	public BlockTrainRedstoneSensor(BlockBehaviour.Properties settings) {
 		super(settings);
 	}
 
 	@Override
-	public BlockEntity createBlockEntity(BlockPos blockPos, BlockState blockState) {
+	public BlockEntity newBlockEntity(BlockPos blockPos, BlockState blockState) {
 		return new TrainRedstoneSensorBlockEntity(blockPos, blockState);
 	}
 

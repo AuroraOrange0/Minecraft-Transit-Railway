@@ -1,9 +1,9 @@
 package org.mtr.widget;
 
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.render.RenderLayer;
-import net.minecraft.text.Text;
-import net.minecraft.util.math.ColorHelper;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.network.chat.Component;
+import net.minecraft.util.ARGB;
 import org.apache.commons.lang3.StringUtils;
 import org.jspecify.annotations.Nullable;
 import org.mtr.core.tool.Utilities;
@@ -39,7 +39,7 @@ public final class ColorSelectorWidget extends PopupWidgetBase {
 	private static final int CONTROLS_SIZE = 60;
 
 	public ColorSelectorWidget(int minWidth, Runnable onDismiss, Runnable applyBlur) {
-		super(Math.max(minWidth, GuiHelper.DEFAULT_PADDING * 3 + GuiHelper.DEFAULT_LINE_SIZE + CONTROLS_SIZE), applyBlur, Text.translatable("selectWorld.edit.save").getString(), TranslationProvider.GUI_MTR_COLOR_RANDOM.getString(), TranslationProvider.GUI_MTR_RESET.getString(), TranslationProvider.GUI_MTR_CLOSE.getString());
+		super(Math.max(minWidth, GuiHelper.DEFAULT_PADDING * 3 + GuiHelper.DEFAULT_LINE_SIZE + CONTROLS_SIZE), applyBlur, Component.translatable("selectWorld.edit.save").getString(), TranslationProvider.GUI_MTR_COLOR_RANDOM.getString(), TranslationProvider.GUI_MTR_RESET.getString(), TranslationProvider.GUI_MTR_CLOSE.getString());
 		this.onDismiss = onDismiss;
 		colorTextField = new BetterTextFieldWidget(6, TextCase.UPPER, "[^\\dA-F]", "", CONTROLS_SIZE, text -> textCallback(text, 16, (existingColor, component) -> setColor(new Color(component))));
 		redTextField = new BetterTextFieldWidget(3, TextCase.DEFAULT, "\\D", "", CONTROLS_SIZE, text -> textCallback(text, 10, (existingColor, component) -> setColor(component, existingColor.getGreen(), existingColor.getBlue())));
@@ -48,16 +48,16 @@ public final class ColorSelectorWidget extends PopupWidgetBase {
 	}
 
 	@Override
-	public void init(Consumer<ClickableWidgetBase> addDrawableChild) {
-		super.init(addDrawableChild);
-		addDrawableChild.accept(colorTextField);
-		addDrawableChild.accept(redTextField);
-		addDrawableChild.accept(greenTextField);
-		addDrawableChild.accept(blueTextField);
+	public void init(Consumer<ClickableWidgetBase> addRenderableWidget) {
+		super.init(addRenderableWidget);
+		addRenderableWidget.accept(colorTextField);
+		addRenderableWidget.accept(redTextField);
+		addRenderableWidget.accept(greenTextField);
+		addRenderableWidget.accept(blueTextField);
 	}
 
 	@Override
-	protected void render(DrawContext context, int mouseX, int mouseY) {
+	protected void render(GuiGraphics context, int mouseX, int mouseY) {
 		visible = colorCallback != null;
 
 		final int controlsX = getX() + width - GuiHelper.DEFAULT_PADDING - CONTROLS_SIZE;
@@ -66,13 +66,13 @@ public final class ColorSelectorWidget extends PopupWidgetBase {
 		greenTextField.setPosition(controlsX, getY() + GuiHelper.DEFAULT_PADDING * 3 + GuiHelper.DEFAULT_LINE_SIZE * 2);
 		blueTextField.setPosition(controlsX, getY() + GuiHelper.DEFAULT_PADDING * 4 + GuiHelper.DEFAULT_LINE_SIZE * 3);
 
-		final Drawing drawing = new Drawing(context.getMatrices(), RenderLayer.getGui());
+		final Drawing drawing = new Drawing(context.pose(), RenderType.gui());
 		final int mainHeight = height - GuiHelper.DEFAULT_PADDING * 2 - GuiHelper.DEFAULT_LINE_SIZE;
 		final int mainWidth = width - GuiHelper.DEFAULT_PADDING * 4 - GuiHelper.DEFAULT_LINE_SIZE - CONTROLS_SIZE;
 		hoverMouseZone = MouseZone.NONE;
 
 		// Draw the selected colour
-		drawing.setVerticesWH(controlsX, getY() + GuiHelper.DEFAULT_PADDING * 5 + GuiHelper.DEFAULT_LINE_SIZE * 4, CONTROLS_SIZE, CONTROLS_SIZE).setColor(ColorHelper.fullAlpha(Color.HSBtoRGB(hue, saturation, brightness))).draw();
+		drawing.setVerticesWH(controlsX, getY() + GuiHelper.DEFAULT_PADDING * 5 + GuiHelper.DEFAULT_LINE_SIZE * 4, CONTROLS_SIZE, CONTROLS_SIZE).setColor(ARGB.opaque(Color.HSBtoRGB(hue, saturation, brightness))).draw();
 
 		// Draw hue bar
 		final int hueBarX = controlsX - GuiHelper.DEFAULT_PADDING - GuiHelper.DEFAULT_LINE_SIZE;
@@ -82,7 +82,7 @@ public final class ColorSelectorWidget extends PopupWidgetBase {
 			final int hueBarStartY = getY() + GuiHelper.DEFAULT_PADDING;
 			final int hueBarY = hueBarStartY + drawHue;
 
-			drawing.setVerticesWH(hueBarX, hueBarY, GuiHelper.DEFAULT_LINE_SIZE, 1).setColor(ColorHelper.fullAlpha(Color.HSBtoRGB(currentHue, 1, 1))).draw();
+			drawing.setVerticesWH(hueBarX, hueBarY, GuiHelper.DEFAULT_LINE_SIZE, 1).setColor(ARGB.opaque(Color.HSBtoRGB(currentHue, 1, 1))).draw();
 
 			final boolean isDragging = draggingMouseZone == MouseZone.HUE && Math.clamp(mouseY, hueBarStartY, hueBarStartY + mainHeight - 1) == hueBarY;
 			final boolean isOver = mouseY == hueBarY && Utilities.isBetween(mouseX, hueBarX, hueBarX + GuiHelper.DEFAULT_LINE_SIZE - 1);
@@ -107,7 +107,7 @@ public final class ColorSelectorWidget extends PopupWidgetBase {
 				final int brightnessRectangleStartY = getY() + GuiHelper.DEFAULT_PADDING;
 				final int brightnessRectangleY = getY() + height - GuiHelper.DEFAULT_LINE_SIZE - GuiHelper.DEFAULT_PADDING - drawBrightness - 1;
 
-				drawing.setVerticesWH(saturationRectangleX, brightnessRectangleY, 1, 1).setColor(ColorHelper.fullAlpha(Color.HSBtoRGB(hue, currentSaturation, currentBrightness))).draw();
+				drawing.setVerticesWH(saturationRectangleX, brightnessRectangleY, 1, 1).setColor(ARGB.opaque(Color.HSBtoRGB(hue, currentSaturation, currentBrightness))).draw();
 
 				final boolean isDragging = draggingMouseZone == MouseZone.SATURATION_BRIGHTNESS && Math.clamp(mouseX, saturationRectangleStartX, saturationRectangleStartX + mainWidth - 1) == saturationRectangleX && Math.clamp(mouseY, brightnessRectangleStartY, brightnessRectangleStartY + mainHeight - 1) == brightnessRectangleY;
 				final boolean isOver = mouseX == saturationRectangleX && mouseY == brightnessRectangleY;
@@ -157,7 +157,7 @@ public final class ColorSelectorWidget extends PopupWidgetBase {
 		switch (index) {
 			case 0 -> {
 				if (colorCallback != null) {
-					colorCallback.accept(ColorHelper.zeroAlpha(new Color(Color.HSBtoRGB(hue, saturation, brightness)).getRGB()));
+					colorCallback.accept(ARGB.transparent(new Color(Color.HSBtoRGB(hue, saturation, brightness)).getRGB()));
 				}
 				setColorCallbackInternal(null);
 			}
@@ -174,7 +174,7 @@ public final class ColorSelectorWidget extends PopupWidgetBase {
 
 	public void setColorCallback(IntConsumer colorCallback, int oldColorRGB) {
 		setColorCallbackInternal(colorCallback);
-		oldColor = new Color(ColorHelper.zeroAlpha(oldColorRGB), true);
+		oldColor = new Color(ARGB.transparent(oldColorRGB), true);
 		setColor(oldColor);
 	}
 
@@ -201,7 +201,7 @@ public final class ColorSelectorWidget extends PopupWidgetBase {
 	}
 
 	private void updateTextFields() {
-		final Color color = new Color(ColorHelper.zeroAlpha(Color.HSBtoRGB(hue, saturation, brightness)), true);
+		final Color color = new Color(ARGB.transparent(Color.HSBtoRGB(hue, saturation, brightness)), true);
 		setTextField(colorTextField, color.getRGB(), 16);
 		setTextField(redTextField, color.getRed(), 10);
 		setTextField(greenTextField, color.getGreen(), 10);
@@ -212,7 +212,7 @@ public final class ColorSelectorWidget extends PopupWidgetBase {
 	private void textCallback(String text, int base, ColorCallback colorCallback) {
 		try {
 			final int value = Integer.parseInt(text, base);
-			colorCallback.accept(new Color(ColorHelper.zeroAlpha(Color.HSBtoRGB(hue, saturation, brightness))), base == 10 ? Math.clamp(value, 0, 0xFF) : value);
+			colorCallback.accept(new Color(ARGB.transparent(Color.HSBtoRGB(hue, saturation, brightness))), base == 10 ? Math.clamp(value, 0, 0xFF) : value);
 		} catch (Exception ignored) {
 		}
 	}

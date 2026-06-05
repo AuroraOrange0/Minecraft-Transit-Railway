@@ -2,9 +2,9 @@ package org.mtr.render;
 
 import com.logisticscraft.occlusionculling.DataProvider;
 import com.logisticscraft.occlusionculling.OcclusionCullingInstance;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.world.ClientWorld;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.core.BlockPos;
 import org.jspecify.annotations.Nullable;
 import org.mtr.MTR;
 
@@ -36,7 +36,7 @@ import java.util.function.Consumer;
  *
  * <p>The loop parks on {@link LockSupport#park()} when there is no work, and is woken by
  * the scheduling methods. {@link #start()} is idempotent — the loop is launched once on
- * first call and survives until {@link MinecraftClient#isRunning()} returns
+ * first call and survives until {@link Minecraft#isRunning()} returns
  * {@code false}.</p>
  *
  * <p>The {@link #worker} executor is a {@code newVirtualThreadPerTaskExecutor}, suitable
@@ -82,7 +82,7 @@ public final class WorkerThread {
 
 	/**
 	 * Idempotent loop launcher. Called once per frame from
-	 * {@link org.mtr.render.MainRenderer#render}; the loop body only spawns the first time
+	 * {@link MainRenderer#render}; the loop body only spawns the first time
 	 * and then re-arms after a {@value #COOLDOWN}-tick idle period to recover from a
 	 * Minecraft client restart without leaking the thread.
 	 */
@@ -199,7 +199,7 @@ public final class WorkerThread {
 	}
 
 	private void updateInstance() {
-		final int newRenderDistance = (int) MinecraftClient.getInstance().worldRenderer.getViewDistance();
+		final int newRenderDistance = (int) Minecraft.getInstance().levelRenderer.getLastViewDistance();
 		if (renderDistance != newRenderDistance) {
 			renderDistance = newRenderDistance;
 			occlusionCullingInstance = new OcclusionCullingInstance(Math.min(renderDistance, MAX_OCCLUSION_CHUNK_DISTANCE) * 16, new CullingDataProvider());
@@ -207,7 +207,7 @@ public final class WorkerThread {
 	}
 
 	private static boolean isRunning() {
-		return MinecraftClient.getInstance().isRunning();
+		return Minecraft.getInstance().isRunning();
 	}
 
 	private static <T> void run(AtomicReference<@Nullable T> nextTask, Consumer<T> consumer) {
@@ -223,20 +223,20 @@ public final class WorkerThread {
 
 	private static final class CullingDataProvider implements DataProvider {
 
-		private final MinecraftClient minecraftClient = MinecraftClient.getInstance();
+		private final Minecraft minecraftClient = Minecraft.getInstance();
 		@Nullable
-		private ClientWorld clientWorld = null;
+		private ClientLevel clientWorld = null;
 
 		@Override
 		public boolean prepareChunk(int chunkX, int chunkZ) {
-			clientWorld = minecraftClient.world;
+			clientWorld = minecraftClient.level;
 			return clientWorld != null;
 		}
 
 		@Override
 		public boolean isOpaqueFullCube(int x, int y, int z) {
 			final BlockPos blockPos = new BlockPos(x, y, z);
-			return clientWorld != null && clientWorld.getBlockState(blockPos).isOpaqueFullCube();
+			return clientWorld != null && clientWorld.getBlockState(blockPos).isSolidRender();
 		}
 
 		@Override

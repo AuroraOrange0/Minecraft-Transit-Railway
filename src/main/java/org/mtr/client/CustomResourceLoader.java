@@ -1,7 +1,7 @@
 package org.mtr.client;
 
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.util.Identifier;
+import net.minecraft.client.Minecraft;
+import net.minecraft.resources.ResourceLocation;
 import org.apache.commons.io.IOUtils;
 import org.jspecify.annotations.Nullable;
 import org.mtr.Keys;
@@ -30,7 +30,7 @@ import java.util.function.Function;
  * <ol>
  *   <li>The bundled default rail.</li>
  *   <li>Every {@code mtr:mtr_custom_resources.json} found across active resource packs.
- *       Each file goes through {@link org.mtr.legacy.resource.CustomResourcesConverter}
+ *       Each file goes through {@link CustomResourcesConverter}
  *       which transparently upgrades MTR 3.x format JSON to the current schema (see
  *       {@code docs/MIGRATIONS.md} §1).</li>
  *   <li>The temporary {@code mtr_custom_resources_pending_migration.json} manifest, which
@@ -122,7 +122,7 @@ public class CustomResourceLoader {
 		RAILS.add(defaultRailResource);
 		RAILS_CACHE.put(DEFAULT_RAIL_ID, defaultRailResource);
 
-		ResourceManagerHelper.readAllResources(Identifier.of(MTR.MOD_ID, CUSTOM_RESOURCES_ID + ".json"), inputStream -> {
+		ResourceManagerHelper.readAllResources(ResourceLocation.fromNamespaceAndPath(MTR.MOD_ID, CUSTOM_RESOURCES_ID + ".json"), inputStream -> {
 			try {
 				final CustomResources customResources = CustomResourcesConverter.convert(Config.readResource(inputStream).getAsJsonObject(), CustomResourceLoader::readResource);
 				customResources.iterateVehicles(vehicleResource -> registerVehicle(vehicleResource, false));
@@ -152,7 +152,7 @@ public class CustomResourceLoader {
 		});
 
 		// TODO temporary code for loading models pending migration
-		ResourceManagerHelper.readAllResources(Identifier.of(MTR.MOD_ID, CUSTOM_RESOURCES_PENDING_MIGRATION_ID + ".json"), inputStream -> {
+		ResourceManagerHelper.readAllResources(ResourceLocation.fromNamespaceAndPath(MTR.MOD_ID, CUSTOM_RESOURCES_PENDING_MIGRATION_ID + ".json"), inputStream -> {
 			try {
 				CustomResourcesConverter.convert(Config.readResource(inputStream).getAsJsonObject(), CustomResourceLoader::readResource).iterateVehicles(vehicleResource -> registerVehicle(vehicleResource, false));
 			} catch (Exception e) {
@@ -200,7 +200,7 @@ public class CustomResourceLoader {
 		final long time1 = System.currentTimeMillis();
 
 		// NOTE: the preload pass must run on the render thread because the inner build
-		// step eventually calls VertexBuffer#createAndUpload (a GL call). The bulk of the
+		// step eventually calls VertexBuffer#uploadStatic (a GL call). The bulk of the
 		// work (OBJ / Blockbench parsing) has already been awaited above and runs in
 		// parallel on virtual threads; by the time we reach here every model is parsed
 		// and the synchronous build below is just GPU upload.
@@ -375,14 +375,14 @@ public class CustomResourceLoader {
 		}
 	}
 
-	private static String readResource(Identifier identifier) {
+	private static String readResource(ResourceLocation identifier) {
 		final String identifierString = identifier.toString();
 		// computeIfAbsent guarantees a single resource fetch per key even when multiple
 		// worker threads request the same file concurrently (e.g. several vehicles sharing
 		// an MTL or texture during async OBJ parsing).
 		return RESOURCE_CACHE.computeIfAbsent(identifierString, key -> {
 			if (Keys.DEBUG) {
-				try (final InputStream inputStream = Files.newInputStream(MinecraftClient.getInstance().runDirectory.toPath().resolve("../src/main/resources/assets").resolve(identifier.getNamespace()).resolve(identifier.getPath()), StandardOpenOption.READ)) {
+				try (final InputStream inputStream = Files.newInputStream(Minecraft.getInstance().gameDirectory.toPath().resolve("../src/main/resources/assets").resolve(identifier.getNamespace()).resolve(identifier.getPath()), StandardOpenOption.READ)) {
 					return IOUtils.toString(inputStream, StandardCharsets.UTF_8);
 				} catch (Exception e) {
 					MTR.LOGGER.error("Failed to read debug-mode resource [{}] from the development source tree", key, e);

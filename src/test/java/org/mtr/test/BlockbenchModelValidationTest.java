@@ -1,9 +1,7 @@
 package org.mtr.test;
 
-import org.apache.commons.io.FilenameUtils;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import org.mtr.MTR;
 import org.mtr.libraries.com.google.gson.JsonObject;
 import org.mtr.libraries.com.google.gson.JsonParser;
 import org.mtr.resource.BlockbenchModelValidator;
@@ -17,15 +15,15 @@ public final class BlockbenchModelValidationTest {
 	public void validate() throws IOException {
 		try (final DirectoryStream<Path> stream = Files.newDirectoryStream(Paths.get(System.getProperty("user.dir")).resolve("../../src/main/resources/assets/mtr/models/vehicle"))) {
 			stream.forEach(path -> {
-				final String id = FilenameUtils.getBaseName(path.toString());
-				MTR.LOGGER.info("Validating {}", id);
+				final String id = path.getFileName().toString().split("\\.")[0];
+				System.out.println("Validating " + id);
 
 				try {
 					final JsonObject modelObject = JsonParser.parseReader(Files.newBufferedReader(path)).getAsJsonObject();
 					BlockbenchModelValidator.validate(modelObject, id, Assertions::assertTrue);
 					Files.writeString(path, modelObject.toString(), StandardOpenOption.TRUNCATE_EXISTING);
 				} catch (IOException e) {
-					MTR.LOGGER.error("", e);
+					System.err.println(e);
 				}
 			});
 		}

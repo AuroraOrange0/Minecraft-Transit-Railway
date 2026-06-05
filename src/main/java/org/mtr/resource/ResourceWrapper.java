@@ -1,6 +1,6 @@
 package org.mtr.resource;
 
-import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.Minecraft;
 import org.mtr.core.serializer.JsonReader;
 import org.mtr.core.tool.Utilities;
 import org.mtr.generated.resource.ResourceWrapperSchema;
@@ -51,8 +51,8 @@ public final class ResourceWrapper extends ResourceWrapperSchema {
 	}
 
 	public void updateMinecraftInfo() {
-		isMinecraftPaused = MinecraftClient.getInstance().isPaused();
-		exportDirectory = MinecraftClient.getInstance().runDirectory.getAbsolutePath().replace("\\", "/") + "/resourcepacks";
+		isMinecraftPaused = Minecraft.getInstance().isPaused();
+		exportDirectory = Minecraft.getInstance().gameDirectory.getAbsolutePath().replace("\\", "/") + "/resourcepacks";
 	}
 
 	public void clean() {

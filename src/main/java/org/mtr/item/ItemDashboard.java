@@ -1,12 +1,12 @@
 package org.mtr.item;
 
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.Item;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.Hand;
-import net.minecraft.world.World;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.level.Level;
 import org.jspecify.annotations.Nullable;
 import org.mtr.Keys;
 import org.mtr.MTR;
@@ -28,22 +28,22 @@ public class ItemDashboard extends Item {
 
 	private static final int SEARCH_RADIUS = 5;
 
-	public ItemDashboard(TransportMode transportMode, Item.Settings settings) {
-		super(settings.maxCount(1));
+	public ItemDashboard(TransportMode transportMode, Item.Properties settings) {
+		super(settings.stacksTo(1));
 		this.transportMode = transportMode;
 	}
 
 	@Override
-	public ActionResult use(World world, PlayerEntity user, Hand hand) {
-		if (Keys.DEBUG && user.isSneaking()) {
-			if (world.isClient()) {
+	public InteractionResult use(Level world, Player user, InteractionHand hand) {
+		if (Keys.DEBUG && user.isShiftKeyDown()) {
+			if (world.isClientSide()) {
 				CustomResourceLoader.reload();
 			}
 		} else {
-			if (!world.isClient()) {
-				if (user.isSneaking()) {
-					final Position playerPosition = MTR.blockPosToPosition(user.getBlockPos());
-					MTR.sendMessageC2S(OperationProcessor.GET_DATA, world.getServer(), world, new DataRequest(user.getUuid(), playerPosition, SEARCH_RADIUS), dataResponse -> {
+			if (!world.isClientSide()) {
+				if (user.isShiftKeyDown()) {
+					final Position playerPosition = MTR.blockPosToPosition(user.blockPosition());
+					MTR.sendMessageC2S(OperationProcessor.GET_DATA, world.getServer(), world, new DataRequest(user.getUUID(), playerPosition, SEARCH_RADIUS), dataResponse -> {
 						final ClientData tempClientData = new ClientData();
 						new DataResponse(new JsonReader(Utilities.getJsonObjectFromData(dataResponse)), tempClientData).write();
 						final Station station = findNearbyArea(playerPosition, tempClientData.stations);
@@ -52,23 +52,23 @@ public class ItemDashboard extends Item {
 						if (station != null) {
 							final Platform platform = findNearbySavedRail(playerPosition, station.savedRails, tempClientData);
 							if (platform == null) {
-								PacketOpenDashboardScreen.sendDirectlyToServer((ServerWorld) world, (ServerPlayerEntity) user, transportMode, PacketOpenDashboardScreen.ScreenType.STATION, station.getId());
+								PacketOpenDashboardScreen.sendDirectlyToServer((ServerLevel) world, (ServerPlayer) user, transportMode, PacketOpenDashboardScreen.ScreenType.STATION, station.getId());
 							} else {
-								PacketOpenDashboardScreen.sendDirectlyToServer((ServerWorld) world, (ServerPlayerEntity) user, transportMode, PacketOpenDashboardScreen.ScreenType.PLATFORM, platform.getId());
+								PacketOpenDashboardScreen.sendDirectlyToServer((ServerLevel) world, (ServerPlayer) user, transportMode, PacketOpenDashboardScreen.ScreenType.PLATFORM, platform.getId());
 							}
 						} else if (depot != null) {
 							final Siding siding = findNearbySavedRail(playerPosition, depot.savedRails, tempClientData);
 							if (siding == null) {
-								PacketOpenDashboardScreen.sendDirectlyToServer((ServerWorld) world, (ServerPlayerEntity) user, transportMode, PacketOpenDashboardScreen.ScreenType.DEPOT, depot.getId());
+								PacketOpenDashboardScreen.sendDirectlyToServer((ServerLevel) world, (ServerPlayer) user, transportMode, PacketOpenDashboardScreen.ScreenType.DEPOT, depot.getId());
 							} else {
-								PacketOpenDashboardScreen.sendDirectlyToServer((ServerWorld) world, (ServerPlayerEntity) user, transportMode, PacketOpenDashboardScreen.ScreenType.SIDING, siding.getId());
+								PacketOpenDashboardScreen.sendDirectlyToServer((ServerLevel) world, (ServerPlayer) user, transportMode, PacketOpenDashboardScreen.ScreenType.SIDING, siding.getId());
 							}
 						} else {
-							PacketOpenDashboardScreen.sendDirectlyToServer((ServerWorld) world, (ServerPlayerEntity) user, transportMode);
+							PacketOpenDashboardScreen.sendDirectlyToServer((ServerLevel) world, (ServerPlayer) user, transportMode);
 						}
 					}, DataResponse.class);
 				} else {
-					PacketOpenDashboardScreen.sendDirectlyToServer((ServerWorld) world, (ServerPlayerEntity) user, transportMode);
+					PacketOpenDashboardScreen.sendDirectlyToServer((ServerLevel) world, (ServerPlayer) user, transportMode);
 				}
 			}
 		}

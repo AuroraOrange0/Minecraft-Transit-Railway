@@ -1,8 +1,8 @@
 package org.mtr.data;
 
-import net.minecraft.block.BlockState;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.level.block.state.BlockState;
 import org.mtr.core.data.Rail;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.mtr.packet.PacketBroadcastRailActions;
@@ -14,10 +14,10 @@ import org.mtr.registry.RegistryServer;
  */
 public class RailActionModule {
 
-	private final ServerWorld serverWorld;
+	private final ServerLevel serverWorld;
 	private final ObjectArrayList<RailAction> railActions = new ObjectArrayList<>();
 
-	public RailActionModule(ServerWorld serverWorld) {
+	public RailActionModule(ServerLevel serverWorld) {
 		this.serverWorld = serverWorld;
 	}
 
@@ -28,17 +28,17 @@ public class RailActionModule {
 		}
 	}
 
-	public void markRailForBridge(Rail rail, ServerPlayerEntity serverPlayerEntity, int radius, BlockState blockState) {
+	public void markRailForBridge(Rail rail, ServerPlayer serverPlayerEntity, int radius, BlockState blockState) {
 		railActions.add(new RailAction(serverWorld, serverPlayerEntity, RailActionType.BRIDGE, rail, radius, 0, blockState));
 		broadcastUpdate();
 	}
 
-	public void markRailForTunnel(Rail rail, ServerPlayerEntity serverPlayerEntity, int radius, int height) {
+	public void markRailForTunnel(Rail rail, ServerPlayer serverPlayerEntity, int radius, int height) {
 		railActions.add(new RailAction(serverWorld, serverPlayerEntity, RailActionType.TUNNEL, rail, radius, height, null));
 		broadcastUpdate();
 	}
 
-	public void markRailForTunnelWall(Rail rail, ServerPlayerEntity serverPlayerEntity, int radius, int height, BlockState blockState) {
+	public void markRailForTunnelWall(Rail rail, ServerPlayer serverPlayerEntity, int radius, int height, BlockState blockState) {
 		railActions.add(new RailAction(serverWorld, serverPlayerEntity, RailActionType.TUNNEL_WALL, rail, radius + 1, height + 1, blockState));
 		broadcastUpdate();
 	}
@@ -49,6 +49,6 @@ public class RailActionModule {
 	}
 
 	private void broadcastUpdate() {
-		serverWorld.getPlayers().forEach(serverPlayerEntity -> RegistryServer.sendPacketToClient(serverPlayerEntity, new PacketBroadcastRailActions(railActions)));
+		serverWorld.players().forEach(serverPlayerEntity -> RegistryServer.sendPacketToClient(serverPlayerEntity, new PacketBroadcastRailActions(railActions)));
 	}
 }

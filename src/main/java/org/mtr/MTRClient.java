@@ -1,15 +1,15 @@
 package org.mtr;
 
+import com.mojang.blaze3d.vertex.PoseStack;
 import lombok.Getter;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.client.render.RenderLayer;
-import net.minecraft.client.render.VertexConsumerProvider;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.client.world.ClientWorld;
-import net.minecraft.text.Text;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.phys.Vec3;
 import org.jspecify.annotations.Nullable;
 import org.mtr.block.BlockStationNameTallBase;
 import org.mtr.block.BlockStationNameTallStanding;
@@ -76,7 +76,7 @@ public final class MTRClient {
 	@Nullable
 	private static Runnable movePlayer;
 	@Nullable
-	private static ClientWorld lastClientWorld;
+	private static ClientLevel lastClientWorld;
 	@Nullable
 	private static MapTileProvider mapTileProvider;
 
@@ -92,68 +92,68 @@ public final class MTRClient {
 		MTR.writeFromClient();
 		KeyBindings.init();
 
-		RegistryClient.registerBlockRenderType(RenderLayer.getCutout(), Blocks.APG_DOOR);
-		RegistryClient.registerBlockRenderType(RenderLayer.getCutout(), Blocks.APG_GLASS);
-		RegistryClient.registerBlockRenderType(RenderLayer.getCutout(), Blocks.APG_GLASS_END);
-		RegistryClient.registerBlockRenderType(RenderLayer.getCutout(), Blocks.CABLE_CAR_NODE_LOWER);
-		RegistryClient.registerBlockRenderType(RenderLayer.getCutout(), Blocks.CABLE_CAR_NODE_UPPER);
-		RegistryClient.registerBlockRenderType(RenderLayer.getCutout(), Blocks.CLOCK);
-		RegistryClient.registerBlockRenderType(RenderLayer.getTranslucent(), Blocks.GLASS_FENCE_CIO);
-		RegistryClient.registerBlockRenderType(RenderLayer.getTranslucent(), Blocks.GLASS_FENCE_CKT);
-		RegistryClient.registerBlockRenderType(RenderLayer.getTranslucent(), Blocks.GLASS_FENCE_HEO);
-		RegistryClient.registerBlockRenderType(RenderLayer.getTranslucent(), Blocks.GLASS_FENCE_MOS);
-		RegistryClient.registerBlockRenderType(RenderLayer.getTranslucent(), Blocks.GLASS_FENCE_PLAIN);
-		RegistryClient.registerBlockRenderType(RenderLayer.getTranslucent(), Blocks.GLASS_FENCE_SHM);
-		RegistryClient.registerBlockRenderType(RenderLayer.getTranslucent(), Blocks.GLASS_FENCE_STAINED);
-		RegistryClient.registerBlockRenderType(RenderLayer.getTranslucent(), Blocks.GLASS_FENCE_STW);
-		RegistryClient.registerBlockRenderType(RenderLayer.getTranslucent(), Blocks.GLASS_FENCE_TSH);
-		RegistryClient.registerBlockRenderType(RenderLayer.getTranslucent(), Blocks.GLASS_FENCE_WKS);
-		RegistryClient.registerBlockRenderType(RenderLayer.getCutout(), Blocks.LOGO);
-		RegistryClient.registerBlockRenderType(RenderLayer.getCutout(), Blocks.PLATFORM);
-		RegistryClient.registerBlockRenderType(RenderLayer.getCutout(), Blocks.PLATFORM_INDENTED);
-		RegistryClient.registerBlockRenderType(RenderLayer.getCutout(), Blocks.PLATFORM_SLAB);
-		RegistryClient.registerBlockRenderType(RenderLayer.getCutout(), Blocks.PLATFORM_NA_1);
-		RegistryClient.registerBlockRenderType(RenderLayer.getCutout(), Blocks.PLATFORM_NA_1_INDENTED);
-		RegistryClient.registerBlockRenderType(RenderLayer.getCutout(), Blocks.PLATFORM_NA_1_SLAB);
-		RegistryClient.registerBlockRenderType(RenderLayer.getCutout(), Blocks.PLATFORM_NA_2);
-		RegistryClient.registerBlockRenderType(RenderLayer.getCutout(), Blocks.PLATFORM_NA_2_INDENTED);
-		RegistryClient.registerBlockRenderType(RenderLayer.getCutout(), Blocks.PLATFORM_NA_2_SLAB);
-		RegistryClient.registerBlockRenderType(RenderLayer.getCutout(), Blocks.PLATFORM_UK_1);
-		RegistryClient.registerBlockRenderType(RenderLayer.getCutout(), Blocks.PLATFORM_UK_1_INDENTED);
-		RegistryClient.registerBlockRenderType(RenderLayer.getCutout(), Blocks.PLATFORM_UK_1_SLAB);
-		RegistryClient.registerBlockRenderType(RenderLayer.getCutout(), Blocks.PSD_DOOR_1);
-		RegistryClient.registerBlockRenderType(RenderLayer.getCutout(), Blocks.PSD_GLASS_1);
-		RegistryClient.registerBlockRenderType(RenderLayer.getCutout(), Blocks.PSD_GLASS_END_1);
-		RegistryClient.registerBlockRenderType(RenderLayer.getCutout(), Blocks.PSD_DOOR_2);
-		RegistryClient.registerBlockRenderType(RenderLayer.getCutout(), Blocks.PSD_GLASS_2);
-		RegistryClient.registerBlockRenderType(RenderLayer.getCutout(), Blocks.PSD_GLASS_END_2);
-		RegistryClient.registerBlockRenderType(RenderLayer.getCutout(), Blocks.RUBBISH_BIN_1);
-		RegistryClient.registerBlockRenderType(RenderLayer.getTranslucent(), Blocks.STATION_COLOR_STAINED_GLASS);
-		RegistryClient.registerBlockRenderType(RenderLayer.getTranslucent(), Blocks.STATION_COLOR_STAINED_GLASS_SLAB);
-		RegistryClient.registerBlockRenderType(RenderLayer.getCutout(), Blocks.STATION_NAME_TALL_BLOCK);
-		RegistryClient.registerBlockRenderType(RenderLayer.getCutout(), Blocks.STATION_NAME_TALL_BLOCK_DOUBLE_SIDED);
-		RegistryClient.registerBlockRenderType(RenderLayer.getCutout(), Blocks.STATION_NAME_TALL_WALL);
-		RegistryClient.registerBlockRenderType(RenderLayer.getCutout(), Blocks.STATION_NAME_TALL_STANDING);
-		RegistryClient.registerBlockRenderType(RenderLayer.getCutout(), Blocks.TICKET_BARRIER_ENTRANCE_1);
-		RegistryClient.registerBlockRenderType(RenderLayer.getCutout(), Blocks.TICKET_BARRIER_EXIT_1);
-		RegistryClient.registerBlockRenderType(RenderLayer.getCutout(), Blocks.TICKET_MACHINE);
-		RegistryClient.registerBlockRenderType(RenderLayer.getCutout(), Blocks.TICKET_PROCESSOR);
-		RegistryClient.registerBlockRenderType(RenderLayer.getCutout(), Blocks.TICKET_PROCESSOR_ENTRANCE);
-		RegistryClient.registerBlockRenderType(RenderLayer.getCutout(), Blocks.TICKET_PROCESSOR_EXIT);
-		RegistryClient.registerBlockRenderType(RenderLayer.getCutout(), Blocks.TICKET_PROCESSOR_ENQUIRY);
-		RegistryClient.registerBlockRenderType(RenderLayer.getCutout(), Blocks.TRAIN_ANNOUNCER);
-		RegistryClient.registerBlockRenderType(RenderLayer.getCutout(), Blocks.TRAIN_CARGO_LOADER);
-		RegistryClient.registerBlockRenderType(RenderLayer.getCutout(), Blocks.TRAIN_CARGO_UNLOADER);
-		RegistryClient.registerBlockRenderType(RenderLayer.getCutout(), Blocks.TRAIN_REDSTONE_SENSOR);
-		RegistryClient.registerBlockRenderType(RenderLayer.getCutout(), Blocks.TRAIN_SCHEDULE_SENSOR);
-		RegistryClient.registerBlockRenderType(RenderLayer.getCutout(), Blocks.LIFT_DOOR_EVEN_1);
-		RegistryClient.registerBlockRenderType(RenderLayer.getCutout(), Blocks.LIFT_DOOR_ODD_1);
-		RegistryClient.registerBlockRenderType(RenderLayer.getCutout(), Blocks.LIFT_PANEL_EVEN_1);
-		RegistryClient.registerBlockRenderType(RenderLayer.getCutout(), Blocks.LIFT_PANEL_ODD_1);
-		RegistryClient.registerBlockRenderType(RenderLayer.getCutout(), Blocks.LIFT_PANEL_EVEN_2);
-		RegistryClient.registerBlockRenderType(RenderLayer.getCutout(), Blocks.LIFT_PANEL_ODD_2);
-		RegistryClient.registerBlockRenderType(RenderLayer.getCutout(), Blocks.ESCALATOR_STEP);
-		RegistryClient.registerBlockRenderType(RenderLayer.getCutout(), Blocks.ESCALATOR_SIDE);
+		RegistryClient.registerBlockRenderType(RenderType.cutout(), Blocks.APG_DOOR);
+		RegistryClient.registerBlockRenderType(RenderType.cutout(), Blocks.APG_GLASS);
+		RegistryClient.registerBlockRenderType(RenderType.cutout(), Blocks.APG_GLASS_END);
+		RegistryClient.registerBlockRenderType(RenderType.cutout(), Blocks.CABLE_CAR_NODE_LOWER);
+		RegistryClient.registerBlockRenderType(RenderType.cutout(), Blocks.CABLE_CAR_NODE_UPPER);
+		RegistryClient.registerBlockRenderType(RenderType.cutout(), Blocks.CLOCK);
+		RegistryClient.registerBlockRenderType(RenderType.translucent(), Blocks.GLASS_FENCE_CIO);
+		RegistryClient.registerBlockRenderType(RenderType.translucent(), Blocks.GLASS_FENCE_CKT);
+		RegistryClient.registerBlockRenderType(RenderType.translucent(), Blocks.GLASS_FENCE_HEO);
+		RegistryClient.registerBlockRenderType(RenderType.translucent(), Blocks.GLASS_FENCE_MOS);
+		RegistryClient.registerBlockRenderType(RenderType.translucent(), Blocks.GLASS_FENCE_PLAIN);
+		RegistryClient.registerBlockRenderType(RenderType.translucent(), Blocks.GLASS_FENCE_SHM);
+		RegistryClient.registerBlockRenderType(RenderType.translucent(), Blocks.GLASS_FENCE_STAINED);
+		RegistryClient.registerBlockRenderType(RenderType.translucent(), Blocks.GLASS_FENCE_STW);
+		RegistryClient.registerBlockRenderType(RenderType.translucent(), Blocks.GLASS_FENCE_TSH);
+		RegistryClient.registerBlockRenderType(RenderType.translucent(), Blocks.GLASS_FENCE_WKS);
+		RegistryClient.registerBlockRenderType(RenderType.cutout(), Blocks.LOGO);
+		RegistryClient.registerBlockRenderType(RenderType.cutout(), Blocks.PLATFORM);
+		RegistryClient.registerBlockRenderType(RenderType.cutout(), Blocks.PLATFORM_INDENTED);
+		RegistryClient.registerBlockRenderType(RenderType.cutout(), Blocks.PLATFORM_SLAB);
+		RegistryClient.registerBlockRenderType(RenderType.cutout(), Blocks.PLATFORM_NA_1);
+		RegistryClient.registerBlockRenderType(RenderType.cutout(), Blocks.PLATFORM_NA_1_INDENTED);
+		RegistryClient.registerBlockRenderType(RenderType.cutout(), Blocks.PLATFORM_NA_1_SLAB);
+		RegistryClient.registerBlockRenderType(RenderType.cutout(), Blocks.PLATFORM_NA_2);
+		RegistryClient.registerBlockRenderType(RenderType.cutout(), Blocks.PLATFORM_NA_2_INDENTED);
+		RegistryClient.registerBlockRenderType(RenderType.cutout(), Blocks.PLATFORM_NA_2_SLAB);
+		RegistryClient.registerBlockRenderType(RenderType.cutout(), Blocks.PLATFORM_UK_1);
+		RegistryClient.registerBlockRenderType(RenderType.cutout(), Blocks.PLATFORM_UK_1_INDENTED);
+		RegistryClient.registerBlockRenderType(RenderType.cutout(), Blocks.PLATFORM_UK_1_SLAB);
+		RegistryClient.registerBlockRenderType(RenderType.cutout(), Blocks.PSD_DOOR_1);
+		RegistryClient.registerBlockRenderType(RenderType.cutout(), Blocks.PSD_GLASS_1);
+		RegistryClient.registerBlockRenderType(RenderType.cutout(), Blocks.PSD_GLASS_END_1);
+		RegistryClient.registerBlockRenderType(RenderType.cutout(), Blocks.PSD_DOOR_2);
+		RegistryClient.registerBlockRenderType(RenderType.cutout(), Blocks.PSD_GLASS_2);
+		RegistryClient.registerBlockRenderType(RenderType.cutout(), Blocks.PSD_GLASS_END_2);
+		RegistryClient.registerBlockRenderType(RenderType.cutout(), Blocks.RUBBISH_BIN_1);
+		RegistryClient.registerBlockRenderType(RenderType.translucent(), Blocks.STATION_COLOR_STAINED_GLASS);
+		RegistryClient.registerBlockRenderType(RenderType.translucent(), Blocks.STATION_COLOR_STAINED_GLASS_SLAB);
+		RegistryClient.registerBlockRenderType(RenderType.cutout(), Blocks.STATION_NAME_TALL_BLOCK);
+		RegistryClient.registerBlockRenderType(RenderType.cutout(), Blocks.STATION_NAME_TALL_BLOCK_DOUBLE_SIDED);
+		RegistryClient.registerBlockRenderType(RenderType.cutout(), Blocks.STATION_NAME_TALL_WALL);
+		RegistryClient.registerBlockRenderType(RenderType.cutout(), Blocks.STATION_NAME_TALL_STANDING);
+		RegistryClient.registerBlockRenderType(RenderType.cutout(), Blocks.TICKET_BARRIER_ENTRANCE_1);
+		RegistryClient.registerBlockRenderType(RenderType.cutout(), Blocks.TICKET_BARRIER_EXIT_1);
+		RegistryClient.registerBlockRenderType(RenderType.cutout(), Blocks.TICKET_MACHINE);
+		RegistryClient.registerBlockRenderType(RenderType.cutout(), Blocks.TICKET_PROCESSOR);
+		RegistryClient.registerBlockRenderType(RenderType.cutout(), Blocks.TICKET_PROCESSOR_ENTRANCE);
+		RegistryClient.registerBlockRenderType(RenderType.cutout(), Blocks.TICKET_PROCESSOR_EXIT);
+		RegistryClient.registerBlockRenderType(RenderType.cutout(), Blocks.TICKET_PROCESSOR_ENQUIRY);
+		RegistryClient.registerBlockRenderType(RenderType.cutout(), Blocks.TRAIN_ANNOUNCER);
+		RegistryClient.registerBlockRenderType(RenderType.cutout(), Blocks.TRAIN_CARGO_LOADER);
+		RegistryClient.registerBlockRenderType(RenderType.cutout(), Blocks.TRAIN_CARGO_UNLOADER);
+		RegistryClient.registerBlockRenderType(RenderType.cutout(), Blocks.TRAIN_REDSTONE_SENSOR);
+		RegistryClient.registerBlockRenderType(RenderType.cutout(), Blocks.TRAIN_SCHEDULE_SENSOR);
+		RegistryClient.registerBlockRenderType(RenderType.cutout(), Blocks.LIFT_DOOR_EVEN_1);
+		RegistryClient.registerBlockRenderType(RenderType.cutout(), Blocks.LIFT_DOOR_ODD_1);
+		RegistryClient.registerBlockRenderType(RenderType.cutout(), Blocks.LIFT_PANEL_EVEN_1);
+		RegistryClient.registerBlockRenderType(RenderType.cutout(), Blocks.LIFT_PANEL_ODD_1);
+		RegistryClient.registerBlockRenderType(RenderType.cutout(), Blocks.LIFT_PANEL_EVEN_2);
+		RegistryClient.registerBlockRenderType(RenderType.cutout(), Blocks.LIFT_PANEL_ODD_2);
+		RegistryClient.registerBlockRenderType(RenderType.cutout(), Blocks.ESCALATOR_STEP);
+		RegistryClient.registerBlockRenderType(RenderType.cutout(), Blocks.ESCALATOR_SIDE);
 
 		RegistryClient.registerBlockEntityRenderer(BlockEntityTypes.LIFT_BUTTONS_1, context -> new RenderLiftButtons());
 		RegistryClient.registerBlockEntityRenderer(BlockEntityTypes.LIFT_PANEL_EVEN_1, dispatcher -> new RenderLiftPanel<>(false, false));
@@ -337,7 +337,7 @@ public final class MTRClient {
 				mapTileProvider.tick();
 			}
 
-			final ClientWorld clientWorld = MinecraftClient.getInstance().world;
+			final ClientLevel clientWorld = Minecraft.getInstance().level;
 			// If world or dimension changed, reset the data
 			if (clientWorld != null && (lastClientWorld == null || !lastClientWorld.equals(clientWorld))) {
 				lastClientWorld = clientWorld;
@@ -349,9 +349,9 @@ public final class MTRClient {
 			ResourcePackCreatorOperationServlet.tick(millisElapsed);
 
 			// If player is moving, send a request every 0.5 seconds to the server to fetch any new nearby data
-			final ClientPlayerEntity clientPlayerEntity = MinecraftClient.getInstance().player;
+			final LocalPlayer clientPlayerEntity = Minecraft.getInstance().player;
 			if (clientPlayerEntity != null && lastUpdatePacketMillis > 0 && getGameMillis() > lastUpdatePacketMillis) {
-				final DataRequest dataRequest = new DataRequest(clientPlayerEntity.getUuid(), MTR.blockPosToPosition(MinecraftClient.getInstance().gameRenderer.getCamera().getBlockPos()), (int) MinecraftClient.getInstance().worldRenderer.getViewDistance() * 16L);
+				final DataRequest dataRequest = new DataRequest(clientPlayerEntity.getUUID(), MTR.blockPosToPosition(Minecraft.getInstance().gameRenderer.getMainCamera().getBlockPosition()), (int) Minecraft.getInstance().levelRenderer.getLastViewDistance() * 16L);
 				dataRequest.writeExistingIds(MinecraftClientData.getInstance());
 				RegistryClient.sendPacketToServer(new PacketRequestData(dataRequest));
 				lastUpdatePacketMillis = 0;
@@ -371,7 +371,7 @@ public final class MTRClient {
 				lastUpdatePacketMillis = getGameMillis() + 500;
 			}
 			if (mapTileProvider != null) {
-				mapTileProvider.getTile(chunk.getPos().getStartPos());
+				mapTileProvider.getTile(chunk.getPos().getWorldPosition());
 			}
 		});
 
@@ -382,14 +382,14 @@ public final class MTRClient {
 		EventRegistryClient.registerWorldRenderEvent(MainRenderer::render);
 		EventRegistryClient.registerHudLayerRenderEvent((context, renderTickCounter) -> DrivingGuiRenderer.render(context));
 
-		Config.init(MinecraftClient.getInstance().runDirectory.toPath());
+		Config.init(Minecraft.getInstance().gameDirectory.toPath());
 
 		BlockTactileMap.TactileMapBlockEntity.updateSoundSource = TACTILE_MAP_SOUND_INSTANCE::setPos;
 		BlockTactileMap.TactileMapBlockEntity.onUse = blockPos -> {
 			final Station station = findStation(blockPos);
 			if (station != null) {
 				final String text = IGui.formatStationName(IGui.insertTranslation(TranslationProvider.GUI_MTR_WELCOME_STATION_CJK, TranslationProvider.GUI_MTR_WELCOME_STATION, 1, IGui.textOrUntitled(station.getName())));
-				IDrawing.narrateOrAnnounce(text, ObjectArrayList.of(Text.literal(text)));
+				IDrawing.narrateOrAnnounce(text, ObjectArrayList.of(Component.literal(text)));
 			}
 		};
 	}
@@ -412,7 +412,7 @@ public final class MTRClient {
 		if (getGameMillis() - lastPlayedTrainSoundsMillis >= MILLIS_PER_SPEED_SOUND) {
 			lastPlayedTrainSoundsMillis = getGameMillis();
 		}
-		return getGameMillis() == lastPlayedTrainSoundsMillis && !MinecraftClient.getInstance().isPaused();
+		return getGameMillis() == lastPlayedTrainSoundsMillis && !Minecraft.getInstance().isPaused();
 	}
 
 	@Nullable
@@ -436,8 +436,8 @@ public final class MTRClient {
 		return null;
 	}
 
-	public static void transformToFacePlayer(MatrixStack matrixStack, double x, double y, double z) {
-		final Vec3d cameraPosition = MinecraftClient.getInstance().gameRenderer.getCamera().getPos();
+	public static void transformToFacePlayer(PoseStack matrixStack, double x, double y, double z) {
+		final Vec3 cameraPosition = Minecraft.getInstance().gameRenderer.getMainCamera().getPosition();
 		final double differenceX = cameraPosition.x - x;
 		final double differenceY = cameraPosition.y - y;
 		final double differenceZ = cameraPosition.z - z;
@@ -446,7 +446,7 @@ public final class MTRClient {
 	}
 
 	public static String getShiftText() {
-		return MinecraftClient.getInstance().options.sneakKey.getBoundKeyLocalizedText().getString();
+		return Minecraft.getInstance().options.keyShift.getTranslatedKeyMessage().getString();
 	}
 
 	public static float getGameTick() {
@@ -454,7 +454,7 @@ public final class MTRClient {
 	}
 
 	public static void processUniqueWorldId(String uniqueWorldId) {
-		final ClientWorld clientWorld = MinecraftClient.getInstance().world;
+		final ClientLevel clientWorld = Minecraft.getInstance().level;
 		if (clientWorld != null) {
 			mapTileProvider = new MapTileProvider(clientWorld, uniqueWorldId, MapTileProvider.MapType.SATELLITE);
 		}
@@ -475,7 +475,7 @@ public final class MTRClient {
 
 	@FunctionalInterface
 	public interface WorldRenderCallback {
-		void accept(MatrixStack matrixStack, VertexConsumerProvider vertexConsumerProvider, Vec3d offset);
+		void accept(PoseStack matrixStack, MultiBufferSource vertexConsumerProvider, Vec3 offset);
 	}
 
 	private static class ResourcePackCreatorWebServlet extends WebServlet {

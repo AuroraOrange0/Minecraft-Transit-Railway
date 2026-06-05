@@ -1,10 +1,10 @@
 package org.mtr.resource;
 
-import net.minecraft.MinecraftVersion;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.resource.Resource;
-import net.minecraft.resource.ResourceType;
-import net.minecraft.util.Identifier;
+import net.minecraft.DetectedVersion;
+import net.minecraft.client.Minecraft;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.packs.PackType;
+import net.minecraft.server.packs.resources.Resource;
 import org.apache.commons.io.IOUtils;
 import org.mtr.MTR;
 
@@ -32,9 +32,9 @@ public final class ResourceManagerHelper {
 	 * resource's input stream. If the resource is absent or the read throws, the consumer
 	 * is not invoked and the failure is logged.
 	 */
-	public static void readResource(Identifier identifier, Consumer<InputStream> consumer) {
+	public static void readResource(ResourceLocation identifier, Consumer<InputStream> consumer) {
 		try {
-			final Optional<Resource> optionalResource = MinecraftClient.getInstance().getResourceManager().getResource(identifier);
+			final Optional<Resource> optionalResource = Minecraft.getInstance().getResourceManager().getResource(identifier);
 			optionalResource.ifPresent(resource -> readResource(resource, consumer));
 		} catch (Exception e) {
 			MTR.LOGGER.error("Failed to read resource [{}] from the resource manager", identifier, e);
@@ -46,11 +46,11 @@ public final class ResourceManagerHelper {
 	 * empty string if the resource is missing or decoding fails.
 	 *
 	 * <p><b>Performance:</b> prefer
-	 * {@link #readResource(Identifier, Consumer)} when the caller already plans to feed the
+	 * {@link #readResource(ResourceLocation, Consumer)} when the caller already plans to feed the
 	 * stream into another parser — it avoids the intermediate {@link String} allocation
 	 * (see {@code docs/PERFORMANCE.md} §1.1).</p>
 	 */
-	public static String readResource(Identifier identifier) {
+	public static String readResource(ResourceLocation identifier) {
 		final String[] string = {""};
 		readResource(identifier, inputStream -> {
 			try {
@@ -67,9 +67,9 @@ public final class ResourceManagerHelper {
 	 * invoking the consumer once per pack. Used to merge data from packs that all ship the
 	 * same well-known manifest path (e.g. {@code mtr:mtr_custom_resources.json}).
 	 */
-	public static void readAllResources(Identifier identifier, Consumer<InputStream> consumer) {
+	public static void readAllResources(ResourceLocation identifier, Consumer<InputStream> consumer) {
 		try {
-			MinecraftClient.getInstance().getResourceManager().getAllResources(identifier).forEach(resource -> readResource(resource, consumer));
+			Minecraft.getInstance().getResourceManager().getResourceStack(identifier).forEach(resource -> readResource(resource, consumer));
 		} catch (Exception e) {
 			MTR.LOGGER.error("Failed to enumerate all resources matching [{}]", identifier, e);
 		}
@@ -80,10 +80,10 @@ public final class ResourceManagerHelper {
 	 * The consumer receives each file's identifier (so the caller can recover its
 	 * namespace / leaf name) and the open input stream.
 	 */
-	public static void readDirectory(String path, BiConsumer<Identifier, InputStream> consumer) {
+	public static void readDirectory(String path, BiConsumer<ResourceLocation, InputStream> consumer) {
 		try {
-			MinecraftClient.getInstance().getResourceManager()
-				.findAllResources(path, identifier -> true)
+			Minecraft.getInstance().getResourceManager()
+				.listResourceStacks(path, identifier -> true)
 				.forEach((identifier, resources) -> resources.forEach(resource -> readResource(resource, inputStream -> consumer.accept(identifier, inputStream))));
 		} catch (Exception e) {
 			MTR.LOGGER.error("Failed to enumerate resources under directory [{}]", path, e);
@@ -91,10 +91,10 @@ public final class ResourceManagerHelper {
 	}
 
 	private static void readResource(Resource resource, Consumer<InputStream> consumer) {
-		try (final InputStream inputStream = resource.getInputStream()) {
+		try (final InputStream inputStream = resource.open()) {
 			consumer.accept(inputStream);
 		} catch (Exception e) {
-			MTR.LOGGER.error("Failed to open the input stream for resource [{}]", resource.getPackId(), e);
+			MTR.LOGGER.error("Failed to open the input stream for resource [{}]", resource.sourcePackId(), e);
 		}
 	}
 
@@ -102,13 +102,13 @@ public final class ResourceManagerHelper {
 	 * @return the resource-pack format version Minecraft expects on the current client.
 	 */
 	public static int getResourcePackVersion() {
-		return MinecraftVersion.create().getResourceVersion(ResourceType.CLIENT_RESOURCES);
+		return DetectedVersion.tryDetectVersion().getPackVersion(PackType.CLIENT_RESOURCES);
 	}
 
 	/**
 	 * @return the data-pack format version Minecraft expects on the current server.
 	 */
 	public static int getDataPackVersion() {
-		return MinecraftVersion.create().getResourceVersion(ResourceType.SERVER_DATA);
+		return DetectedVersion.tryDetectVersion().getPackVersion(PackType.SERVER_DATA);
 	}
 }

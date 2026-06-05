@@ -2,8 +2,8 @@ package org.mtr.neoforge;
 
 //? if neoforge {
 
-/*import net.minecraft.server.world.ServerWorld;
-import net.minecraft.world.chunk.Chunk;
+/*import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.level.chunk.ChunkAccess;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.level.ChunkEvent;
@@ -22,22 +22,22 @@ import java.util.function.Function;
 @EventBusSubscriber(modid = MTR.MOD_ID, bus = EventBusSubscriber.Bus.MOD)
 public final class ModEventBus {
 
-	public static BiConsumer<ServerWorld, Chunk> chunkLoadConsumer = null;
-	public static BiConsumer<ServerWorld, Chunk> chunkUnloadConsumer = null;
+	public static BiConsumer<ServerLevel, ChunkAccess> chunkLoadConsumer = null;
+	public static BiConsumer<ServerLevel, ChunkAccess> chunkUnloadConsumer = null;
 	public static final Object2ObjectOpenHashMap<String, Function<PacketBufferReceiver, ? extends PacketHandler>> PACKETS = new Object2ObjectOpenHashMap<>();
 	public static final ObjectArrayList<Consumer<PayloadRegistrar>> PAYLOAD_HANDLERS = new ObjectArrayList<>();
 	private static final String PROTOCOL_VERSION = "1";
 
 	@SubscribeEvent
 	public static void chunkLoad(ChunkEvent.Load event) {
-		if (chunkLoadConsumer != null && event.getLevel() instanceof ServerWorld serverWorld) {
+		if (chunkLoadConsumer != null && event.getLevel() instanceof ServerLevel serverWorld) {
 			chunkLoadConsumer.accept(serverWorld, event.getChunk());
 		}
 	}
 
 	@SubscribeEvent
 	public static void chunkUnload(ChunkEvent.Unload event) {
-		if (chunkUnloadConsumer != null && event.getLevel() instanceof ServerWorld serverWorld) {
+		if (chunkUnloadConsumer != null && event.getLevel() instanceof ServerLevel serverWorld) {
 			chunkUnloadConsumer.accept(serverWorld, event.getChunk());
 		}
 	}

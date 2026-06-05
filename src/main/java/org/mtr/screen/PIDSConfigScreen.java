@@ -5,9 +5,9 @@ import gg.essential.elementa.components.UIContainer;
 import gg.essential.elementa.components.UIWrappedText;
 import gg.essential.elementa.constraints.*;
 import gg.essential.universal.UMinecraft;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.text.Text;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.client.Minecraft;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
 import org.mtr.MTRClient;
 import org.mtr.block.BlockPIDSBase;
 import org.mtr.core.data.Platform;
@@ -74,7 +74,7 @@ public final class PIDSConfigScreen extends WindowBase {
 			.setY(new SiblingConstraint())
 			.setWidth(new RelativeConstraint());
 
-		filterButton.setText(Text.translatable("selectWorld.edit").getString());
+		filterButton.setText(Component.translatable("selectWorld.edit").getString());
 		filterButton.onClick(() -> openPlatformFilter(blockPos, selectAllCheckbox, filterPlatformIds, this));
 		selectAllCheckbox.setText(TranslationProvider.GUI_MTR_AUTOMATICALLY_DETECT_NEARBY_PLATFORM.getString());
 		selectAllCheckbox.setChecked(filterPlatformIds.isEmpty());
@@ -137,7 +137,7 @@ public final class PIDSConfigScreen extends WindowBase {
 		}
 
 		final int displayPage = (int) Math.max(0, displayPageNumberInput.getValue() - 1);
-		new PacketUpdatePIDSConfig(blockPos, messages, hideArrivalArray, filterPlatformIds, displayPage).send(MinecraftClient.getInstance().world);
+		new PacketUpdatePIDSConfig(blockPos, messages, hideArrivalArray, filterPlatformIds, displayPage).send(Minecraft.getInstance().level);
 		super.onScreenClose();
 	}
 
@@ -162,7 +162,7 @@ public final class PIDSConfigScreen extends WindowBase {
 			platforms = station.savedRails;
 		} else {
 			platforms = new ObjectArraySet<>();
-			MTRClient.findClosePlatform(blockPos.down(4), 5, platforms::add);
+			MTRClient.findClosePlatform(blockPos.below(4), 5, platforms::add);
 		}
 
 		if (selectAllCheckbox.isChecked()) {

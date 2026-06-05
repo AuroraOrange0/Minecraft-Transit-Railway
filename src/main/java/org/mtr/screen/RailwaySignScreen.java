@@ -4,8 +4,8 @@ import gg.essential.elementa.components.ScrollComponent;
 import gg.essential.elementa.components.UIContainer;
 import gg.essential.elementa.constraints.*;
 import gg.essential.universal.UMinecraft;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.client.Minecraft;
+import net.minecraft.core.BlockPos;
 import org.jspecify.annotations.Nullable;
 import org.mtr.block.BlockRailwaySign;
 import org.mtr.client.CustomResourceLoader;
@@ -83,7 +83,7 @@ public final class RailwaySignScreen extends WindowBase {
 	public void onScreenClose() {
 		super.onScreenClose();
 		if (signPos != null) {
-			new PacketUpdateRailwaySignConfig(signPos, selectedIds, signIds).send(MinecraftClient.getInstance().world);
+			new PacketUpdateRailwaySignConfig(signPos, selectedIds, signIds).send(Minecraft.getInstance().level);
 		}
 	}
 

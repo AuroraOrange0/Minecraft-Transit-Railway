@@ -1,19 +1,19 @@
 package org.mtr.block;
 
-import net.minecraft.block.AbstractBlock;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockBehaviour;
+import net.minecraft.world.level.block.state.BlockState;
 import org.mtr.registry.BlockEntityTypes;
 
 public class BlockStationNameWallBlack extends BlockStationNameWallBase {
 
-	public BlockStationNameWallBlack(AbstractBlock.Settings blockSettings) {
+	public BlockStationNameWallBlack(BlockBehaviour.Properties blockSettings) {
 		super(blockSettings);
 	}
 
 	@Override
-	public BlockEntity createBlockEntity(BlockPos blockPos, BlockState blockState) {
+	public BlockEntity newBlockEntity(BlockPos blockPos, BlockState blockState) {
 		return new StationNameWallBlackBlockEntity(blockPos, blockState);
 	}
 

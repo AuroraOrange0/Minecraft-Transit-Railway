@@ -4,8 +4,8 @@ import gg.essential.elementa.ElementaVersion;
 import gg.essential.elementa.WindowScreen;
 import gg.essential.universal.UKeyboard;
 import gg.essential.universal.UMinecraft;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.screens.Screen;
 import org.jspecify.annotations.Nullable;
 import org.lwjgl.glfw.GLFW;
 
@@ -56,7 +56,7 @@ public abstract class WindowBase extends WindowScreen {
 		super.onTick();
 		if (closeScreen) {
 			if (previousScreen == null) {
-				MinecraftClient.getInstance().setScreen(previousScreenLegacy);
+				Minecraft.getInstance().setScreen(previousScreenLegacy);
 			} else {
 				UMinecraft.setCurrentScreenObj(previousScreen);
 			}
@@ -66,7 +66,7 @@ public abstract class WindowBase extends WindowScreen {
 	/**
 	 * Implicit override
 	 */
-	public final boolean shouldPause() {
+	public final boolean isPauseScreen() {
 		return false;
 	}
 }

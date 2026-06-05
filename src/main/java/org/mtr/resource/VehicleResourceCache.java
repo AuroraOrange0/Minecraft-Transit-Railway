@@ -1,6 +1,6 @@
 package org.mtr.resource;
 
-import net.minecraft.util.math.Box;
+import net.minecraft.world.phys.AABB;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectImmutableList;
 import org.mtr.model.BuiltVehicleModelHolder;
@@ -9,8 +9,8 @@ public record VehicleResourceCache(
 	ObjectArrayList<BuiltVehicleModelHolder> builtModels,
 	ObjectArrayList<BuiltVehicleModelHolder> builtBogie1Models,
 	ObjectArrayList<BuiltVehicleModelHolder> builtBogie2Models,
-	ObjectImmutableList<Box> floors,
-	ObjectImmutableList<Box> doorways
+	ObjectImmutableList<AABB> floors,
+	ObjectImmutableList<AABB> doorways
 ) {
 
 	public void iterateModels(ModelConsumer modelConsumer) {

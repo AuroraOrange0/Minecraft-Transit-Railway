@@ -1,7 +1,7 @@
 package org.mtr.resource;
 
-import net.minecraft.text.Text;
-import net.minecraft.util.Identifier;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import org.mtr.core.serializer.ReaderBase;
 import org.mtr.generated.resource.LiftResourceSchema;
 
@@ -17,14 +17,14 @@ public final class LiftResource extends LiftResourceSchema implements Comparable
 	}
 
 	public String getName() {
-		return Text.translatable(name).getString();
+		return Component.translatable(name).getString();
 	}
 
 	public int getColor() {
 		return CustomResourceTools.colorStringToInt(color);
 	}
 
-	public Identifier getTexture() {
+	public ResourceLocation getTexture() {
 		return CustomResourceTools.formatIdentifierWithDefault(textureResource, "png");
 	}
 

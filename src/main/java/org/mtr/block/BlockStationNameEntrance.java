@@ -1,53 +1,53 @@
 package org.mtr.block;
 
-import net.minecraft.block.AbstractBlock;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.ShapeContext;
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemPlacementContext;
-import net.minecraft.state.StateManager;
-import net.minecraft.state.property.IntProperty;
-import net.minecraft.state.property.Properties;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.hit.BlockHitResult;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.shape.VoxelShape;
-import net.minecraft.util.shape.VoxelShapes;
-import net.minecraft.world.BlockView;
-import net.minecraft.world.World;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockBehaviour;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.state.properties.IntegerProperty;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.Shapes;
+import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jspecify.annotations.Nullable;
 import org.mtr.registry.BlockEntityTypes;
 
 public class BlockStationNameEntrance extends BlockStationNameBase implements IBlock {
 
-	public static final IntProperty STYLE = IntProperty.of("propagate_property", 0, 5);
+	public static final IntegerProperty STYLE = IntegerProperty.create("propagate_property", 0, 5);
 
-	public BlockStationNameEntrance(AbstractBlock.Settings blockSettings) {
+	public BlockStationNameEntrance(BlockBehaviour.Properties blockSettings) {
 		super(blockSettings);
 	}
 
 	@Override
-	protected ActionResult onUse(BlockState state, World world, BlockPos pos, PlayerEntity player, BlockHitResult hit) {
+	protected InteractionResult useWithoutItem(BlockState state, Level world, BlockPos pos, Player player, BlockHitResult hit) {
 		return IBlock.checkHoldingBrush(world, player, () -> {
-			world.setBlockState(pos, state.cycle(STYLE));
-			propagate(world, pos, IBlock.getStatePropertySafe(state, Properties.HORIZONTAL_FACING).rotateYClockwise(), STYLE, 1);
-			propagate(world, pos, IBlock.getStatePropertySafe(state, Properties.HORIZONTAL_FACING).rotateYCounterclockwise(), STYLE, 1);
+			world.setBlockAndUpdate(pos, state.cycle(STYLE));
+			propagate(world, pos, IBlock.getStatePropertySafe(state, BlockStateProperties.HORIZONTAL_FACING).getClockWise(), STYLE, 1);
+			propagate(world, pos, IBlock.getStatePropertySafe(state, BlockStateProperties.HORIZONTAL_FACING).getCounterClockWise(), STYLE, 1);
 		});
 	}
 
 	@Nullable
 	@Override
-	public BlockState getPlacementState(ItemPlacementContext ctx) {
-		final BlockPos pos = ctx.getBlockPos();
-		final Direction side = ctx.getSide();
+	public BlockState getStateForPlacement(BlockPlaceContext ctx) {
+		final BlockPos pos = ctx.getClickedPos();
+		final Direction side = ctx.getClickedFace();
 		final Direction facing = side.getOpposite();
 
 		if (side != Direction.UP && side != Direction.DOWN) {
-			final BlockState leftState = ctx.getWorld().getBlockState(pos.offset(facing.rotateYCounterclockwise()));
-			final BlockState rightState = ctx.getWorld().getBlockState(pos.offset(facing.rotateYClockwise()));
+			final BlockState leftState = ctx.getLevel().getBlockState(pos.relative(facing.getCounterClockWise()));
+			final BlockState rightState = ctx.getLevel().getBlockState(pos.relative(facing.getClockWise()));
 
 			final int nearbyStyle;
 			if (leftState.getBlock() instanceof BlockStationNameEntrance) {
@@ -58,31 +58,31 @@ public class BlockStationNameEntrance extends BlockStationNameBase implements IB
 				nearbyStyle = 0;
 			}
 
-			return getDefaultState().with(Properties.HORIZONTAL_FACING, facing).with(STYLE, nearbyStyle);
+			return defaultBlockState().setValue(BlockStateProperties.HORIZONTAL_FACING, facing).setValue(STYLE, nearbyStyle);
 		} else {
 			return null;
 		}
 	}
 
 	@Override
-	public VoxelShape getOutlineShape(BlockState state, BlockView world, BlockPos pos, ShapeContext context) {
+	public VoxelShape getShape(BlockState state, BlockGetter world, BlockPos pos, CollisionContext context) {
 		final boolean tall = IBlock.getStatePropertySafe(state, STYLE) % 2 == 1;
-		return IBlock.getVoxelShapeByDirection(0, tall ? 0 : 4, 0, 16, tall ? 16 : 12, 1, IBlock.getStatePropertySafe(state, Properties.HORIZONTAL_FACING));
+		return IBlock.getVoxelShapeByDirection(0, tall ? 0 : 4, 0, 16, tall ? 16 : 12, 1, IBlock.getStatePropertySafe(state, BlockStateProperties.HORIZONTAL_FACING));
 	}
 
 	@Override
-	public VoxelShape getCollisionShape(BlockState state, BlockView world, BlockPos pos, ShapeContext context) {
-		return VoxelShapes.empty();
+	public VoxelShape getCollisionShape(BlockState state, BlockGetter world, BlockPos pos, CollisionContext context) {
+		return Shapes.empty();
 	}
 
 	@Override
-	public BlockEntity createBlockEntity(BlockPos blockPos, BlockState blockState) {
+	public BlockEntity newBlockEntity(BlockPos blockPos, BlockState blockState) {
 		return new StationNameEntranceBlockEntity(blockPos, blockState);
 	}
 
 	@Override
-	protected void appendProperties(StateManager.Builder<Block, BlockState> builder) {
-		builder.add(Properties.HORIZONTAL_FACING);
+	protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+		builder.add(BlockStateProperties.HORIZONTAL_FACING);
 		builder.add(STYLE);
 	}
 

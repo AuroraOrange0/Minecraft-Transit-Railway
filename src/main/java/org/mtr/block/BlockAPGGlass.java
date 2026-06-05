@@ -1,27 +1,27 @@
 package org.mtr.block;
 
-import net.minecraft.block.AbstractBlock;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockEntityProvider;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.Item;
-import net.minecraft.state.StateManager;
-import net.minecraft.state.property.IntProperty;
-import net.minecraft.state.property.Properties;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.hit.BlockHitResult;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.EntityBlock;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockBehaviour;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.state.properties.IntegerProperty;
+import net.minecraft.world.phys.BlockHitResult;
 import org.mtr.registry.BlockEntityTypes;
 import org.mtr.registry.Items;
 
-public class BlockAPGGlass extends BlockPSDAPGGlassBase implements BlockEntityProvider {
+public class BlockAPGGlass extends BlockPSDAPGGlassBase implements EntityBlock {
 
-	public static final IntProperty ARROW_DIRECTION = IntProperty.of("propagate_property", 0, 3);
+	public static final IntegerProperty ARROW_DIRECTION = IntegerProperty.create("propagate_property", 0, 3);
 
-	public BlockAPGGlass(AbstractBlock.Settings settings) {
+	public BlockAPGGlass(BlockBehaviour.Properties settings) {
 		super(settings);
 	}
 
@@ -31,27 +31,27 @@ public class BlockAPGGlass extends BlockPSDAPGGlassBase implements BlockEntityPr
 	}
 
 	@Override
-	protected ActionResult onUse(BlockState state, World world, BlockPos pos, PlayerEntity player, BlockHitResult hit) {
-		final double y = hit.getPos().y;
+	protected InteractionResult useWithoutItem(BlockState state, Level world, BlockPos pos, Player player, BlockHitResult hit) {
+		final double y = hit.getLocation().y;
 		if (IBlock.getStatePropertySafe(state, HALF) == DoubleBlockHalf.UPPER && y - Math.floor(y) > 0.21875) {
 			return IBlock.checkHoldingBrush(world, player, () -> {
-				world.setBlockState(pos, state.cycle(ARROW_DIRECTION));
-				propagate(world, pos, IBlock.getStatePropertySafe(state, Properties.HORIZONTAL_FACING).rotateYClockwise(), ARROW_DIRECTION, 3);
-				propagate(world, pos, IBlock.getStatePropertySafe(state, Properties.HORIZONTAL_FACING).rotateYCounterclockwise(), ARROW_DIRECTION, 3);
+				world.setBlockAndUpdate(pos, state.cycle(ARROW_DIRECTION));
+				propagate(world, pos, IBlock.getStatePropertySafe(state, BlockStateProperties.HORIZONTAL_FACING).getClockWise(), ARROW_DIRECTION, 3);
+				propagate(world, pos, IBlock.getStatePropertySafe(state, BlockStateProperties.HORIZONTAL_FACING).getCounterClockWise(), ARROW_DIRECTION, 3);
 			});
 		} else {
-			return super.onUse(state, world, pos, player, hit);
+			return super.useWithoutItem(state, world, pos, player, hit);
 		}
 	}
 
 	@Override
-	public BlockEntity createBlockEntity(BlockPos blockPos, BlockState blockState) {
+	public BlockEntity newBlockEntity(BlockPos blockPos, BlockState blockState) {
 		return new APGGlassBlockEntity(blockPos, blockState);
 	}
 
 	@Override
-	protected void appendProperties(StateManager.Builder<Block, BlockState> builder) {
-		builder.add(Properties.HORIZONTAL_FACING);
+	protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+		builder.add(BlockStateProperties.HORIZONTAL_FACING);
 		builder.add(HALF);
 		builder.add(SIDE_EXTENDED);
 		builder.add(ARROW_DIRECTION);

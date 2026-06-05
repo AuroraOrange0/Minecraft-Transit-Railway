@@ -2,9 +2,9 @@ package org.mtr.neoforge;
 
 //? if neoforge {
 
-/*import net.minecraft.client.option.KeyBinding;
-import net.minecraft.client.world.ClientWorld;
-import net.minecraft.world.chunk.Chunk;
+/*import net.minecraft.client.KeyMapping;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.world.level.chunk.ChunkAccess;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -23,12 +23,12 @@ import java.util.function.Consumer;
 @EventBusSubscriber(modid = MTR.MOD_ID, bus = EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
 public final class ModEventBusClient {
 
-	public static BiConsumer<ClientWorld, Chunk> chunkLoadConsumer = null;
-	public static BiConsumer<ClientWorld, Chunk> chunkUnloadConsumer = null;
+	public static BiConsumer<ClientLevel, ChunkAccess> chunkLoadConsumer = null;
+	public static BiConsumer<ClientLevel, ChunkAccess> chunkUnloadConsumer = null;
 	public static Runnable resourceReloadRunnable = null;
 	public static final ObjectArrayList<Runnable> CLIENT_OBJECTS_TO_REGISTER = new ObjectArrayList<>();
 	public static final ObjectArrayList<Consumer<EntityRenderersEvent.RegisterRenderers>> BLOCK_ENTITY_RENDERERS = new ObjectArrayList<>();
-	public static final ObjectArrayList<KeyBinding> KEY_BINDINGS = new ObjectArrayList<>();
+	public static final ObjectArrayList<KeyMapping> KEY_BINDINGS = new ObjectArrayList<>();
 	public static final ObjectArrayList<Consumer<RegisterColorHandlersEvent.Block>> BLOCK_COLORS = new ObjectArrayList<>();
 
 	@SubscribeEvent
@@ -38,14 +38,14 @@ public final class ModEventBusClient {
 
 	@SubscribeEvent
 	public static void chunkLoad(ChunkEvent.Load event) {
-		if (chunkLoadConsumer != null && event.getLevel() instanceof ClientWorld clientWorld) {
+		if (chunkLoadConsumer != null && event.getLevel() instanceof ClientLevel clientWorld) {
 			chunkLoadConsumer.accept(clientWorld, event.getChunk());
 		}
 	}
 
 	@SubscribeEvent
 	public static void chunkUnload(ChunkEvent.Unload event) {
-		if (chunkUnloadConsumer != null && event.getLevel() instanceof ClientWorld clientWorld) {
+		if (chunkUnloadConsumer != null && event.getLevel() instanceof ClientLevel clientWorld) {
 			chunkUnloadConsumer.accept(clientWorld, event.getChunk());
 		}
 	}
@@ -67,7 +67,7 @@ public final class ModEventBusClient {
 
 	@SubscribeEvent
 	public static void resourceReload(TextureAtlasStitchedEvent event) {
-		if (resourceReloadRunnable != null && event.getAtlas().getId().getPath().endsWith("blocks.png")) {
+		if (resourceReloadRunnable != null && event.getAtlas().location().getPath().endsWith("blocks.png")) {
 			resourceReloadRunnable.run();
 		}
 	}

@@ -1,71 +1,71 @@
 package org.mtr.block;
 
-import net.minecraft.block.AbstractBlock;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.ShapeContext;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemPlacementContext;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.state.StateManager;
-import net.minecraft.state.property.IntProperty;
-import net.minecraft.state.property.Properties;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.hit.BlockHitResult;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.random.Random;
-import net.minecraft.util.shape.VoxelShape;
-import net.minecraft.world.BlockView;
-import net.minecraft.world.World;
+import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.state.BlockBehaviour;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.state.properties.IntegerProperty;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.VoxelShape;
 
 public class BlockRubbishBin extends Block {
 
 	public static final int MAX_LEVEL = 15;
-	public static final IntProperty FILLED = IntProperty.of("filled", 0, MAX_LEVEL);
+	public static final IntegerProperty FILLED = IntegerProperty.create("filled", 0, MAX_LEVEL);
 
-	public BlockRubbishBin(AbstractBlock.Settings blockSettings) {
+	public BlockRubbishBin(BlockBehaviour.Properties blockSettings) {
 		super(blockSettings);
 	}
 
 	@Override
-	public BlockState getPlacementState(ItemPlacementContext ctx) {
-		return getDefaultState().with(Properties.HORIZONTAL_FACING, ctx.getHorizontalPlayerFacing());
+	public BlockState getStateForPlacement(BlockPlaceContext ctx) {
+		return defaultBlockState().setValue(BlockStateProperties.HORIZONTAL_FACING, ctx.getHorizontalDirection());
 	}
 
 	@Override
-	public VoxelShape getOutlineShape(BlockState state, BlockView world, BlockPos pos, ShapeContext context) {
-		return IBlock.getVoxelShapeByDirection(2, 0, 0, 14, 16, 4.5, state.get(Properties.HORIZONTAL_FACING));
+	public VoxelShape getShape(BlockState state, BlockGetter world, BlockPos pos, CollisionContext context) {
+		return IBlock.getVoxelShapeByDirection(2, 0, 0, 14, 16, 4.5, state.getValue(BlockStateProperties.HORIZONTAL_FACING));
 	}
 
 	@Override
-	protected ActionResult onUse(BlockState state, World world, BlockPos pos, PlayerEntity player, BlockHitResult hit) {
-		return IBlock.checkHoldingBrush(world, player, () -> world.setBlockState(pos, state.with(FILLED, 0)), () -> {
+	protected InteractionResult useWithoutItem(BlockState state, Level world, BlockPos pos, Player player, BlockHitResult hit) {
+		return IBlock.checkHoldingBrush(world, player, () -> world.setBlockAndUpdate(pos, state.setValue(FILLED, 0)), () -> {
 			final int currentLevel = IBlock.getStatePropertySafe(state, FILLED);
-			if (!player.getMainHandStack().isEmpty() && currentLevel < MAX_LEVEL) {
-				world.setBlockState(pos, state.with(FILLED, currentLevel + 1));
+			if (!player.getMainHandItem().isEmpty() && currentLevel < MAX_LEVEL) {
+				world.setBlockAndUpdate(pos, state.setValue(FILLED, currentLevel + 1));
 				if (!player.isCreative()) {
-					player.getMainHandStack().decrement(1);
+					player.getMainHandItem().shrink(1);
 				}
 			}
 		});
 	}
 
 	@Override
-	protected void randomTick(BlockState state, ServerWorld world, BlockPos pos, Random random) {
+	protected void randomTick(BlockState state, ServerLevel world, BlockPos pos, RandomSource random) {
 		final int newLevel = IBlock.getStatePropertySafe(state, FILLED) - 1;
 		if (newLevel >= 0) {
-			world.setBlockState(pos, state.with(FILLED, newLevel));
+			world.setBlockAndUpdate(pos, state.setValue(FILLED, newLevel));
 		}
 	}
 
 	@Override
-	public boolean hasRandomTicks(BlockState state) {
+	public boolean isRandomlyTicking(BlockState state) {
 		return true;
 	}
 
 	@Override
-	protected void appendProperties(StateManager.Builder<Block, BlockState> builder) {
-		builder.add(Properties.HORIZONTAL_FACING);
+	protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+		builder.add(BlockStateProperties.HORIZONTAL_FACING);
 		builder.add(FILLED);
 	}
 }

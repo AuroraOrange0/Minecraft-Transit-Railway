@@ -1,7 +1,7 @@
 package org.mtr.packet;
 
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.server.level.ServerPlayer;
 import org.mtr.client.CustomResourceLoader;
 import org.mtr.client.MinecraftClientData;
 import org.mtr.core.data.Rail;
@@ -49,8 +49,8 @@ public final class PacketUpdateLastRailStyles extends PacketHandler {
 	}
 
 	@Override
-	public void runServer(MinecraftServer minecraftServer, ServerPlayerEntity serverPlayerEntity) {
-		SERVER_CACHE.setLastStyles(serverPlayerEntity.getUuid(), transportMode, styles);
+	public void runServer(MinecraftServer minecraftServer, ServerPlayer serverPlayerEntity) {
+		SERVER_CACHE.setLastStyles(serverPlayerEntity.getUUID(), transportMode, styles);
 	}
 
 	public static class Cache {

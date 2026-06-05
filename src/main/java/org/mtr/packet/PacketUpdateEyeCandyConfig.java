@@ -1,8 +1,8 @@
 package org.mtr.packet;
 
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import org.jspecify.annotations.Nullable;
 import org.mtr.MTR;
 import org.mtr.block.BlockEyeCandy;
@@ -16,7 +16,7 @@ public final class PacketUpdateEyeCandyConfig extends BlockEntityPacketHandler {
 	private final boolean fullLight;
 
 	public PacketUpdateEyeCandyConfig(PacketBufferReceiver packetBufferReceiver) {
-		blockPos = BlockPos.fromLong(packetBufferReceiver.readLong());
+		blockPos = BlockPos.of(packetBufferReceiver.readLong());
 		modelId = packetBufferReceiver.readString();
 		translateX = packetBufferReceiver.readFloat();
 		translateY = packetBufferReceiver.readFloat();
@@ -52,7 +52,7 @@ public final class PacketUpdateEyeCandyConfig extends BlockEntityPacketHandler {
 		packetBufferSender.writeBoolean(fullLight);
 	}
 
-	protected void setData(@Nullable World world) {
+	protected void setData(@Nullable Level world) {
 		if (world == null || !MTR.isChunkLoaded(world, blockPos)) {
 			return;
 		}

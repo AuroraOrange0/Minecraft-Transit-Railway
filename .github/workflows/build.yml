@@ -33,8 +33,14 @@ jobs:
         run: npm run build --prefix website
       - name: Setup files
         run: ./gradlew setupFiles -PcrowdinApiKey="${{ secrets.CROWDIN_API_KEY }}" -PpatreonApiKey="${{ secrets.PATREON_API_KEY }}" --no-daemon
-      - name: Build mod
+      - name: Setup Fabric 1.21.4
+        run: ./gradlew "Set active project to 1.21.4-fabric" --no-daemon
+      - name: Build Fabric 1.21.4
         run: ./gradlew 1.21.4-fabric:build --no-daemon
+      - name: Setup Neoforge 1.21.4
+        run: ./gradlew "Set active project to 1.21.4-neoforge" --no-daemon
+      - name: Build Neoforge 1.21.4
+        run: ./gradlew 1.21.4-neoforge:build --no-daemon
 
 # TODO fix build script
 #     - name: Capture release artifacts

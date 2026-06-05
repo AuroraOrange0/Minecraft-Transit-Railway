@@ -1,21 +1,21 @@
 package org.mtr.widget;
 
-import net.minecraft.client.gui.screen.narration.NarrationMessageBuilder;
-import net.minecraft.client.gui.widget.ClickableWidget;
-import net.minecraft.text.Text;
+import net.minecraft.client.gui.components.AbstractWidget;
+import net.minecraft.client.gui.narration.NarrationElementOutput;
+import net.minecraft.network.chat.Component;
 
 import java.util.function.Consumer;
 
-public abstract class ClickableWidgetBase extends ClickableWidget {
+public abstract class ClickableWidgetBase extends AbstractWidget {
 
 	public ClickableWidgetBase() {
-		super(0, 0, 0, 0, Text.empty());
+		super(0, 0, 0, 0, Component.empty());
 	}
 
-	public void init(Consumer<ClickableWidgetBase> addDrawableChild) {
+	public void init(Consumer<ClickableWidgetBase> addRenderableWidget) {
 	}
 
 	@Override
-	protected final void appendClickableNarrations(NarrationMessageBuilder builder) {
+	protected final void updateWidgetNarration(NarrationElementOutput builder) {
 	}
 }

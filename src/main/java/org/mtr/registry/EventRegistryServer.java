@@ -13,9 +13,9 @@ import org.mtr.neoforge.ModEventBus;
 *///? }
 
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
-import net.minecraft.world.chunk.Chunk;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.level.chunk.ChunkAccess;
 
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -29,7 +29,7 @@ public final class EventRegistryServer {
 
 		//? if neoforge {
 		/*MainEventBus.serverStartingConsumer = consumer;
-		*///? }
+		 *///? }
 	}
 
 	public static void registerServerStarted(Consumer<MinecraftServer> consumer) {
@@ -39,7 +39,7 @@ public final class EventRegistryServer {
 
 		//? if neoforge {
 		/*MainEventBus.serverStartedConsumer = consumer;
-		*///? }
+		 *///? }
 	}
 
 	public static void registerServerStopping(Consumer<MinecraftServer> consumer) {
@@ -49,7 +49,7 @@ public final class EventRegistryServer {
 
 		//? if neoforge {
 		/*MainEventBus.serverStoppingConsumer = consumer;
-		*///? }
+		 *///? }
 	}
 
 	public static void registerServerStopped(Consumer<MinecraftServer> consumer) {
@@ -59,7 +59,7 @@ public final class EventRegistryServer {
 
 		//? if neoforge {
 		/*MainEventBus.serverStoppedConsumer = consumer;
-		*///? }
+		 *///? }
 	}
 
 	public static void registerStartServerTick(Runnable runnable) {
@@ -69,7 +69,7 @@ public final class EventRegistryServer {
 
 		//? if neoforge {
 		/*MainEventBus.startServerTickRunnable = runnable;
-		*///? }
+		 *///? }
 	}
 
 	public static void registerEndServerTick(Runnable runnable) {
@@ -79,66 +79,66 @@ public final class EventRegistryServer {
 
 		//? if neoforge {
 		/*MainEventBus.endServerTickRunnable = runnable;
-		*///? }
+		 *///? }
 	}
 
-	public static void registerStartWorldTick(Consumer<ServerWorld> consumer) {
+	public static void registerStartWorldTick(Consumer<ServerLevel> consumer) {
 		//? if fabric {
 		ServerTickEvents.START_WORLD_TICK.register(consumer::accept);
 		//? }
 
 		//? if neoforge {
 		/*MainEventBus.startWorldTickRunnable = consumer;
-		*///? }
+		 *///? }
 	}
 
-	public static void registerEndWorldTick(Consumer<ServerWorld> consumer) {
+	public static void registerEndWorldTick(Consumer<ServerLevel> consumer) {
 		//? if fabric {
 		ServerTickEvents.END_WORLD_TICK.register(consumer::accept);
 		//? }
 
 		//? if neoforge {
 		/*MainEventBus.endWorldTickRunnable = consumer;
-		*///? }
+		 *///? }
 	}
 
-	public static void registerPlayerJoin(BiConsumer<MinecraftServer, ServerPlayerEntity> consumer) {
+	public static void registerPlayerJoin(BiConsumer<MinecraftServer, ServerPlayer> consumer) {
 		//? if fabric {
 		ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> consumer.accept(server, handler.player));
 		//? }
 
 		//? if neoforge {
 		/*MainEventBus.playerJoinRunnable = consumer;
-		*///? }
+		 *///? }
 	}
 
-	public static void registerPlayerDisconnect(BiConsumer<MinecraftServer, ServerPlayerEntity> consumer) {
+	public static void registerPlayerDisconnect(BiConsumer<MinecraftServer, ServerPlayer> consumer) {
 		//? if fabric {
 		ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> consumer.accept(server, handler.player));
 		//? }
 
 		//? if neoforge {
 		/*MainEventBus.playerDisconnectRunnable = consumer;
-		*///? }
+		 *///? }
 	}
 
-	public static void registerChunkLoad(BiConsumer<ServerWorld, Chunk> consumer) {
+	public static void registerChunkLoad(BiConsumer<ServerLevel, ChunkAccess> consumer) {
 		//? if fabric {
 		ServerChunkEvents.CHUNK_LOAD.register(consumer::accept);
 		//? }
 
 		//? if neoforge {
 		/*ModEventBus.chunkLoadConsumer = consumer;
-		*///? }
+		 *///? }
 	}
 
-	public static void registerChunkUnload(BiConsumer<ServerWorld, Chunk> consumer) {
+	public static void registerChunkUnload(BiConsumer<ServerLevel, ChunkAccess> consumer) {
 		//? if fabric {
 		ServerChunkEvents.CHUNK_UNLOAD.register(consumer::accept);
 		//? }
 
 		//? if neoforge {
 		/*ModEventBus.chunkUnloadConsumer = consumer;
-		*///? }
+		 *///? }
 	}
 }

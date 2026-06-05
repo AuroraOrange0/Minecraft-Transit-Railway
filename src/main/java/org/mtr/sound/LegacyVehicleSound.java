@@ -1,8 +1,8 @@
 package org.mtr.sound;
 
-import net.minecraft.sound.SoundEvent;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.core.BlockPos;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.sounds.SoundEvent;
 import org.jspecify.annotations.Nullable;
 import org.mtr.MTR;
 import org.mtr.MTRClient;
@@ -52,7 +52,7 @@ public class LegacyVehicleSound extends VehicleSoundBase {
 				final int index = Math.min(floorSpeed, legacySpeedSoundCount) - 1;
 				final boolean isAccelerating = speedChange == 0 ? legacyUseAccelerationSoundsWhenCoasting || random.nextBoolean() : speedChange > 0;
 				final String speedSoundId = legacySpeedSoundBaseResource + (isAccelerating ? SOUND_ACCELERATION : SOUND_DECELERATION) + index / SOUND_GROUP_SIZE + SOUND_GROUP_LETTERS[index % SOUND_GROUP_SIZE];
-				ScheduledSound.schedule(blockPos, SoundEvent.of(Identifier.of(MTR.MOD_ID, speedSoundId)), 1, 1);
+				ScheduledSound.schedule(blockPos, SoundEvent.createVariableRangeEvent(ResourceLocation.fromNamespaceAndPath(MTR.MOD_ID, speedSoundId)), 1, 1);
 			}
 		}
 	}
@@ -63,7 +63,7 @@ public class LegacyVehicleSound extends VehicleSoundBase {
 
 	@Override
 	protected void playDoorSound(BlockPos blockPos, boolean isOpen) {
-		ScheduledSound.schedule(blockPos, SoundEvent.of(Identifier.of(MTR.MOD_ID, String.format("%s%s", legacyDoorSoundBaseResource, isOpen ? SOUND_DOOR_OPEN : SOUND_DOOR_CLOSE))), 2, 1);
+		ScheduledSound.schedule(blockPos, SoundEvent.createVariableRangeEvent(ResourceLocation.fromNamespaceAndPath(MTR.MOD_ID, String.format("%s%s", legacyDoorSoundBaseResource, isOpen ? SOUND_DOOR_OPEN : SOUND_DOOR_CLOSE))), 2, 1);
 	}
 
 	@Override

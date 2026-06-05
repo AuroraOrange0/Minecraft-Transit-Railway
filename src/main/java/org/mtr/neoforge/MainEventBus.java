@@ -3,11 +3,11 @@ package org.mtr.neoforge;
 //? if neoforge {
 
 /*import com.mojang.brigadier.CommandDispatcher;
-import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.command.ServerCommandSource;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.player.Player;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.RegisterCommandsEvent;
@@ -32,11 +32,11 @@ public final class MainEventBus {
 	public static Consumer<MinecraftServer> serverStoppedConsumer = null;
 	public static Runnable startServerTickRunnable = null;
 	public static Runnable endServerTickRunnable = null;
-	public static Consumer<ServerWorld> startWorldTickRunnable = null;
-	public static Consumer<ServerWorld> endWorldTickRunnable = null;
-	public static BiConsumer<MinecraftServer, ServerPlayerEntity> playerJoinRunnable = null;
-	public static BiConsumer<MinecraftServer, ServerPlayerEntity> playerDisconnectRunnable = null;
-	public static Consumer<CommandDispatcher<ServerCommandSource>> commandConsumer = null;
+	public static Consumer<ServerLevel> startWorldTickRunnable = null;
+	public static Consumer<ServerLevel> endWorldTickRunnable = null;
+	public static BiConsumer<MinecraftServer, ServerPlayer> playerJoinRunnable = null;
+	public static BiConsumer<MinecraftServer, ServerPlayer> playerDisconnectRunnable = null;
+	public static Consumer<CommandDispatcher<CommandSourceStack>> commandConsumer = null;
 
 	@SubscribeEvent
 	public static void serverStarting(ServerStartingEvent event) {
@@ -82,29 +82,29 @@ public final class MainEventBus {
 
 	@SubscribeEvent
 	public static void worldTickStart(LevelTickEvent.Pre event) {
-		if (startWorldTickRunnable != null && event.getLevel() instanceof ServerWorld serverWorld) {
+		if (startWorldTickRunnable != null && event.getLevel() instanceof ServerLevel serverWorld) {
 			startWorldTickRunnable.accept(serverWorld);
 		}
 	}
 
 	@SubscribeEvent
 	public static void worldTickEnd(LevelTickEvent.Post event) {
-		if (endWorldTickRunnable != null && event.getLevel() instanceof ServerWorld serverWorld) {
+		if (endWorldTickRunnable != null && event.getLevel() instanceof ServerLevel serverWorld) {
 			endWorldTickRunnable.accept(serverWorld);
 		}
 	}
 
 	@SubscribeEvent
 	public static void playerJoin(PlayerEvent.PlayerLoggedInEvent event) {
-		final PlayerEntity playerEntity = event.getEntity();
-		if (playerJoinRunnable != null && playerEntity instanceof ServerPlayerEntity serverPlayerEntity) {
+		final Player playerEntity = event.getEntity();
+		if (playerJoinRunnable != null && playerEntity instanceof ServerPlayer serverPlayerEntity) {
 			playerJoinRunnable.accept(serverPlayerEntity.server, serverPlayerEntity);
 		}
 	}
 
 	@SubscribeEvent
 	public static void playerDisconnect(PlayerEvent.PlayerLoggedOutEvent event) {
-		if (playerDisconnectRunnable != null && event.getEntity() instanceof ServerPlayerEntity serverPlayerEntity) {
+		if (playerDisconnectRunnable != null && event.getEntity() instanceof ServerPlayer serverPlayerEntity) {
 			playerDisconnectRunnable.accept(serverPlayerEntity.server, serverPlayerEntity);
 		}
 	}

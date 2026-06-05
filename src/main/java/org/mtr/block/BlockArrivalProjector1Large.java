@@ -1,21 +1,21 @@
 package org.mtr.block;
 
-import net.minecraft.block.AbstractBlock;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockBehaviour;
+import net.minecraft.world.level.block.state.BlockState;
 import org.mtr.registry.BlockEntityTypes;
 
 public class BlockArrivalProjector1Large extends BlockArrivalProjectorBase {
 
 	private static final int MAX_ARRIVALS = 16;
 
-	public BlockArrivalProjector1Large(AbstractBlock.Settings settings) {
+	public BlockArrivalProjector1Large(BlockBehaviour.Properties settings) {
 		super(settings, MAX_ARRIVALS);
 	}
 
 	@Override
-	public BlockEntity createBlockEntity(BlockPos blockPos, BlockState blockState) {
+	public BlockEntity newBlockEntity(BlockPos blockPos, BlockState blockState) {
 		return new ArrivalProjector1LargeBlockEntity(blockPos, blockState);
 	}
 

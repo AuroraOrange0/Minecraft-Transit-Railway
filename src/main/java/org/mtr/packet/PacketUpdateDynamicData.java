@@ -87,8 +87,8 @@ public final class PacketUpdateDynamicData extends PacketRequestResponseBase {
 	}
 
 	@Override
-	protected PacketRequestResponseBase.ResponseType responseType() {
-		return PacketRequestResponseBase.ResponseType.NONE;
+	protected ResponseType responseType() {
+		return ResponseType.NONE;
 	}
 
 	private static <T extends NameColorDataBase, U> boolean updateVehiclesOrLifts(ObjectArraySet<T> dataSet, Consumer<LongConsumer> iterateKeep, Consumer<Consumer<U>> iterateUpdate, Consumer<T> onRemove, ToLongFunction<U> getId, Function<U, T> createInstance) {

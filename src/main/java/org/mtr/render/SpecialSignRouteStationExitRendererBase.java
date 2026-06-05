@@ -1,7 +1,7 @@
 package org.mtr.render;
 
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.util.Identifier;
+import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.resources.ResourceLocation;
 import org.jspecify.annotations.Nullable;
 import org.mtr.core.tool.Utilities;
 import org.mtr.font.FontRenderHelper;
@@ -16,10 +16,10 @@ public abstract class SpecialSignRouteStationExitRendererBase<T> extends Special
 
 	@Override
 	public final void render(
-		Drawing textureDrawing, ObjectArrayList<Consumer<MatrixStack>> deferredRenders,
+		Drawing textureDrawing, ObjectArrayList<Consumer<PoseStack>> deferredRenders,
 		float x, float y, float zOffset,
 		float signSize, ObjectArrayList<T> dataList,
-		boolean flipTexture, boolean flipText, boolean small, String customText, Identifier font,
+		boolean flipTexture, boolean flipText, boolean small, String customText, ResourceLocation font,
 		float totalSpace, boolean renderPlaceholder
 	) {
 		if (dataList.isEmpty() && !renderPlaceholder) {
@@ -115,7 +115,7 @@ public abstract class SpecialSignRouteStationExitRendererBase<T> extends Special
 
 	protected abstract boolean calculateTextWidths();
 
-	protected abstract void renderOverlayText(MatrixStack matrixStack, String overlayText, Identifier font, float x, float y, float zOffset, float width, float height, float padding, boolean flipText);
+	protected abstract void renderOverlayText(PoseStack matrixStack, String overlayText, ResourceLocation font, float x, float y, float zOffset, float width, float height, float padding, boolean flipText);
 
 	protected abstract int getColor(@Nullable T data);
 

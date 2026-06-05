@@ -1,8 +1,8 @@
 package org.mtr.render;
 
-import net.minecraft.client.world.ClientWorld;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.Direction;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.core.Direction;
+import net.minecraft.resources.ResourceLocation;
 import org.mtr.MTR;
 import org.mtr.block.BlockSignalBase;
 import org.mtr.client.IDrawing;
@@ -14,7 +14,7 @@ public class RenderSignalLight3Aspect<T extends BlockSignalBase.BlockEntityBase>
 	}
 
 	@Override
-	protected void render(StoredMatrixTransformations storedMatrixTransformations, T entity, ClientWorld world, float tickDelta, int light, int occupiedAspect, boolean isBackSide) {
+	protected void render(StoredMatrixTransformations storedMatrixTransformations, T entity, ClientLevel world, float tickDelta, int light, int occupiedAspect, boolean isBackSide) {
 		final float y;
 		final int color = switch (occupiedAspect) {
 			case 1 -> {
@@ -31,10 +31,10 @@ public class RenderSignalLight3Aspect<T extends BlockSignalBase.BlockEntityBase>
 			}
 		};
 
-		MainRenderer.scheduleRender(Identifier.of(MTR.MOD_ID, "textures/block/white.png"), false, QueuedRenderLayer.LIGHT, (matrixStack, vertexConsumer, offset) -> {
+		MainRenderer.scheduleRender(ResourceLocation.fromNamespaceAndPath(MTR.MOD_ID, "textures/block/white.png"), false, QueuedRenderLayer.LIGHT, (matrixStack, vertexConsumer, offset) -> {
 			storedMatrixTransformations.transform(matrixStack, offset);
 			IDrawing.drawTexture(matrixStack, vertexConsumer, -0.09375F, y, -0.19375F, 0.09375F, y + 0.1875F, -0.19375F, Direction.UP, color, DEFAULT_LIGHT);
-			matrixStack.pop();
+			matrixStack.popPose();
 		});
 	}
 }

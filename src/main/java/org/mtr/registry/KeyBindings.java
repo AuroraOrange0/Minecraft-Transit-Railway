@@ -1,6 +1,6 @@
 package org.mtr.registry;
 
-import net.minecraft.client.option.KeyBinding;
+import net.minecraft.client.KeyMapping;
 import org.lwjgl.glfw.GLFW;
 import org.mtr.MTR;
 import org.mtr.generated.lang.TranslationProvider;
@@ -14,17 +14,17 @@ public final class KeyBindings {
 		TRAIN_TOGGLE_DOORS = registerKeyBinding(TranslationProvider.KEY_MTR_TRAIN_TOGGLE_DOORS.key, GLFW.GLFW_KEY_LEFT, TranslationProvider.CATEGORY_MTR_KEYBINDING.key);
 	}
 
-	public static final KeyBinding LIFT_MENU;
-	public static final KeyBinding TRAIN_ACCELERATE;
-	public static final KeyBinding TRAIN_BRAKE;
-	public static final KeyBinding TRAIN_TOGGLE_DOORS;
+	public static final KeyMapping LIFT_MENU;
+	public static final KeyMapping TRAIN_ACCELERATE;
+	public static final KeyMapping TRAIN_BRAKE;
+	public static final KeyMapping TRAIN_TOGGLE_DOORS;
 
 	public static void init() {
 		MTR.LOGGER.info("Registering Minecraft Transit Railway key bindings");
 	}
 
-	private static KeyBinding registerKeyBinding(String translationKey, int code, String category) {
-		final KeyBinding keyBinding = new KeyBinding(translationKey, code, category);
+	private static KeyMapping registerKeyBinding(String translationKey, int code, String category) {
+		final KeyMapping keyBinding = new KeyMapping(translationKey, code, category);
 		RegistryClient.registerKeyBinding(keyBinding);
 		return keyBinding;
 	}

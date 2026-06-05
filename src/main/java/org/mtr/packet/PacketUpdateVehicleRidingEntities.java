@@ -1,9 +1,9 @@
 package org.mtr.packet;
 
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import org.jspecify.annotations.Nullable;
 import org.mtr.MTR;
 import org.mtr.core.data.VehicleRidingEntity;
@@ -19,9 +19,9 @@ public final class PacketUpdateVehicleRidingEntities extends PacketRequestRespon
 
 	public static PacketUpdateVehicleRidingEntities create(long sidingId, long vehicleId, int ridingCar, double x, double y, double z, boolean isOnGangway, boolean isDriver, boolean manualAccelerate, boolean manualBrake, boolean manualToggleDoors, boolean manualToggleAto, boolean doorOverride) {
 		final UpdateVehicleRidingEntities updateVehicleRidingEntities = new UpdateVehicleRidingEntities(sidingId, vehicleId);
-		final ClientPlayerEntity clientPlayerEntity = MinecraftClient.getInstance().player;
+		final LocalPlayer clientPlayerEntity = Minecraft.getInstance().player;
 		if (clientPlayerEntity != null) {
-			updateVehicleRidingEntities.add(new VehicleRidingEntity(clientPlayerEntity.getUuid(), ridingCar, x, y, z, isOnGangway, isDriver, manualAccelerate, manualBrake, manualToggleDoors, manualToggleAto, doorOverride));
+			updateVehicleRidingEntities.add(new VehicleRidingEntity(clientPlayerEntity.getUUID(), ridingCar, x, y, z, isOnGangway, isDriver, manualAccelerate, manualBrake, manualToggleDoors, manualToggleAto, doorOverride));
 		}
 		return new PacketUpdateVehicleRidingEntities(Utilities.getJsonObjectFromData(updateVehicleRidingEntities).toString(), ridingCar < 0);
 	}
@@ -43,7 +43,7 @@ public final class PacketUpdateVehicleRidingEntities extends PacketRequestRespon
 	}
 
 	@Override
-	protected void runServerOutbound(ServerWorld serverWorld, @Nullable ServerPlayerEntity serverPlayerEntity) {
+	protected void runServerOutbound(ServerLevel serverWorld, @Nullable ServerPlayer serverPlayerEntity) {
 		super.runServerOutbound(serverWorld, serverPlayerEntity);
 		if (serverPlayerEntity != null) {
 			MTR.updateRidingEntity(serverPlayerEntity, dismount);
@@ -66,7 +66,7 @@ public final class PacketUpdateVehicleRidingEntities extends PacketRequestRespon
 	}
 
 	@Override
-	protected PacketRequestResponseBase.ResponseType responseType() {
-		return PacketRequestResponseBase.ResponseType.NONE;
+	protected ResponseType responseType() {
+		return ResponseType.NONE;
 	}
 }

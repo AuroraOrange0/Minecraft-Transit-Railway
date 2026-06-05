@@ -1,8 +1,8 @@
 package org.mtr.resource;
 
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.Box;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 import org.jspecify.annotations.Nullable;
 import org.mtr.MTR;
 import org.mtr.client.DynamicTextureCache;
@@ -126,12 +126,12 @@ public final class ModelPropertiesPart extends ModelPropertiesPartSchema {
 		Object2ObjectOpenHashMap<PartCondition, NewOptimizedModelGroup> rawModels,
 		ObjectArrayList<RawDoorModelDetails> rawDoorModelDetailsList,
 		Object2ObjectOpenHashMap<PartCondition, ObjectArrayList<ModelDisplayPart>> displays,
-		ObjectArrayList<Box> floors,
-		ObjectArrayList<Box> doorways,
+		ObjectArrayList<AABB> floors,
+		ObjectArrayList<AABB> doorways,
 		double modelYOffset
 	) {
 		final ObjectArrayList<NewOptimizedModelGroup> newOptimizedModelGroups = new ObjectArrayList<>();
-		final ObjectArrayList<Box> boxes = new ObjectArrayList<>();
+		final ObjectArrayList<AABB> boxes = new ObjectArrayList<>();
 		final ObjectArrayList<ObjectObjectImmutablePair<StoredMatrixTransformations, IntIntImmutablePair>> rawModelDisplayPartsList = new ObjectArrayList<>();
 
 		names.forEach(name -> {
@@ -155,7 +155,7 @@ public final class ModelPropertiesPart extends ModelPropertiesPartSchema {
 					iteratePositions(positions, positionsFlipped, (x, y, z, flipped) -> {
 						if (isDoor) {
 							final Object2ObjectOpenHashMap<PartCondition, NewOptimizedModelGroup> rawDoorModels = new Object2ObjectOpenHashMap<>();
-							final ObjectArrayList<Box> doorBoxes = new ObjectArrayList<>();
+							final ObjectArrayList<AABB> doorBoxes = new ObjectArrayList<>();
 							mergeNewOptimizedModelGroups(newOptimizedModelGroups, rawDoorModels, x, -y + modelYOffset, -z, flipped);
 							boxes.forEach(box -> doorBoxes.add(addBox(box, x, y + modelYOffset, z, flipped)));
 							rawDoorModelDetailsList.add(new RawDoorModelDetails(rawDoorModels, this, doorBoxes, x, y, z, flipped));
@@ -195,16 +195,16 @@ public final class ModelPropertiesPart extends ModelPropertiesPartSchema {
 		}
 	}
 
-	public void getOpenDoorBounds(ObjectArrayList<Box> boxes, double time) {
+	public void getOpenDoorBounds(ObjectArrayList<AABB> boxes, double time) {
 		if (isDoor()) {
 			partDetailsList.forEach(partDetails -> {
 				final double x = doorAnimationType.getDoorAnimationX(doorXMultiplier, partDetails.flipped, time) / 16;
 				final double z = doorAnimationType.getDoorAnimationZ(doorZMultiplier, partDetails.flipped, time, true) / 16;
-				final Box box = partDetails.box;
+				final AABB box = partDetails.box;
 				final float xOffset = box.minX == box.maxX ? 0.1F : 0;
 				final float yOffset = box.minY == box.maxY ? 0.1F : 0;
 				final float zOffset = box.minZ == box.maxZ ? 0.1F : 0;
-				boxes.add(new Box(
+				boxes.add(new AABB(
 					box.minX - xOffset + x,
 					box.minY - yOffset,
 					box.minZ - zOffset + z,
@@ -280,12 +280,12 @@ public final class ModelPropertiesPart extends ModelPropertiesPartSchema {
 		}
 
 		if (color != 0) {
-			MainRenderer.scheduleRender(Identifier.of(MTR.MOD_ID, String.format("textures/block/%s.png", displayType == DisplayType.ROUTE_COLOR ? "white" : "sign/circle")), true, QueuedRenderLayer.INTERIOR, (matrixStack, vertexConsumer, offset) -> {
+			MainRenderer.scheduleRender(ResourceLocation.fromNamespaceAndPath(MTR.MOD_ID, String.format("textures/block/%s.png", displayType == DisplayType.ROUTE_COLOR ? "white" : "sign/circle")), true, QueuedRenderLayer.INTERIOR, (matrixStack, vertexConsumer, offset) -> {
 				storedMatrixTransformations.transform(matrixStack, offset);
 				matrixStack.translate(modelDisplayPart.x, modelDisplayPart.y, modelDisplayPart.z);
 				Drawing.rotateYDegrees(matrixStack, modelDisplayPart.flipped ? 180 : 0);
 				Drawing.rotateXDegrees(matrixStack, 180);
-				modelDisplayPart.storedMatrixTransformations.transform(matrixStack, Vec3d.ZERO);
+				modelDisplayPart.storedMatrixTransformations.transform(matrixStack, Vec3.ZERO);
 				matrixStack.translate(0, 0, -IGui.SMALL_OFFSET);
 
 				new Drawing(matrixStack, vertexConsumer).setVertices(
@@ -295,8 +295,8 @@ public final class ModelPropertiesPart extends ModelPropertiesPartSchema {
 					(modelDisplayPart.height - displayYPadding) / 16
 				).setColor(color).setLight().setUv().draw();
 
-				matrixStack.pop();
-				matrixStack.pop();
+				matrixStack.popPose();
+				matrixStack.popPose();
 			});
 		}
 	}
@@ -306,12 +306,12 @@ public final class ModelPropertiesPart extends ModelPropertiesPartSchema {
 
 		if (!text.isEmpty()) {
 			final FontRenderOptions.Alignment horizontalAlignment = getHorizontalAlignment(false);
-			MainRenderer.scheduleRender(Identifier.of(MTR.MOD_ID, "textures/overlay/seven_segment.png"), true, QueuedRenderLayer.LIGHT_2, (matrixStack, vertexConsumer, offset) -> {
+			MainRenderer.scheduleRender(ResourceLocation.fromNamespaceAndPath(MTR.MOD_ID, "textures/overlay/seven_segment.png"), true, QueuedRenderLayer.LIGHT_2, (matrixStack, vertexConsumer, offset) -> {
 				storedMatrixTransformations.transform(matrixStack, offset);
 				matrixStack.translate(modelDisplayPart.x, modelDisplayPart.y, modelDisplayPart.z);
 				Drawing.rotateYDegrees(matrixStack, modelDisplayPart.flipped ? 180 : 0);
 				Drawing.rotateXDegrees(matrixStack, 180);
-				modelDisplayPart.storedMatrixTransformations.transform(matrixStack, Vec3d.ZERO);
+				modelDisplayPart.storedMatrixTransformations.transform(matrixStack, Vec3.ZERO);
 				matrixStack.translate(0, displayYPadding / 16, -IGui.SMALL_OFFSET);
 
 				IDrawing.drawSevenSegment(
@@ -325,8 +325,8 @@ public final class ModelPropertiesPart extends ModelPropertiesPartSchema {
 					IGui.ARGB_BLACK | displayColorInt, IGui.DEFAULT_LIGHT
 				);
 
-				matrixStack.pop();
-				matrixStack.pop();
+				matrixStack.popPose();
+				matrixStack.popPose();
 			});
 		}
 	}
@@ -351,11 +351,11 @@ public final class ModelPropertiesPart extends ModelPropertiesPartSchema {
 				matrixStack.translate(modelDisplayPart.x, modelDisplayPart.y, modelDisplayPart.z);
 				Drawing.rotateYDegrees(matrixStack, modelDisplayPart.flipped ? 180 : 0);
 				Drawing.rotateXDegrees(matrixStack, 180);
-				modelDisplayPart.storedMatrixTransformations.transform(matrixStack, Vec3d.ZERO);
+				modelDisplayPart.storedMatrixTransformations.transform(matrixStack, Vec3.ZERO);
 				matrixStack.translate(displayXPadding / 16, displayYPadding / 16, -IGui.SMALL_OFFSET);
 				scrollingText.scrollText(matrixStack, vertexConsumer);
-				matrixStack.pop();
-				matrixStack.pop();
+				matrixStack.popPose();
+				matrixStack.popPose();
 			});
 		}
 
@@ -371,7 +371,7 @@ public final class ModelPropertiesPart extends ModelPropertiesPartSchema {
 				matrixStack.translate(modelDisplayPart.x, modelDisplayPart.y, modelDisplayPart.z);
 				Drawing.rotateYDegrees(matrixStack, modelDisplayPart.flipped ? 180 : 0);
 				Drawing.rotateXDegrees(matrixStack, 180);
-				modelDisplayPart.storedMatrixTransformations.transform(matrixStack, Vec3d.ZERO);
+				modelDisplayPart.storedMatrixTransformations.transform(matrixStack, Vec3.ZERO);
 				matrixStack.translate(displayXPadding / 16, displayYPadding / 16, -IGui.SMALL_OFFSET);
 
 				FontRenderHelper.render(matrixStack, text, FontRenderOptions.builder()
@@ -386,8 +386,8 @@ public final class ModelPropertiesPart extends ModelPropertiesPartSchema {
 					.build()
 				);
 
-				matrixStack.pop();
-				matrixStack.pop();
+				matrixStack.popPose();
+				matrixStack.popPose();
 			});
 		}
 	}
@@ -485,8 +485,8 @@ public final class ModelPropertiesPart extends ModelPropertiesPartSchema {
 		}
 	}
 
-	private static Box addBox(Box box, double x, double y, double z, boolean flipped) {
-		return new Box(
+	private static AABB addBox(AABB box, double x, double y, double z, boolean flipped) {
+		return new AABB(
 			(flipped ? -1 : 1) * box.minX + x, box.minY + y, (flipped ? 1 : -1) * box.minZ + z,
 			(flipped ? -1 : 1) * box.maxX + x, box.maxY + y, (flipped ? 1 : -1) * box.maxZ + z
 		);
@@ -528,15 +528,15 @@ public final class ModelPropertiesPart extends ModelPropertiesPartSchema {
 	private static class PartDetails {
 
 		@Nullable
-		private Box doorway;
+		private AABB doorway;
 		//		private final OptimizedModelWrapper optimizedModelDoor;
-		private final Box box;
+		private final AABB box;
 		private final double x;
 		private final double y;
 		private final double z;
 		private final boolean flipped;
 
-		private PartDetails(Box box, double x, double y, double z, boolean flipped) {
+		private PartDetails(AABB box, double x, double y, double z, boolean flipped) {
 			this.box = box;
 			this.x = x;
 			this.y = y;
@@ -559,7 +559,7 @@ public final class ModelPropertiesPart extends ModelPropertiesPartSchema {
 	public record RawDoorModelDetails(
 		Object2ObjectOpenHashMap<PartCondition, NewOptimizedModelGroup> rawModels,
 		ModelPropertiesPart modelPropertiesPart,
-		ObjectArrayList<Box> boxes,
+		ObjectArrayList<AABB> boxes,
 		double x,
 		double y,
 		double z,

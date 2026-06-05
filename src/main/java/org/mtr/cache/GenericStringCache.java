@@ -10,17 +10,17 @@ public final class GenericStringCache<T> extends GenericCacheBase<T, String, Obj
 	}
 
 	@Override
-	protected GenericCacheBase.DataHolder<T> get(Object2ObjectOpenHashMap<String, DataHolder<T>> map, String key) {
+	protected DataHolder<T> get(Object2ObjectOpenHashMap<String, DataHolder<T>> map, String key) {
 		return map.get(key);
 	}
 
 	@Override
-	protected void put(Object2ObjectOpenHashMap<String, DataHolder<T>> map, String key, GenericCacheBase.DataHolder<T> newData) {
+	protected void put(Object2ObjectOpenHashMap<String, DataHolder<T>> map, String key, DataHolder<T> newData) {
 		map.put(key, newData);
 	}
 
 	@Override
-	protected ObjectCollection<GenericCacheBase.DataHolder<T>> values(Object2ObjectOpenHashMap<String, DataHolder<T>> map) {
+	protected ObjectCollection<DataHolder<T>> values(Object2ObjectOpenHashMap<String, DataHolder<T>> map) {
 		return map.values();
 	}
 

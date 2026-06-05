@@ -1,17 +1,18 @@
 package org.mtr.render;
 
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
 import lombok.Getter;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.client.render.LightmapTextureManager;
-import net.minecraft.client.render.RenderLayer;
-import net.minecraft.client.render.VertexConsumer;
-import net.minecraft.client.render.VertexConsumerProvider;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.client.world.ClientWorld;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.client.renderer.LightTexture;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.texture.DynamicTexture;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.phys.Vec3;
 import org.jspecify.annotations.Nullable;
 import org.mtr.MTRClient;
 import org.mtr.client.DynamicTextureCache;
@@ -38,16 +39,16 @@ import java.util.function.Consumer;
  *
  * <p>Three responsibilities live here:</p>
  * <ol>
- *   <li><b>Tick management</b> — {@link #render(MatrixStack, VertexConsumerProvider, Vec3d)}
+ *   <li><b>Tick management</b> — {@link #render(PoseStack, MultiBufferSource, Vec3)}
  *       is the single entry point the loader (Fabric / NeoForge) wires into the world-render
  *       pipeline. It advances {@link #timerMillis}, ticks {@link DynamicTextureCache},
  *       riding state, and the arrivals cache, then dispatches into the per-domain
  *       renderers ({@link RenderVehicles}, {@link RenderLifts}, {@link RenderRails}).</li>
  *   <li><b>Batched draw scheduling</b> — code anywhere in the mod can call
- *       {@link #scheduleRender(Identifier, boolean, QueuedRenderLayer, ScheduledRender)} or
+ *       {@link #scheduleRender(ResourceLocation, boolean, QueuedRenderLayer, ScheduledRender)} or
  *       {@link #renderModel(Object2ObjectOpenHashMap, StoredMatrixTransformations, int)} to
  *       enqueue draw work for the current frame. The drains at the end of
- *       {@link #render(MatrixStack, VertexConsumerProvider, Vec3d)} sort and dispatch by
+ *       {@link #render(PoseStack, MultiBufferSource, Vec3)} sort and dispatch by
  *       {@link QueuedRenderLayer} and {@link RenderStage}.</li>
  *   <li><b>Shared frame utilities</b> — {@link #getFlashingLight()},
  *       {@link #getFlashingColor(Color, int)}, and {@link #getInterchangeRouteNames(Consumer)}
@@ -72,7 +73,7 @@ public class MainRenderer {
 	/**
 	 * Get a continuously ticking timer for rendering, suitable for animations.
 	 * Returns a value in milliseconds representing the time elapsed, incremented when
-	 * {@link MainRenderer#render(MatrixStack, VertexConsumerProvider, Vec3d)} is invoked.
+	 * {@link MainRenderer#render(PoseStack, MultiBufferSource, Vec3)} is invoked.
 	 */
 	@Getter
 	private static long timerMillis;
@@ -95,9 +96,9 @@ public class MainRenderer {
 	/**
 	 * Reusable identifier for {@link #scheduleRender(QueuedRenderLayer, ScheduledRender)} — see {@code docs/PERFORMANCE.md} §4.3.
 	 */
-	private static final Identifier EMPTY_IDENTIFIER = Identifier.of("");
-	private static final ObjectArrayList<ObjectArrayList<Object2ObjectArrayMap<Identifier, ObjectArrayList<ScheduledRender>>>> RENDERS = new ObjectArrayList<>(TOTAL_RENDER_STAGES);
-	private static final ObjectArrayList<ObjectArrayList<Object2ObjectArrayMap<Identifier, ObjectArrayList<ScheduledRender>>>> CURRENT_RENDERS = new ObjectArrayList<>(TOTAL_RENDER_STAGES);
+	private static final ResourceLocation EMPTY_IDENTIFIER = ResourceLocation.parse("");
+	private static final ObjectArrayList<ObjectArrayList<Object2ObjectArrayMap<ResourceLocation, ObjectArrayList<ScheduledRender>>>> RENDERS = new ObjectArrayList<>(TOTAL_RENDER_STAGES);
+	private static final ObjectArrayList<ObjectArrayList<Object2ObjectArrayMap<ResourceLocation, ObjectArrayList<ScheduledRender>>>> CURRENT_RENDERS = new ObjectArrayList<>(TOTAL_RENDER_STAGES);
 	private static final ObjectArrayList<ScheduledTextRender> TEXT_RENDERS = new ObjectArrayList<>(TOTAL_RENDER_STAGES);
 	private static final ObjectArrayList<ScheduledTextRender> CURRENT_TEXT_RENDERS = new ObjectArrayList<>(TOTAL_RENDER_STAGES);
 	private static final Object2ObjectOpenHashMap<NewOptimizedModel, Object2ObjectOpenHashMap<RenderStage, ObjectArrayList<ObjectIntImmutablePair<StoredMatrixTransformations>>>> MODEL_RENDERS = new Object2ObjectOpenHashMap<>();
@@ -106,8 +107,8 @@ public class MainRenderer {
 	static {
 		for (int i = 0; i < TOTAL_RENDER_STAGES; i++) {
 			final int renderStageCount = QUEUED_RENDER_LAYERS.length;
-			final ObjectArrayList<Object2ObjectArrayMap<Identifier, ObjectArrayList<ScheduledRender>>> rendersList = new ObjectArrayList<>(renderStageCount);
-			final ObjectArrayList<Object2ObjectArrayMap<Identifier, ObjectArrayList<ScheduledRender>>> currentRendersList = new ObjectArrayList<>(renderStageCount);
+			final ObjectArrayList<Object2ObjectArrayMap<ResourceLocation, ObjectArrayList<ScheduledRender>>> rendersList = new ObjectArrayList<>(renderStageCount);
+			final ObjectArrayList<Object2ObjectArrayMap<ResourceLocation, ObjectArrayList<ScheduledRender>>> currentRendersList = new ObjectArrayList<>(renderStageCount);
 
 			for (int j = 0; j < renderStageCount; j++) {
 				rendersList.add(j, new Object2ObjectArrayMap<>());
@@ -132,10 +133,10 @@ public class MainRenderer {
 	 * @param vertexConsumerProvider the buffer source for this frame
 	 * @param offset                 the camera-relative offset for the world frame
 	 */
-	public static void render(MatrixStack matrixStack, VertexConsumerProvider vertexConsumerProvider, Vec3d offset) {
-		final MinecraftClient minecraftClient = MinecraftClient.getInstance();
-		final ClientWorld clientWorld = minecraftClient.world;
-		final ClientPlayerEntity clientPlayerEntity = minecraftClient.player;
+	public static void render(PoseStack matrixStack, MultiBufferSource vertexConsumerProvider, Vec3 offset) {
+		final Minecraft minecraftClient = Minecraft.getInstance();
+		final ClientLevel clientWorld = minecraftClient.level;
+		final LocalPlayer clientPlayerEntity = minecraftClient.player;
 
 		if (clientWorld == null || clientPlayerEntity == null) {
 			return;
@@ -149,7 +150,7 @@ public class MainRenderer {
 		MinecraftClientData.getInstance().lifts.forEach(lift -> {
 			lift.tick(millisElapsed);
 			if (VehicleRidingMovement.isRiding(lift.getId()) && VehicleRidingMovement.showShiftProgressBar()) {
-				clientPlayerEntity.sendMessage(TranslationProvider.GUI_MTR_PRESS_TO_SELECT_FLOOR.getText(KeyBindings.LIFT_MENU.getBoundKeyLocalizedText().getString()), true);
+				clientPlayerEntity.displayClientMessage(TranslationProvider.GUI_MTR_PRESS_TO_SELECT_FLOOR.getText(KeyBindings.LIFT_MENU.getTranslatedKeyMessage().getString()), true);
 			}
 		});
 		lastRenderedMillis = MTRClient.getGameMillis();
@@ -159,7 +160,7 @@ public class MainRenderer {
 		VehicleRidingMovement.tick();
 		ArrivalsCacheClient.INSTANCE.tick();
 
-		final Vec3d cameraShakeOffset = clientPlayerEntity.getPos().subtract(offset);
+		final Vec3 cameraShakeOffset = clientPlayerEntity.position().subtract(offset);
 		RenderVehicles.render(millisElapsed, cameraShakeOffset);
 		RenderLifts.render(millisElapsed, cameraShakeOffset);
 		RenderRails.render(matrixStack, vertexConsumerProvider, offset);
@@ -185,7 +186,7 @@ public class MainRenderer {
 			for (int j = 0; j < QUEUED_RENDER_LAYERS.length; j++) {
 				final QueuedRenderLayer queuedRenderLayer = QUEUED_RENDER_LAYERS[j];
 				CURRENT_RENDERS.get(i).get(j).forEach((key, value) -> {
-					final RenderLayer renderLayer = switch (queuedRenderLayer) {
+					final RenderType renderLayer = switch (queuedRenderLayer) {
 						case LIGHT -> MoreRenderLayers.getLight(key, false);
 						case LIGHT_TRANSLUCENT -> MoreRenderLayers.getLight(key, true);
 						case LIGHT_2 -> MoreRenderLayers.getLight2(key);
@@ -193,7 +194,7 @@ public class MainRenderer {
 						case INTERIOR_TRANSLUCENT -> MoreRenderLayers.getInteriorTranslucent(key);
 						case EXTERIOR -> MoreRenderLayers.getExterior(key);
 						case EXTERIOR_TRANSLUCENT -> MoreRenderLayers.getExteriorTranslucent(key);
-						case LINES -> RenderLayer.getLines();
+						case LINES -> RenderType.lines();
 					};
 					value.forEach(renderer -> renderer.accept(matrixStack, vertexConsumerProvider.getBuffer(renderLayer), offset));
 				});
@@ -230,7 +231,7 @@ public class MainRenderer {
 	 * @param queuedRenderLayer the render-layer family to dispatch into
 	 * @param scheduledRender   the draw callback invoked during the drain pass
 	 */
-	public static void scheduleRender(@Nullable Identifier identifier, boolean priority, QueuedRenderLayer queuedRenderLayer, ScheduledRender scheduledRender) {
+	public static void scheduleRender(@Nullable ResourceLocation identifier, boolean priority, QueuedRenderLayer queuedRenderLayer, ScheduledRender scheduledRender) {
 		if (identifier != null) {
 			RENDERS.get(priority ? 1 : 0).get(queuedRenderLayer.ordinal()).computeIfAbsent(identifier, key -> new ObjectArrayList<>()).add(scheduledRender);
 		}
@@ -238,7 +239,7 @@ public class MainRenderer {
 
 	/**
 	 * Convenience overload of
-	 * {@link #scheduleRender(Identifier, boolean, QueuedRenderLayer, ScheduledRender)}
+	 * {@link #scheduleRender(ResourceLocation, boolean, QueuedRenderLayer, ScheduledRender)}
 	 * for draws that aren't keyed to a specific texture (e.g. line / debug renders).
 	 */
 	public static void scheduleRender(QueuedRenderLayer queuedRenderLayer, ScheduledRender scheduledRender) {
@@ -257,9 +258,9 @@ public class MainRenderer {
 	/**
 	 * Drop every queued draw associated with the given identifier from both the pending
 	 * and current frame buckets. Called when a dynamic texture is evicted so stale draws
-	 * don't reference a disposed {@link net.minecraft.client.texture.NativeImageBackedTexture}.
+	 * don't reference a disposed {@link DynamicTexture}.
 	 */
-	public static void cancelRender(Identifier identifier) {
+	public static void cancelRender(ResourceLocation identifier) {
 		RENDERS.forEach(renderForPriority -> renderForPriority.forEach(renderForPriorityAndQueuedRenderLayer -> renderForPriorityAndQueuedRenderLayer.remove(identifier)));
 		CURRENT_RENDERS.forEach(renderForPriority -> renderForPriority.forEach(renderForPriorityAndQueuedRenderLayer -> renderForPriorityAndQueuedRenderLayer.remove(identifier)));
 	}
@@ -284,7 +285,7 @@ public class MainRenderer {
 	 */
 	public static int getFlashingLight() {
 		final int light = (int) Math.round(((Math.sin(Math.PI * 2 * (getTimerMillis() % FLASHING_INTERVAL) / FLASHING_INTERVAL) + 1) / 2) * 0xF);
-		return LightmapTextureManager.pack(light, light);
+		return LightTexture.pack(light, light);
 	}
 
 	public static Color getFlashingColor(Color color, int multiplier) {
@@ -300,30 +301,30 @@ public class MainRenderer {
 		return getFlashingColor(new Color(color), multiplier).getRGB();
 	}
 
-	private static void renderModel(MatrixStack matrixStack, Object2ObjectOpenHashMap<NewOptimizedModel, Object2ObjectOpenHashMap<RenderStage, ObjectArrayList<ObjectIntImmutablePair<StoredMatrixTransformations>>>> modelRenders, Vec3d offset) {
+	private static void renderModel(PoseStack matrixStack, Object2ObjectOpenHashMap<NewOptimizedModel, Object2ObjectOpenHashMap<RenderStage, ObjectArrayList<ObjectIntImmutablePair<StoredMatrixTransformations>>>> modelRenders, Vec3 offset) {
 		modelRenders.forEach((newOptimizedModel, modelsForRenderStage) -> modelsForRenderStage.forEach((renderStage, renderDetails) -> {
-			final Identifier texture = newOptimizedModel.texture;
-			final RenderLayer renderLayer = switch (renderStage) {
+			final ResourceLocation texture = newOptimizedModel.texture;
+			final RenderType renderLayer = switch (renderStage) {
 				case LIGHT -> MoreRenderLayers.getLight(texture, false);
 				case ALWAYS_ON_LIGHT -> MoreRenderLayers.getLight(texture, true);
 				case INTERIOR -> MoreRenderLayers.getInterior(texture);
 				case INTERIOR_TRANSLUCENT -> MoreRenderLayers.getInteriorTranslucent(texture);
 				case EXTERIOR -> MoreRenderLayers.getExterior(texture);
 			};
-			renderLayer.startDrawing();
+			renderLayer.setupRenderState();
 			newOptimizedModel.begin(RenderSystem.getShader());
 			renderDetails.forEach(renderDetailsEntry -> {
 				renderDetailsEntry.left().transform(matrixStack, offset);
-				newOptimizedModel.render(matrixStack.peek().getPositionMatrix(), renderStage.isFullBrightness ? 1 : (float) renderDetailsEntry.rightInt() / 0xF, RenderSystem.getShader());
-				matrixStack.pop();
+				newOptimizedModel.render(matrixStack.last().pose(), renderStage.isFullBrightness ? 1 : (float) renderDetailsEntry.rightInt() / 0xF, RenderSystem.getShader());
+				matrixStack.popPose();
 			});
-			renderLayer.endDrawing();
+			renderLayer.clearRenderState();
 		}));
 	}
 
 	private static long getMillisElapsed() {
 		final long millisElapsed = MTRClient.getGameMillis() - lastRenderedMillis;
-		final long gameMillisElapsed = (long) (MinecraftClient.getInstance().getRenderTickCounter().getLastFrameDuration() * 50);
+		final long gameMillisElapsed = (long) (Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaTicks() * 50);
 		return Math.abs(gameMillisElapsed - millisElapsed) < 50 ? gameMillisElapsed : millisElapsed;
 	}
 
@@ -336,7 +337,7 @@ public class MainRenderer {
 		 * @param vertexConsumer the buffer for the resolved {@code RenderLayer}
 		 * @param offset         camera-relative world offset
 		 */
-		void accept(MatrixStack matrixStack, VertexConsumer vertexConsumer, Vec3d offset);
+		void accept(PoseStack matrixStack, VertexConsumer vertexConsumer, Vec3 offset);
 	}
 
 	@FunctionalInterface
@@ -347,6 +348,6 @@ public class MainRenderer {
 		 * @param matrixStack the frame's matrix stack, already positioned for world space
 		 * @param offset      camera-relative world offset
 		 */
-		void accept(MatrixStack matrixStack, Vec3d offset);
+		void accept(PoseStack matrixStack, Vec3 offset);
 	}
 }

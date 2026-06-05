@@ -1,21 +1,21 @@
 package org.mtr.registry;
 
+import com.mojang.blaze3d.vertex.MeshData;
+import com.mojang.blaze3d.vertex.PoseStack;
 import gg.essential.universal.UMatrixStack;
 import gg.essential.universal.vertex.UBuiltBuffer;
-import net.minecraft.client.render.BuiltBuffer;
-import net.minecraft.client.util.math.MatrixStack;
 
 public final class UConverters {
 
-	public static MatrixStack convert(UMatrixStack matrixStack) {
+	public static PoseStack convert(UMatrixStack matrixStack) {
 		return matrixStack.toMC();
 	}
 
-	public static UMatrixStack convert(MatrixStack matrixStack) {
+	public static UMatrixStack convert(PoseStack matrixStack) {
 		return new UMatrixStack(matrixStack);
 	}
 
-	public static UBuiltBuffer convert(BuiltBuffer builtBuffer) {
+	public static UBuiltBuffer convert(MeshData builtBuffer) {
 		return UBuiltBuffer.wrap(builtBuffer);
 	}
 }

@@ -1,13 +1,13 @@
 package org.mtr.screen;
 
+import com.mojang.blaze3d.vertex.PoseStack;
 import gg.essential.elementa.components.ScrollComponent;
 import gg.essential.elementa.components.UIContainer;
 import gg.essential.elementa.components.UIWrappedText;
 import gg.essential.elementa.constraints.*;
 import gg.essential.universal.UMinecraft;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.text.Text;
-import net.minecraft.util.math.Direction;
+import net.minecraft.core.Direction;
+import net.minecraft.network.chat.Component;
 import org.mtr.client.CustomResourceLoader;
 import org.mtr.client.MinecraftClientData;
 import org.mtr.core.data.Lift;
@@ -49,7 +49,7 @@ public final class LiftCustomizationScreen extends WindowBase {
 
 	public LiftCustomizationScreen(Lift lift) {
 		this.lift = lift;
-		liftDirection = Direction.fromHorizontalDegrees(lift.getAngle().angleDegrees);
+		liftDirection = Direction.fromYRot(lift.getAngle().angleDegrees);
 
 		final BackgroundComponent backgroundComponent = new BackgroundComponent(getWindow(), ObjectImmutableList.of(
 			new ObjectObjectImmutablePair<>(ReleasedDynamicTextureRegistry.BRUSH_TEXTURE.get(), TranslationProvider.GUI_MTR_LIFT_CUSTOMIZATION.getString())
@@ -103,7 +103,7 @@ public final class LiftCustomizationScreen extends WindowBase {
 			.setY(new SiblingConstraint())
 			.setWidth(new RelativeConstraint());
 
-		editStylesButtonComponent.setText(Text.translatable("selectWorld.edit").getString());
+		editStylesButtonComponent.setText(Component.translatable("selectWorld.edit").getString());
 		editStylesButtonComponent.onClick(() -> UMinecraft.setCurrentScreenObj(createLiftStyleSelectorScreen()));
 
 		final ButtonComponent rotateAnticlockwiseButton = (ButtonComponent) new ButtonComponent(true)
@@ -113,8 +113,8 @@ public final class LiftCustomizationScreen extends WindowBase {
 
 		rotateAnticlockwiseButton.setText(TranslationProvider.GUI_MTR_ROTATE_ANTICLOCKWISE.getString());
 		rotateAnticlockwiseButton.onClick(() -> {
-			liftDirection = liftDirection.rotateYCounterclockwise();
-			lift.setAngle(Angle.fromAngle(liftDirection.getPositiveHorizontalDegrees()));
+			liftDirection = liftDirection.getCounterClockWise();
+			lift.setAngle(Angle.fromAngle(liftDirection.toYRot()));
 		});
 
 		final ButtonComponent rotateClockwiseButton = (ButtonComponent) new ButtonComponent(true)
@@ -124,8 +124,8 @@ public final class LiftCustomizationScreen extends WindowBase {
 
 		rotateClockwiseButton.setText(TranslationProvider.GUI_MTR_ROTATE_CLOCKWISE.getString());
 		rotateClockwiseButton.onClick(() -> {
-			liftDirection = liftDirection.rotateYClockwise();
-			lift.setAngle(Angle.fromAngle(liftDirection.getPositiveHorizontalDegrees()));
+			liftDirection = liftDirection.getClockWise();
+			lift.setAngle(Angle.fromAngle(liftDirection.toYRot()));
 		});
 	}
 
@@ -145,7 +145,7 @@ public final class LiftCustomizationScreen extends WindowBase {
 		super.onScreenClose();
 	}
 
-	private void onDrawPreview(MatrixStack matrixStack) {
+	private void onDrawPreview(PoseStack matrixStack) {
 		// TODO lift preview
 	}
 

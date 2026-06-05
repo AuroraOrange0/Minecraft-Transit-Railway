@@ -1,9 +1,8 @@
 package org.mtr.sound;
 
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.sound.SoundEvent;
-import net.minecraft.util.math.BlockPos;
-
+import net.minecraft.client.Minecraft;
+import net.minecraft.core.BlockPos;
+import net.minecraft.sounds.SoundEvent;
 import org.jspecify.annotations.Nullable;
 
 import java.util.Random;
@@ -50,7 +49,7 @@ public class BveVehicleSound extends VehicleSoundBase {
 
 	@Override
 	public void playMotorSound(BlockPos blockPos, float speed, float speedChange, float acceleration, boolean isOnRoute) {
-		final float secondsElapsed = MinecraftClient.getInstance().getRenderTickCounter().getLastFrameDuration() / 20;
+		final float secondsElapsed = Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaTicks() / 20;
 		final float speedKilometersPerHour = speed * 3600;
 		final float speedMetersPerSecond = speed * 1000;
 

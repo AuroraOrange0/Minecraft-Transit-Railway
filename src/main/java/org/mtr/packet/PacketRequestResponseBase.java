@@ -1,8 +1,8 @@
 package org.mtr.packet;
 
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.server.world.ServerWorld;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import org.jspecify.annotations.Nullable;
 import org.mtr.MTR;
 import org.mtr.core.serializer.JsonReader;
@@ -34,8 +34,8 @@ public abstract class PacketRequestResponseBase extends PacketHandler {
 	}
 
 	@Override
-	public final void runServer(MinecraftServer minecraftServer, ServerPlayerEntity serverPlayerEntity) {
-		runServerOutbound(serverPlayerEntity.getServerWorld(), serverPlayerEntity);
+	public final void runServer(MinecraftServer minecraftServer, ServerPlayer serverPlayerEntity) {
+		runServerOutbound(serverPlayerEntity.serverLevel(), serverPlayerEntity);
 	}
 
 	@Override
@@ -43,7 +43,7 @@ public abstract class PacketRequestResponseBase extends PacketHandler {
 		runClientInbound(new JsonReader(Utilities.parseJson(content)));
 	}
 
-	protected void runServerOutbound(ServerWorld serverWorld, @Nullable ServerPlayerEntity serverPlayerEntity) {
+	protected void runServerOutbound(ServerLevel serverWorld, @Nullable ServerPlayer serverPlayerEntity) {
 		MTR.sendMessageC2S(getKey(), serverWorld.getServer(), serverWorld, getDataInstance(new JsonReader(Utilities.parseJson(content))), responseType() == ResponseType.NONE ? null : responseData -> {
 			final JsonObject responseJson = Utilities.getJsonObjectFromData(responseData);
 			if (responseType() == ResponseType.PLAYER) {
@@ -51,13 +51,13 @@ public abstract class PacketRequestResponseBase extends PacketHandler {
 					RegistryServer.sendPacketToClient(serverPlayerEntity, getInstance(responseJson.toString()));
 				}
 			} else {
-				serverWorld.getPlayers().forEach(serverPlayerEntityNew -> RegistryServer.sendPacketToClient(serverPlayerEntityNew, getInstance(responseJson.toString())));
+				serverWorld.players().forEach(serverPlayerEntityNew -> RegistryServer.sendPacketToClient(serverPlayerEntityNew, getInstance(responseJson.toString())));
 			}
 			runServerInbound(serverWorld, responseJson);
 		}, SerializedDataBase.class);
 	}
 
-	protected void runServerInbound(ServerWorld serverWorld, JsonObject jsonObject) {
+	protected void runServerInbound(ServerLevel serverWorld, JsonObject jsonObject) {
 	}
 
 	protected void runClientInbound(JsonReader jsonReader) {

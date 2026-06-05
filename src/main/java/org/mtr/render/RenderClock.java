@@ -1,14 +1,14 @@
 package org.mtr.render;
 
-import net.minecraft.block.BlockState;
-import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.client.render.VertexConsumer;
-import net.minecraft.client.render.VertexConsumerProvider;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.client.world.ClientWorld;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.level.block.state.BlockState;
 import org.mtr.MTR;
 import org.mtr.block.BlockClock;
 import org.mtr.block.IBlock;
@@ -19,8 +19,8 @@ import org.mtr.tool.Drawing;
 public class RenderClock extends BlockEntityRendererExtension<BlockClock.ClockBlockEntity> implements IGui, IBlock {
 
 	@Override
-	public void render(BlockClock.ClockBlockEntity blockEntity, MatrixStack matrixStack2, VertexConsumerProvider vertexConsumerProvider, ClientWorld world, ClientPlayerEntity player, float tickDelta, int light, int overlay) {
-		final BlockPos pos = blockEntity.getPos();
+	public void render(BlockClock.ClockBlockEntity blockEntity, PoseStack matrixStack2, MultiBufferSource vertexConsumerProvider, ClientLevel world, LocalPlayer player, float tickDelta, int light, int overlay) {
+		final BlockPos pos = blockEntity.getBlockPos();
 		final BlockState state = world.getBlockState(pos);
 		final boolean rotated = IBlock.getStatePropertySafe(state, BlockClock.FACING);
 
@@ -29,9 +29,9 @@ public class RenderClock extends BlockEntityRendererExtension<BlockClock.ClockBl
 			storedMatrixTransformations.add(matrixStack -> Drawing.rotateYDegrees(matrixStack, 90));
 		}
 
-		MainRenderer.scheduleRender(Identifier.of(MTR.MOD_ID, "textures/block/white.png"), false, QueuedRenderLayer.LIGHT, (matrixStack, vertexConsumer, offset) -> {
+		MainRenderer.scheduleRender(ResourceLocation.fromNamespaceAndPath(MTR.MOD_ID, "textures/block/white.png"), false, QueuedRenderLayer.LIGHT, (matrixStack, vertexConsumer, offset) -> {
 			storedMatrixTransformations.transform(matrixStack, offset);
-			final long time = world.getTimeOfDay() + 6000;
+			final long time = world.getDayTime() + 6000;
 
 			drawHand(matrixStack, vertexConsumer, time * 360F / 12000, true);
 			drawHand(matrixStack, vertexConsumer, time * 360F / 1000, false);
@@ -40,14 +40,14 @@ public class RenderClock extends BlockEntityRendererExtension<BlockClock.ClockBl
 			drawHand(matrixStack, vertexConsumer, time * 360F / 12000, true);
 			drawHand(matrixStack, vertexConsumer, time * 360F / 1000, false);
 
-			matrixStack.pop();
+			matrixStack.popPose();
 		});
 	}
 
-	private static void drawHand(MatrixStack matrixStack, VertexConsumer vertexConsumer, float rotation, boolean isHourHand) {
-		matrixStack.push();
+	private static void drawHand(PoseStack matrixStack, VertexConsumer vertexConsumer, float rotation, boolean isHourHand) {
+		matrixStack.pushPose();
 		Drawing.rotateZDegrees(matrixStack, -rotation);
 		IDrawing.drawTexture(matrixStack, vertexConsumer, -0.01F, isHourHand ? 0.15F : 0.24F, isHourHand ? 0.1F : 0.105F, 0.01F, -0.03F, isHourHand ? 0.1F : 0.105F, Direction.UP, ARGB_LIGHT_GRAY, MAX_LIGHT_INTERIOR);
-		matrixStack.pop();
+		matrixStack.popPose();
 	}
 }

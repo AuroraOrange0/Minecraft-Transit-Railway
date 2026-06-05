@@ -1,48 +1,48 @@
 package org.mtr.block;
 
-import net.minecraft.block.AbstractBlock;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.Waterloggable;
-import net.minecraft.fluid.FluidState;
-import net.minecraft.fluid.Fluids;
-import net.minecraft.item.ItemPlacementContext;
-import net.minecraft.state.StateManager;
-import net.minecraft.state.property.Properties;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.random.Random;
-import net.minecraft.world.WorldView;
-import net.minecraft.world.tick.ScheduledTickView;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.level.LevelReader;
+import net.minecraft.world.level.ScheduledTickAccess;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.SimpleWaterloggedBlock;
+import net.minecraft.world.level.block.state.BlockBehaviour;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.material.FluidState;
+import net.minecraft.world.level.material.Fluids;
 
-public abstract class BlockWaterloggable extends Block implements Waterloggable {
+public abstract class BlockWaterloggable extends Block implements SimpleWaterloggedBlock {
 
-	public BlockWaterloggable(AbstractBlock.Settings blockSettings) {
+	public BlockWaterloggable(BlockBehaviour.Properties blockSettings) {
 		super(blockSettings);
-		setDefaultState(getDefaultState().with(Properties.WATERLOGGED, false));
+		registerDefaultState(defaultBlockState().setValue(BlockStateProperties.WATERLOGGED, false));
 	}
 
 	@Override
-	public BlockState getPlacementState(ItemPlacementContext itemPlacementContext) {
-		return getDefaultState().with(Properties.WATERLOGGED, itemPlacementContext.getWorld().getFluidState(itemPlacementContext.getBlockPos()).getFluid() == Fluids.WATER);
+	public BlockState getStateForPlacement(BlockPlaceContext itemPlacementContext) {
+		return defaultBlockState().setValue(BlockStateProperties.WATERLOGGED, itemPlacementContext.getLevel().getFluidState(itemPlacementContext.getClickedPos()).getType() == Fluids.WATER);
 	}
 
 	@Override
 	protected FluidState getFluidState(BlockState state) {
-		return state.get(Properties.WATERLOGGED) ? Fluids.WATER.getStill(false) : super.getFluidState(state);
+		return state.getValue(BlockStateProperties.WATERLOGGED) ? Fluids.WATER.getSource(false) : super.getFluidState(state);
 	}
 
 	@Override
-	protected BlockState getStateForNeighborUpdate(BlockState state, WorldView world, ScheduledTickView tickView, BlockPos pos, Direction direction, BlockPos neighborPos, BlockState neighborState, Random random) {
-		if (state.get(Properties.WATERLOGGED)) {
-			tickView.scheduleFluidTick(pos, Fluids.WATER, 5);
+	protected BlockState updateShape(BlockState state, LevelReader world, ScheduledTickAccess tickView, BlockPos pos, Direction direction, BlockPos neighborPos, BlockState neighborState, RandomSource random) {
+		if (state.getValue(BlockStateProperties.WATERLOGGED)) {
+			tickView.scheduleTick(pos, Fluids.WATER, 5);
 		}
 
-		return super.getStateForNeighborUpdate(state, world, tickView, pos, direction, neighborPos, neighborState, random);
+		return super.updateShape(state, world, tickView, pos, direction, neighborPos, neighborState, random);
 	}
 
 	@Override
-	protected void appendProperties(StateManager.Builder<Block, BlockState> builder) {
-		builder.add(Properties.WATERLOGGED);
+	protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+		builder.add(BlockStateProperties.WATERLOGGED);
 	}
 }

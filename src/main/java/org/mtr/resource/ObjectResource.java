@@ -1,6 +1,6 @@
 package org.mtr.resource;
 
-import net.minecraft.text.Text;
+import net.minecraft.network.chat.Component;
 import org.jspecify.annotations.Nullable;
 import org.mtr.config.Config;
 import org.mtr.core.serializer.ReaderBase;
@@ -59,7 +59,7 @@ public final class ObjectResource extends ObjectResourceSchema implements Stored
 	}
 
 	public String getName() {
-		return Text.translatable(name).getString();
+		return Component.translatable(name).getString();
 	}
 
 	public int getColor() {

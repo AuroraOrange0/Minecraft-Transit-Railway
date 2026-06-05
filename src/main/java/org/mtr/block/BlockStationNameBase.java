@@ -1,34 +1,34 @@
 package org.mtr.block;
 
-import net.minecraft.block.AbstractBlock;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockEntityProvider;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.block.entity.BlockEntityType;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.tooltip.TooltipType;
-import net.minecraft.state.property.IntProperty;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.ChatFormatting;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.EntityBlock;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.entity.BlockEntityType;
+import net.minecraft.world.level.block.state.BlockBehaviour;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.IntegerProperty;
 import org.mtr.data.IGui;
 import org.mtr.generated.lang.TranslationProvider;
 
 import java.util.List;
 
-public abstract class BlockStationNameBase extends Block implements BlockEntityProvider {
+public abstract class BlockStationNameBase extends Block implements EntityBlock {
 
-	public static final IntProperty COLOR = IntProperty.of("color", 0, 2);
+	public static final IntegerProperty COLOR = IntegerProperty.create("color", 0, 2);
 
-	protected BlockStationNameBase(AbstractBlock.Settings blockSettings) {
-		super(blockSettings.nonOpaque());
+	protected BlockStationNameBase(BlockBehaviour.Properties blockSettings) {
+		super(blockSettings.noOcclusion());
 	}
 
 	@Override
-	public void appendTooltip(ItemStack stack, Item.TooltipContext context, List<Text> tooltip, TooltipType options) {
-		tooltip.add(TranslationProvider.TOOLTIP_MTR_STATION_COLOR_NAME.getMutableText().formatted(Formatting.GRAY));
+	public void appendHoverText(ItemStack stack, Item.TooltipContext context, List<Component> tooltip, TooltipFlag options) {
+		tooltip.add(TranslationProvider.TOOLTIP_MTR_STATION_COLOR_NAME.getMutableText().withStyle(ChatFormatting.GRAY));
 	}
 
 	public abstract static class BlockEntityBase extends BlockEntity implements IGui {

@@ -1,7 +1,7 @@
 package org.mtr.packet;
 
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.server.level.ServerPlayer;
 import org.mtr.core.operation.ArrivalResponse;
 import org.mtr.core.serializer.JsonReader;
 import org.mtr.core.tool.Utilities;
@@ -66,8 +66,8 @@ public final class PacketFetchArrivals extends PacketHandler {
 	}
 
 	@Override
-	public void runServer(MinecraftServer minecraftServer, ServerPlayerEntity serverPlayerEntity) {
-		final ArrivalsCacheServer instance = ArrivalsCacheServer.getInstance(serverPlayerEntity.getServerWorld());
+	public void runServer(MinecraftServer minecraftServer, ServerPlayer serverPlayerEntity) {
+		final ArrivalsCacheServer instance = ArrivalsCacheServer.getInstance(serverPlayerEntity.serverLevel());
 		RegistryServer.sendPacketToClient(serverPlayerEntity, new PacketFetchArrivals(instance.getMillisOffset() + System.currentTimeMillis(), instance.requestArrivals(platformIds), callbackId));
 	}
 

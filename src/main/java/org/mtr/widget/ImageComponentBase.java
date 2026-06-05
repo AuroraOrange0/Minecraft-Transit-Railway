@@ -12,7 +12,7 @@ import gg.essential.universal.vertex.UBuiltBuffer;
 import gg.essential.universal.vertex.UVertexConsumer;
 import kotlin.Unit;
 import lombok.Setter;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.world.phys.Vec3;
 import org.jspecify.annotations.Nullable;
 import org.mtr.MTR;
 import org.mtr.core.tool.Vector;
@@ -112,10 +112,10 @@ public abstract class ImageComponentBase extends UIComponent {
 	}
 
 	public static void drawShadedQuad(UMatrixStack matrixStack, UVertexConsumer vertexConsumer, double x1, double y1, double z1, double x2, double y2, double z2, double x3, double y3, double z3, double x4, double y4, double z4, Color color) {
-		final Vec3d v1 = new Vec3d(x2 - x1, y2 - y1, z2 - z1);
-		final Vec3d v2 = new Vec3d(x3 - x1, y3 - y1, z3 - z1);
-		final Vec3d normal = v1.crossProduct(v2).normalize();
-		final float brightness = (float) (3 + normal.dotProduct(new Vec3d(0, 1, 0))) / 4;
+		final Vec3 v1 = new Vec3(x2 - x1, y2 - y1, z2 - z1);
+		final Vec3 v2 = new Vec3(x3 - x1, y3 - y1, z3 - z1);
+		final Vec3 normal = v1.cross(v2).normalize();
+		final float brightness = (float) (3 + normal.dot(new Vec3(0, 1, 0))) / 4;
 		final int r = (int) Math.floor(color.getRed() * brightness);
 		final int g = (int) Math.floor(color.getGreen() * brightness);
 		final int b = (int) Math.floor(color.getBlue() * brightness);

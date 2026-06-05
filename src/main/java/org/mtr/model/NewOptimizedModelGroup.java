@@ -1,8 +1,8 @@
 package org.mtr.model;
 
-import net.minecraft.client.render.VertexFormat;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.Box;
+import com.mojang.blaze3d.vertex.VertexFormat;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.phys.AABB;
 import org.jspecify.annotations.Nullable;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList;
@@ -12,10 +12,10 @@ import java.util.function.Consumer;
 
 public final class NewOptimizedModelGroup {
 
-	public final ObjectArrayList<Box> boxes = new ObjectArrayList<>();
-	private final Object2ObjectOpenHashMap<@Nullable RenderStage, Object2ObjectOpenHashMap<Identifier, ObjectArrayList<StoredVertexData>>> storedVertexConsumersForRenderStageAndTexture = new Object2ObjectOpenHashMap<>();
+	public final ObjectArrayList<AABB> boxes = new ObjectArrayList<>();
+	private final Object2ObjectOpenHashMap<@Nullable RenderStage, Object2ObjectOpenHashMap<ResourceLocation, ObjectArrayList<StoredVertexData>>> storedVertexConsumersForRenderStageAndTexture = new Object2ObjectOpenHashMap<>();
 
-	public void add(@Nullable RenderStage renderStage, Identifier texture, Consumer<ObjectArrayList<StoredVertexData>> consumer, @Nullable ObjectArrayList<Box> boxes) {
+	public void add(@Nullable RenderStage renderStage, ResourceLocation texture, Consumer<ObjectArrayList<StoredVertexData>> consumer, @Nullable ObjectArrayList<AABB> boxes) {
 		final ObjectArrayList<StoredVertexData> storedVertexDataList = new ObjectArrayList<>();
 		consumer.accept(storedVertexDataList);
 		storedVertexConsumersForRenderStageAndTexture.computeIfAbsent(renderStage, key -> new Object2ObjectOpenHashMap<>()).computeIfAbsent(texture, key -> new ObjectArrayList<>()).addAll(storedVertexDataList);
@@ -30,13 +30,13 @@ public final class NewOptimizedModelGroup {
 				bounds[4] = Math.max(bounds[4], storedVertexData.y());
 				bounds[5] = Math.max(bounds[5], storedVertexData.z());
 			});
-			this.boxes.add(new Box(bounds[0], bounds[1], bounds[2], bounds[3], bounds[4], bounds[5]));
+			this.boxes.add(new AABB(bounds[0], bounds[1], bounds[2], bounds[3], bounds[4], bounds[5]));
 		} else {
 			this.boxes.addAll(boxes);
 		}
 	}
 
-	public Object2ObjectOpenHashMap<RenderStage, ObjectArrayList<NewOptimizedModel>> build(VertexFormat.DrawMode drawMode) {
+	public Object2ObjectOpenHashMap<RenderStage, ObjectArrayList<NewOptimizedModel>> build(VertexFormat.Mode drawMode) {
 		final Object2ObjectOpenHashMap<RenderStage, ObjectArrayList<NewOptimizedModel>> newOptimizedModels = new Object2ObjectOpenHashMap<>(RenderStage.values().length);
 		storedVertexConsumersForRenderStageAndTexture.forEach((renderStage, storedVertexConsumerForTexture) -> {
 			if (renderStage != null) {

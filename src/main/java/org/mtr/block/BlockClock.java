@@ -1,44 +1,48 @@
 package org.mtr.block;
 
-import net.minecraft.block.*;
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.item.ItemPlacementContext;
-import net.minecraft.state.StateManager;
-import net.minecraft.state.property.BooleanProperty;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.shape.VoxelShape;
-import net.minecraft.util.shape.VoxelShapes;
-import net.minecraft.world.BlockView;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.EntityBlock;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockBehaviour;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.BooleanProperty;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.Shapes;
+import net.minecraft.world.phys.shapes.VoxelShape;
 import org.mtr.registry.BlockEntityTypes;
 
-public class BlockClock extends Block implements BlockEntityProvider {
+public class BlockClock extends Block implements EntityBlock {
 
-	public static final BooleanProperty FACING = BooleanProperty.of("facing");
+	public static final BooleanProperty FACING = BooleanProperty.create("facing");
 
-	public BlockClock(AbstractBlock.Settings blockSettings) {
+	public BlockClock(BlockBehaviour.Properties blockSettings) {
 		super(blockSettings);
 	}
 
 	@Override
-	public BlockState getPlacementState(ItemPlacementContext ctx) {
-		final boolean facing = ctx.getHorizontalPlayerFacing().getAxis() == Direction.Axis.X;
-		return getDefaultState().with(FACING, facing);
+	public BlockState getStateForPlacement(BlockPlaceContext ctx) {
+		final boolean facing = ctx.getHorizontalDirection().getAxis() == Direction.Axis.X;
+		return defaultBlockState().setValue(FACING, facing);
 	}
 
 	@Override
-	protected VoxelShape getOutlineShape(BlockState state, BlockView world, BlockPos pos, ShapeContext context) {
+	protected VoxelShape getShape(BlockState state, BlockGetter world, BlockPos pos, CollisionContext context) {
 		final Direction facing = IBlock.getStatePropertySafe(state, FACING) ? Direction.EAST : Direction.NORTH;
-		return VoxelShapes.union(IBlock.getVoxelShapeByDirection(3, 0, 6, 13, 12, 10, facing), Block.createCuboidShape(7.5, 12, 7.5, 8.5, 16, 8.5));
+		return Shapes.or(IBlock.getVoxelShapeByDirection(3, 0, 6, 13, 12, 10, facing), Block.box(7.5, 12, 7.5, 8.5, 16, 8.5));
 	}
 
 	@Override
-	public BlockEntity createBlockEntity(BlockPos blockPos, BlockState blockState) {
+	public BlockEntity newBlockEntity(BlockPos blockPos, BlockState blockState) {
 		return new ClockBlockEntity(blockPos, blockState);
 	}
 
 	@Override
-	protected void appendProperties(StateManager.Builder<Block, BlockState> builder) {
+	protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
 		builder.add(FACING);
 	}
 

@@ -1,10 +1,10 @@
 package org.mtr.widget;
 
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.font.TextRenderer;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.text.OrderedText;
-import net.minecraft.text.Text;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.network.chat.Component;
+import net.minecraft.util.FormattedCharSequence;
 import org.jspecify.annotations.Nullable;
 import org.mtr.data.IGui;
 import org.mtr.generated.lang.TranslationProvider;
@@ -17,22 +17,22 @@ public final class DeleteConfirmationWidget extends PopupWidgetBase {
 	@Nullable
 	private Runnable deleteCallback;
 	private final Runnable onDismiss;
-	private final ObjectArrayList<ObjectIntImmutablePair<OrderedText>> mainTextLines = new ObjectArrayList<>();
+	private final ObjectArrayList<ObjectIntImmutablePair<FormattedCharSequence>> mainTextLines = new ObjectArrayList<>();
 
 	public DeleteConfirmationWidget(int minWidth, Runnable onDismiss, Runnable applyBlur) {
-		super(minWidth, applyBlur, Text.translatable("gui.yes").getString(), Text.translatable("gui.no").getString());
+		super(minWidth, applyBlur, Component.translatable("gui.yes").getString(), Component.translatable("gui.no").getString());
 		this.onDismiss = onDismiss;
 	}
 
 	@Override
-	protected void render(DrawContext context, int mouseX, int mouseY) {
+	protected void render(GuiGraphics context, int mouseX, int mouseY) {
 		visible = deleteCallback != null;
 
 		// Draw main text
-		final TextRenderer textRenderer = MinecraftClient.getInstance().textRenderer;
+		final Font textRenderer = Minecraft.getInstance().font;
 		for (int i = 0; i < mainTextLines.size(); i++) {
-			final ObjectIntImmutablePair<OrderedText> lineDetails = mainTextLines.get(i);
-			context.drawText(textRenderer, lineDetails.left(), getX() + width / 2 - lineDetails.rightInt() / 2, getY() + GuiHelper.DEFAULT_PADDING + i * GuiHelper.MINECRAFT_TEXT_LINE_HEIGHT, GuiHelper.WHITE_COLOR, false);
+			final ObjectIntImmutablePair<FormattedCharSequence> lineDetails = mainTextLines.get(i);
+			context.drawString(textRenderer, lineDetails.left(), getX() + width / 2 - lineDetails.rightInt() / 2, getY() + GuiHelper.DEFAULT_PADDING + i * GuiHelper.MINECRAFT_TEXT_LINE_HEIGHT, GuiHelper.WHITE_COLOR, false);
 		}
 	}
 
@@ -65,8 +65,8 @@ public final class DeleteConfirmationWidget extends PopupWidgetBase {
 			this.deleteCallback = null;
 		} else {
 			this.deleteCallback = deleteCallback;
-			final TextRenderer textRenderer = MinecraftClient.getInstance().textRenderer;
-			textRenderer.wrapLines(TranslationProvider.GUI_MTR_DELETE_CONFIRMATION.getMutableText(IGui.formatStationName(name)), width - GuiHelper.DEFAULT_PADDING * 2).forEach(line -> mainTextLines.add(new ObjectIntImmutablePair<>(line, textRenderer.getWidth(line))));
+			final Font textRenderer = Minecraft.getInstance().font;
+			textRenderer.split(TranslationProvider.GUI_MTR_DELETE_CONFIRMATION.getMutableText(IGui.formatStationName(name)), width - GuiHelper.DEFAULT_PADDING * 2).forEach(line -> mainTextLines.add(new ObjectIntImmutablePair<>(line, textRenderer.width(line))));
 			setWidgetHeight();
 		}
 		visible = this.deleteCallback != null;

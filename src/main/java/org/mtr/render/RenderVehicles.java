@@ -1,18 +1,18 @@
 package org.mtr.render;
 
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.client.render.LightmapTextureManager;
-import net.minecraft.client.render.VertexConsumer;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.client.world.ClientWorld;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Box;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.LightType;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.client.renderer.LightTexture;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.level.LightLayer;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 import org.jspecify.annotations.Nullable;
 import org.mtr.client.*;
 import org.mtr.config.Config;
@@ -40,15 +40,15 @@ public final class RenderVehicles {
 
 	public static final ObjectArrayList<RidingPlayerInterpolation> RIDING_PLAYER_INTERPOLATIONS = new ObjectArrayList<>();
 
-	public static void render(long millisElapsed, Vec3d cameraShakeOffset) {
-		final MinecraftClient minecraftClient = MinecraftClient.getInstance();
-		final ClientWorld clientWorld = minecraftClient.world;
-		final ClientPlayerEntity clientPlayerEntity = minecraftClient.player;
+	public static void render(long millisElapsed, Vec3 cameraShakeOffset) {
+		final Minecraft minecraftClient = Minecraft.getInstance();
+		final ClientLevel clientWorld = minecraftClient.level;
+		final LocalPlayer clientPlayerEntity = minecraftClient.player;
 		if (clientWorld == null || clientPlayerEntity == null) {
 			return;
 		}
 
-		final double renderDistance = minecraftClient.worldRenderer.getViewDistance() * 16;
+		final double renderDistance = minecraftClient.levelRenderer.getLastViewDistance() * 16;
 
 		// When riding a moving vehicle, the client movement is always out of sync with the vehicle rendering. This produces annoying shaking effects.
 		// Offsets are used to render the vehicle with respect to the player position rather than the absolute world position, eliminating shaking.
@@ -75,10 +75,10 @@ public final class RenderVehicles {
 				.collect(Collectors.toCollection(ObjectArrayList::new));
 
 			// Riding offset
-			final IntObjectImmutablePair<ObjectObjectImmutablePair<@Nullable Vec3d, @Nullable Double>> ridingVehicleCarNumberAndOffset = VehicleRidingMovement.getRidingVehicleCarNumberAndOffset(vehicle.getId());
+			final IntObjectImmutablePair<ObjectObjectImmutablePair<@Nullable Vec3, @Nullable Double>> ridingVehicleCarNumberAndOffset = VehicleRidingMovement.getRidingVehicleCarNumberAndOffset(vehicle.getId());
 			final int ridingCarNumber;
 			final PositionAndRotation ridingCarPositionAndRotation;
-			final Vec3d offsetVector;
+			final Vec3 offsetVector;
 			final Double offsetRotation;
 			if (ridingVehicleCarNumberAndOffset == null) {
 				ridingCarNumber = -1;
@@ -90,7 +90,7 @@ public final class RenderVehicles {
 				ridingCarPositionAndRotation = vehiclePropertiesList.get(ridingCarNumber).right().right();
 				offsetVector = ridingVehicleCarNumberAndOffset.right().left();
 				final Double tempOffsetRotation = ridingVehicleCarNumberAndOffset.right().right();
-				offsetRotation = tempOffsetRotation == null ? null : tempOffsetRotation + (Math.abs(Utilities.circularDifference(Math.round(clientPlayerEntity.getYaw()), Math.round(minecraftClient.gameRenderer.getCamera().getYaw()), 360)) > 90 ? Math.PI : 0);
+				offsetRotation = tempOffsetRotation == null ? null : tempOffsetRotation + (Math.abs(Utilities.circularDifference(Math.round(clientPlayerEntity.getYRot()), Math.round(minecraftClient.gameRenderer.getMainCamera().getYRot()), 360)) > 90 ? Math.PI : 0);
 			}
 
 			// Iterate all cars of a vehicle
@@ -123,16 +123,16 @@ public final class RenderVehicles {
 					}
 
 					// Player position relative to the car
-					final Vec3d playerPosition = absoluteVehicleCarPositionAndRotation.transformBackwards(clientPlayerEntity.getPos(), Vec3d::rotateX, Vec3d::rotateY, Vec3d::rotateZ, Vec3d::add);
+					final Vec3 playerPosition = absoluteVehicleCarPositionAndRotation.transformBackwards(clientPlayerEntity.position(), Vec3::xRot, Vec3::yRot, Vec3::zRot, Vec3::add);
 					// A temporary list to store all floors and doorways for player movement
-					final ObjectArrayList<ObjectBooleanImmutablePair<Box>> floorsAndDoorways = new ObjectArrayList<>();
+					final ObjectArrayList<ObjectBooleanImmutablePair<AABB>> floorsAndDoorways = new ObjectArrayList<>();
 					// Extra floors to be used to define where the gangways are
 					final GangwayMovementPositions gangwayMovementPositions1 = new GangwayMovementPositions(absoluteVehicleCarPositionAndRotation, false);
 					final GangwayMovementPositions gangwayMovementPositions2 = new GangwayMovementPositions(absoluteVehicleCarPositionAndRotation, true);
 					// Vehicle resource cache
 					final VehicleResourceCache vehicleResourceCache = vehicleResource.getCachedVehicleResource(carNumber, vehicle.vehicleExtraData.immutableVehicleCars.size());
 					// Find open doorways (close to platform blocks, unlocked platform screen doors, or unlocked automatic platform gates)
-					final ObjectArrayList<Box> openDoorways;
+					final ObjectArrayList<AABB> openDoorways;
 					if (vehicleResourceCache != null && fromResourcePackCreator) {
 						openDoorways = vehicle.persistentVehicleData.checkCanOpenDoors() ? new ObjectArrayList<>(vehicleResourceCache.doorways()) : new ObjectArrayList<>();
 						vehicle.persistentVehicleData.overrideDoorMultiplier(ResourcePackCreatorOperationServlet.getDoorMultiplier());
@@ -144,7 +144,7 @@ public final class RenderVehicles {
 					final double oscillationAmount = vehicle.persistentVehicleData.getOscillation(carNumber).getAmount() * Config.getClient().getVehicleOscillationMultiplier();
 
 					if (canRide) {
-						final ObjectArrayList<Box> openFloorsAndDoorways = new ObjectArrayList<>();
+						final ObjectArrayList<AABB> openFloorsAndDoorways = new ObjectArrayList<>();
 
 						if (vehicleResourceCache != null) {
 							vehicleResourceCache.floors().forEach(floor -> {
@@ -246,12 +246,12 @@ public final class RenderVehicles {
 					}
 
 					// If the vehicle has gangways, add extra floors to define where the gangways are
-					final Box gangwayConnectionFloor1 = gangwayMovementPositions1.getBox();
+					final AABB gangwayConnectionFloor1 = gangwayMovementPositions1.getBox();
 					if (vehicleResource.hasGangway1()) {
 						RenderVehicleHelper.renderFloorOrDoorway(gangwayConnectionFloor1, 0xFF0000FF, playerPosition, vehicleCarRenderingPositionAndRotation, offsetVector == null);
 						floorsAndDoorways.add(new ObjectBooleanImmutablePair<>(gangwayConnectionFloor1, true));
 					}
-					final Box gangwayConnectionFloor2 = gangwayMovementPositions2.getBox();
+					final AABB gangwayConnectionFloor2 = gangwayMovementPositions2.getBox();
 					if (vehicleResource.hasGangway2()) {
 						RenderVehicleHelper.renderFloorOrDoorway(gangwayConnectionFloor2, 0xFF0000FF, playerPosition, vehicleCarRenderingPositionAndRotation, offsetVector == null);
 						floorsAndDoorways.add(new ObjectBooleanImmutablePair<>(gangwayConnectionFloor2, true));
@@ -259,7 +259,7 @@ public final class RenderVehicles {
 
 					if (isWithinHalfRenderDistance) {
 						// Render the current riding player
-						if (ridingCarNumber == carNumber && offsetVector != null && minecraftClient.gameRenderer.getCamera().isThirdPerson()) {
+						if (ridingCarNumber == carNumber && offsetVector != null && minecraftClient.gameRenderer.getMainCamera().isDetached()) {
 							renderPlayer(clientPlayerEntity, -1, 0, 0, offsetVector, offsetVector, offsetRotation, absoluteVehicleCarPositionAndRotation, absoluteVehicleCarPositionAndRotation, cameraShakeOffset);
 						}
 
@@ -267,8 +267,8 @@ public final class RenderVehicles {
 						vehicle.vehicleExtraData.iterateRidingEntities(vehicleRidingEntity -> {
 							final boolean isOnBackGangway = vehicleRidingEntity.getIsOnGangway() && vehicleRidingEntity.getZ() < 0.5;
 
-							if (vehicleRidingEntity.getRidingCar() - (isOnBackGangway ? 1 : 0) == carNumber && !vehicleRidingEntity.uuid.equals(clientPlayerEntity.getUuid())) {
-								final PlayerEntity ridingPlayer = clientWorld.getPlayerByUuid(vehicleRidingEntity.uuid);
+							if (vehicleRidingEntity.getRidingCar() - (isOnBackGangway ? 1 : 0) == carNumber && !vehicleRidingEntity.uuid.equals(clientPlayerEntity.getUUID())) {
+								final Player ridingPlayer = clientWorld.getPlayerByUUID(vehicleRidingEntity.uuid);
 
 								if (ridingPlayer != null) {
 									double playerRidingX;
@@ -291,7 +291,7 @@ public final class RenderVehicles {
 										playerRidingZ = vehicleRidingEntity.getZ();
 									}
 
-									renderPlayer(ridingPlayer, carNumber, gangwayConnectionFloor1.minZ, gangwayConnectionFloor2.maxZ, new Vec3d(playerRidingX, playerRidingY, playerRidingZ), offsetVector, offsetRotation, absoluteVehicleCarPositionAndRotation, ridingCarPositionAndRotation, cameraShakeOffset);
+									renderPlayer(ridingPlayer, carNumber, gangwayConnectionFloor1.minZ, gangwayConnectionFloor2.maxZ, new Vec3(playerRidingX, playerRidingY, playerRidingZ), offsetVector, offsetRotation, absoluteVehicleCarPositionAndRotation, ridingCarPositionAndRotation, cameraShakeOffset);
 								}
 							}
 						});
@@ -325,7 +325,7 @@ public final class RenderVehicles {
 	 * @param cameraShakeOffset            additional camera shake
 	 * @return the adjusted {@link PositionAndRotation} object
 	 */
-	public static PositionAndRotation getRenderPositionAndRotation(@Nullable Vec3d offsetVector, @Nullable Double offsetRotation, @Nullable PositionAndRotation ridingCarPositionAndRotation, PositionAndRotation renderingPositionAndRotation, Vec3d cameraShakeOffset) {
+	public static PositionAndRotation getRenderPositionAndRotation(@Nullable Vec3 offsetVector, @Nullable Double offsetRotation, @Nullable PositionAndRotation ridingCarPositionAndRotation, PositionAndRotation renderingPositionAndRotation, Vec3 cameraShakeOffset) {
 		if (offsetVector == null || ridingCarPositionAndRotation == null) {
 			// Normal absolute rendering
 			return renderingPositionAndRotation;
@@ -338,7 +338,7 @@ public final class RenderVehicles {
 			), renderingPositionAndRotation.yaw, renderingPositionAndRotation.pitch, renderingPositionAndRotation.roll);
 		} else {
 			// Offset rendering with rotation
-			final double ridingRotation = offsetRotation - ridingCarPositionAndRotation.yaw - Math.toRadians(MinecraftClient.getInstance().gameRenderer.getCamera().getYaw());
+			final double ridingRotation = offsetRotation - ridingCarPositionAndRotation.yaw - Math.toRadians(Minecraft.getInstance().gameRenderer.getMainCamera().getYRot());
 			return new PositionAndRotation(new Vector(-offsetVector.x, -offsetVector.y, -offsetVector.z).rotateZ(ridingCarPositionAndRotation.roll).rotateX(ridingCarPositionAndRotation.pitch).rotateY(ridingCarPositionAndRotation.yaw).add(
 				renderingPositionAndRotation.position.x() - ridingCarPositionAndRotation.position.x(),
 				renderingPositionAndRotation.position.y() - ridingCarPositionAndRotation.position.y(),
@@ -392,11 +392,11 @@ public final class RenderVehicles {
 	 * @param ridingCarPositionAndRotation the {@link PositionAndRotation} of the car being ridden in
 	 * @param cameraShakeOffset            additional camera shake
 	 */
-	public static void renderPlayer(PlayerEntity playerEntity, int ridingCar, double minZ, double maxZ, Vec3d playerOffsetVector, @Nullable Vec3d offsetVector, @Nullable Double offsetRotation, PositionAndRotation playerCarPositionAndRotation, @Nullable PositionAndRotation ridingCarPositionAndRotation, Vec3d cameraShakeOffset) {
+	public static void renderPlayer(Player playerEntity, int ridingCar, double minZ, double maxZ, Vec3 playerOffsetVector, @Nullable Vec3 offsetVector, @Nullable Double offsetRotation, PositionAndRotation playerCarPositionAndRotation, @Nullable PositionAndRotation ridingCarPositionAndRotation, Vec3 cameraShakeOffset) {
 		Vector interpolatedPosition = null;
 
 		for (final RidingPlayerInterpolation ridingPlayerInterpolation : RIDING_PLAYER_INTERPOLATIONS) {
-			if (ridingPlayerInterpolation.uuid.equals(playerEntity.getUuid())) {
+			if (ridingPlayerInterpolation.uuid.equals(playerEntity.getUUID())) {
 				// Interpolate movement
 				if (ridingCar >= 0 && ridingPlayerInterpolation.ridingCar == ridingCar) {
 					ridingPlayerInterpolation.interpolationX.setValue(playerOffsetVector.x, ridingPlayerInterpolation.previousX != playerOffsetVector.x);
@@ -425,7 +425,7 @@ public final class RenderVehicles {
 		if (interpolatedPosition == null) {
 			// If the player is not found in RIDING_PLAYER_INTERPOLATIONS
 			interpolatedPosition = new Vector(playerOffsetVector.x, playerOffsetVector.y, playerOffsetVector.z);
-			final RidingPlayerInterpolation ridingPlayerInterpolation = new RidingPlayerInterpolation(playerEntity.getUuid());
+			final RidingPlayerInterpolation ridingPlayerInterpolation = new RidingPlayerInterpolation(playerEntity.getUUID());
 			RIDING_PLAYER_INTERPOLATIONS.add(ridingPlayerInterpolation);
 			ridingPlayerInterpolation.interpolationX.setValueDirect(playerOffsetVector.x);
 			ridingPlayerInterpolation.interpolationY.setValueDirect(playerOffsetVector.y);
@@ -450,24 +450,24 @@ public final class RenderVehicles {
 			storedMatrixTransformations.transform(matrixStack, offset);
 			Drawing.rotateXDegrees(matrixStack, 180);
 			Drawing.rotateYDegrees(matrixStack, 180);
-			final MinecraftClient minecraftClient = MinecraftClient.getInstance();
-			minecraftClient.getEntityRenderDispatcher().render(playerEntity, 0, 0, 0, 0, matrixStack, minecraftClient.getBufferBuilders().getEntityVertexConsumers(), IGui.DEFAULT_LIGHT);
-			matrixStack.pop();
+			final Minecraft minecraftClient = Minecraft.getInstance();
+			minecraftClient.getEntityRenderDispatcher().render(playerEntity, 0, 0, 0, 0, matrixStack, minecraftClient.renderBuffers().bufferSource(), IGui.DEFAULT_LIGHT);
+			matrixStack.popPose();
 		});
 	}
 
 	private static void renderConnection(
 		boolean shouldRender1, boolean shouldRender2, boolean canHaveLight, PreviousConnectionPositions previousConnectionPositions,
-		@Nullable Identifier innerSideTexture,
-		@Nullable Identifier innerTopTexture,
-		@Nullable Identifier innerBottomTexture,
-		@Nullable Identifier outerSideTexture,
-		@Nullable Identifier outerTopTexture,
-		@Nullable Identifier outerBottomTexture,
+		@Nullable ResourceLocation innerSideTexture,
+		@Nullable ResourceLocation innerTopTexture,
+		@Nullable ResourceLocation innerBottomTexture,
+		@Nullable ResourceLocation outerSideTexture,
+		@Nullable ResourceLocation outerTopTexture,
+		@Nullable ResourceLocation outerBottomTexture,
 		PositionAndRotation positionAndRotation, boolean useOffset,
 		double vehicleLength, double width, double height, double yOffset, double zOffset, double oscillationAmount, boolean isOnRoute
 	) {
-		final ClientWorld clientWorld = MinecraftClient.getInstance().world;
+		final ClientLevel clientWorld = Minecraft.getInstance().level;
 		if (clientWorld == null) {
 			return;
 		}
@@ -486,39 +486,39 @@ public final class RenderVehicles {
 			final Vector position7 = previousConnectionPositions.position3;
 			final Vector position8 = previousConnectionPositions.position4;
 
-			final BlockPos blockPosConnection = BlockPos.ofFloored(position1.x(), position1.y() + 1, position1.z());
-			final int lightConnection = LightmapTextureManager.pack(clientWorld.getLightLevel(LightType.BLOCK, blockPosConnection), clientWorld.getLightLevel(LightType.SKY, blockPosConnection));
+			final BlockPos blockPosConnection = BlockPos.containing(position1.x(), position1.y() + 1, position1.z());
+			final int lightConnection = LightTexture.pack(clientWorld.getBrightness(LightLayer.BLOCK, blockPosConnection), clientWorld.getBrightness(LightLayer.SKY, blockPosConnection));
 
 			MainRenderer.scheduleRender(outerSideTexture, false, QueuedRenderLayer.EXTERIOR, (matrixStack, vertexConsumer, offset) -> {
 				// Sides
-				drawTexture(matrixStack, vertexConsumer, position1, position2, position7, position8, useOffset ? offset : Vec3d.ZERO, lightConnection);
-				drawTexture(matrixStack, vertexConsumer, position5, position6, position3, position4, useOffset ? offset : Vec3d.ZERO, lightConnection);
+				drawTexture(matrixStack, vertexConsumer, position1, position2, position7, position8, useOffset ? offset : Vec3.ZERO, lightConnection);
+				drawTexture(matrixStack, vertexConsumer, position5, position6, position3, position4, useOffset ? offset : Vec3.ZERO, lightConnection);
 			});
 
 			MainRenderer.scheduleRender(outerTopTexture, false, QueuedRenderLayer.EXTERIOR, (matrixStack, vertexConsumer, offset) -> {
 				// Top
-				drawTexture(matrixStack, vertexConsumer, position2, position3, position6, position7, useOffset ? offset : Vec3d.ZERO, lightConnection);
+				drawTexture(matrixStack, vertexConsumer, position2, position3, position6, position7, useOffset ? offset : Vec3.ZERO, lightConnection);
 			});
 
 			MainRenderer.scheduleRender(outerBottomTexture, false, QueuedRenderLayer.EXTERIOR, (matrixStack, vertexConsumer, offset) -> {
 				// Bottom
-				drawTexture(matrixStack, vertexConsumer, position4, position1, position8, position5, useOffset ? offset : Vec3d.ZERO, lightConnection);
+				drawTexture(matrixStack, vertexConsumer, position4, position1, position8, position5, useOffset ? offset : Vec3.ZERO, lightConnection);
 			});
 
 			MainRenderer.scheduleRender(innerSideTexture, false, QueuedRenderLayer.EXTERIOR, (matrixStack, vertexConsumer, offset) -> {
 				// Sides
-				drawTexture(matrixStack, vertexConsumer, position8, position7, position2, position1, useOffset ? offset : Vec3d.ZERO, canHaveLight && isOnRoute ? IGui.DEFAULT_LIGHT : lightConnection);
-				drawTexture(matrixStack, vertexConsumer, position4, position3, position6, position5, useOffset ? offset : Vec3d.ZERO, canHaveLight && isOnRoute ? IGui.DEFAULT_LIGHT : lightConnection);
+				drawTexture(matrixStack, vertexConsumer, position8, position7, position2, position1, useOffset ? offset : Vec3.ZERO, canHaveLight && isOnRoute ? IGui.DEFAULT_LIGHT : lightConnection);
+				drawTexture(matrixStack, vertexConsumer, position4, position3, position6, position5, useOffset ? offset : Vec3.ZERO, canHaveLight && isOnRoute ? IGui.DEFAULT_LIGHT : lightConnection);
 			});
 
 			MainRenderer.scheduleRender(innerTopTexture, false, QueuedRenderLayer.EXTERIOR, (matrixStack, vertexConsumer, offset) -> {
 				// Top
-				drawTexture(matrixStack, vertexConsumer, position7, position6, position3, position2, useOffset ? offset : Vec3d.ZERO, canHaveLight && isOnRoute ? IGui.DEFAULT_LIGHT : lightConnection);
+				drawTexture(matrixStack, vertexConsumer, position7, position6, position3, position2, useOffset ? offset : Vec3.ZERO, canHaveLight && isOnRoute ? IGui.DEFAULT_LIGHT : lightConnection);
 			});
 
 			MainRenderer.scheduleRender(innerBottomTexture, false, QueuedRenderLayer.EXTERIOR, (matrixStack, vertexConsumer, offset) -> {
 				// Bottom
-				drawTexture(matrixStack, vertexConsumer, position5, position8, position1, position4, useOffset ? offset : Vec3d.ZERO, canHaveLight && isOnRoute ? IGui.DEFAULT_LIGHT : lightConnection);
+				drawTexture(matrixStack, vertexConsumer, position5, position8, position1, position4, useOffset ? offset : Vec3.ZERO, canHaveLight && isOnRoute ? IGui.DEFAULT_LIGHT : lightConnection);
 			});
 		}
 
@@ -535,7 +535,7 @@ public final class RenderVehicles {
 		}
 	}
 
-	private static void drawTexture(MatrixStack matrixStack, VertexConsumer vertexConsumer, Vector position1, Vector position2, Vector position3, Vector position4, Vec3d offset, int light) {
+	private static void drawTexture(PoseStack matrixStack, VertexConsumer vertexConsumer, Vector position1, Vector position2, Vector position3, Vector position4, Vec3 offset, int light) {
 		IDrawing.drawTexture(
 			matrixStack, vertexConsumer,
 			position1.x(), position1.y(), position1.z(),

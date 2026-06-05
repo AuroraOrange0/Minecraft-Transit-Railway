@@ -1,8 +1,8 @@
 package org.mtr.packet;
 
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BlockEntity;
 import org.jspecify.annotations.Nullable;
 import org.mtr.MTR;
 import org.mtr.block.BlockTrainSensorBase;
@@ -16,7 +16,7 @@ public class PacketUpdateTrainSensorConfig extends BlockEntityPacketHandler {
 	protected final boolean movingOnly;
 
 	public PacketUpdateTrainSensorConfig(PacketBufferReceiver packetBufferReceiver) {
-		blockPos = BlockPos.fromLong(packetBufferReceiver.readLong());
+		blockPos = BlockPos.of(packetBufferReceiver.readLong());
 		final int routeIdCount = packetBufferReceiver.readInt();
 		filterRouteIds = new LongAVLTreeSet();
 		for (int i = 0; i < routeIdCount; i++) {
@@ -43,7 +43,7 @@ public class PacketUpdateTrainSensorConfig extends BlockEntityPacketHandler {
 	}
 
 	@Override
-	protected void setData(@Nullable World world) {
+	protected void setData(@Nullable Level world) {
 		if (world == null || !MTR.isChunkLoaded(world, blockPos)) {
 			return;
 		}

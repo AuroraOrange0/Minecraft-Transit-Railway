@@ -1,13 +1,13 @@
 package org.mtr.render;
 
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.client.render.VertexConsumerProvider;
-import net.minecraft.client.render.block.entity.BlockEntityRenderer;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.client.world.ClientWorld;
-import net.minecraft.world.World;
+import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BlockEntity;
 
 /**
  * This implementation of a {@link BlockEntityRenderer} provides pre-transformed matrices and other helpful parameters.
@@ -17,14 +17,14 @@ import net.minecraft.world.World;
 public abstract class BlockEntityRendererExtension<T extends BlockEntity> implements BlockEntityRenderer<T> {
 
 	@Override
-	public final void render(T blockEntity, float tickDelta, MatrixStack matrixStack, VertexConsumerProvider vertexConsumers, int light, int overlay) {
-		final World world = blockEntity.getWorld();
-		final ClientPlayerEntity clientPlayerEntity = MinecraftClient.getInstance().player;
-		if (world instanceof ClientWorld clientWorld && clientPlayerEntity != null) {
-			matrixStack.push();
+	public final void render(T blockEntity, float tickDelta, PoseStack matrixStack, MultiBufferSource vertexConsumers, int light, int overlay) {
+		final Level world = blockEntity.getLevel();
+		final LocalPlayer clientPlayerEntity = Minecraft.getInstance().player;
+		if (world instanceof ClientLevel clientWorld && clientPlayerEntity != null) {
+			matrixStack.pushPose();
 			matrixStack.translate(0.5, 0, 0.5);
 			render(blockEntity, matrixStack, vertexConsumers, clientWorld, clientPlayerEntity, tickDelta, light, overlay);
-			matrixStack.pop();
+			matrixStack.popPose();
 		}
 	}
 
@@ -32,13 +32,13 @@ public abstract class BlockEntityRendererExtension<T extends BlockEntity> implem
 	 * A better implementation of the render method with helpful parameters.
 	 *
 	 * @param blockEntity            the {@link BlockEntity}
-	 * @param matrixStack            a pre-transformed {@link MatrixStack} centred at (0.5, 0, 0.5) of the block
-	 * @param vertexConsumerProvider the provided {@link VertexConsumerProvider}
-	 * @param clientWorld            the {@link ClientWorld} guaranteed to be non-null
-	 * @param clientPlayerEntity     the {@link ClientPlayerEntity} guaranteed to be non-null
+	 * @param matrixStack            a pre-transformed {@link PoseStack} centred at (0.5, 0, 0.5) of the block
+	 * @param vertexConsumerProvider the provided {@link MultiBufferSource}
+	 * @param clientWorld            the {@link ClientLevel} guaranteed to be non-null
+	 * @param clientPlayerEntity     the {@link LocalPlayer} guaranteed to be non-null
 	 * @param tickDelta              the number of ticks elapsed
 	 * @param light                  the light level of the block
 	 * @param overlay                the texture overlay
 	 */
-	public abstract void render(T blockEntity, MatrixStack matrixStack, VertexConsumerProvider vertexConsumerProvider, ClientWorld clientWorld, ClientPlayerEntity clientPlayerEntity, float tickDelta, int light, int overlay);
+	public abstract void render(T blockEntity, PoseStack matrixStack, MultiBufferSource vertexConsumerProvider, ClientLevel clientWorld, LocalPlayer clientPlayerEntity, float tickDelta, int light, int overlay);
 }

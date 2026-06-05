@@ -1,9 +1,9 @@
 package org.mtr.widget;
 
+import com.mojang.blaze3d.vertex.PoseStack;
 import lombok.Getter;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.render.RenderLayer;
-import net.minecraft.client.util.math.MatrixStack;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.renderer.RenderType;
 import org.mtr.tool.Drawing;
 import org.mtr.tool.GuiAnimation;
 import org.mtr.tool.GuiHelper;
@@ -26,24 +26,24 @@ public final class TabGroupWidget extends ClickableWidgetBase {
 	public TabGroupWidget(int minWidth, IntConsumer onChangeTab, String... messages) {
 		this.onChangeTab = onChangeTab;
 		buttonGroup = new ButtonGroupWidget(minWidth, this::selectTabInternal, messages);
-		setDimensions(buttonGroup.getWidth(), buttonGroup.getHeight());
+		setSize(buttonGroup.getWidth(), buttonGroup.getHeight());
 	}
 
 	@Override
-	public void init(Consumer<ClickableWidgetBase> addDrawableChild) {
-		addDrawableChild.accept(buttonGroup);
+	public void init(Consumer<ClickableWidgetBase> addRenderableWidget) {
+		addRenderableWidget.accept(buttonGroup);
 	}
 
 	@Override
-	protected void renderWidget(DrawContext context, int mouseX, int mouseY, float delta) {
+	protected void renderWidget(GuiGraphics context, int mouseX, int mouseY, float delta) {
 		buttonGroup.active = active;
 		buttonGroup.visible = visible;
-		setDimensions(buttonGroup.getWidth(), buttonGroup.getHeight());
+		setSize(buttonGroup.getWidth(), buttonGroup.getHeight());
 		buttonGroup.setPosition(getX(), getY());
 		buttonGroup.renderWidget(context, mouseX, mouseY, delta);
 
-		final MatrixStack matrixStack = context.getMatrices();
-		final Drawing drawing = new Drawing(matrixStack, RenderLayer.getGui());
+		final PoseStack matrixStack = context.pose();
+		final Drawing drawing = new Drawing(matrixStack, RenderType.gui());
 
 		// Handle animation
 		guiAnimation1.tick();

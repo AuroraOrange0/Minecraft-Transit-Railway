@@ -3,7 +3,7 @@ package org.mtr.screen;
 import gg.essential.elementa.components.UIContainer;
 import gg.essential.elementa.components.UIWrappedText;
 import gg.essential.elementa.constraints.*;
-import net.minecraft.text.Text;
+import net.minecraft.network.chat.Component;
 import org.jspecify.annotations.Nullable;
 import org.mtr.client.MinecraftClientData;
 import org.mtr.core.data.Station;
@@ -153,7 +153,7 @@ public final class StationScreen extends NameColorDataScreenBase<Station> {
 			.setX(new SiblingConstraint())
 			.setWidth(new ScaleConstraint(new RelativeConstraint(), 0.5F));
 
-		cancelButton.setText(Text.translatable("gui.cancel").getString());
+		cancelButton.setText(Component.translatable("gui.cancel").getString());
 		cancelButton.onClick(() -> {
 			editingStationExit = null;
 			updateContainers();
@@ -171,7 +171,7 @@ public final class StationScreen extends NameColorDataScreenBase<Station> {
 	}
 
 	@Override
-	public void onClose() {
+	public void close() {
 		try {
 			data.setZone1(Long.parseLong(zoneXTextInput.getText()));
 		} catch (Exception ignored) {
