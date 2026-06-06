@@ -13,7 +13,7 @@
 		"issues": "${mod_issues}"
 	},
 	"license": "${mod_license}",
-	"icon": "icon_fabric.png",
+	"icon": "assets/mtr/textures/block/sign/logo.png",
 	"environment": "*",
 	"entrypoints": {
 		"main": [

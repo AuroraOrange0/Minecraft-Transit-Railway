@@ -7,7 +7,6 @@ import gg.essential.elementa.constraints.*;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.renderer.entity.layers.RenderLayer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import org.jspecify.annotations.Nullable;
@@ -19,6 +18,16 @@ import org.mtr.widget.ScrollPanelComponent;
 import org.mtr.widget.SlotBackgroundComponent;
 
 import java.awt.*;
+
+//? if < 1.21.4 {
+/*import com.mojang.blaze3d.vertex.DefaultVertexFormat;
+import com.mojang.blaze3d.vertex.VertexFormat;
+import net.minecraft.Util;
+import net.minecraft.client.renderer.GameRenderer;
+import net.minecraft.client.renderer.RenderStateShard;
+
+import java.util.function.Function;
+*///? }
 
 /**
  * GUI colour palette and widget rendering utilities.
@@ -80,6 +89,11 @@ public final class GuiHelper {
 
 	private static final int SHADOW_COLOR_DARK = 0x11000000;
 	private static final int SHADOW_COLOR_LIGHT = 0x11FFFFFF;
+
+//? if < 1.21.4 {
+	/*private static final RenderStateShard.ShaderStateShard POSITION_TEXTURE_COLOR_SHADER = new RenderStateShard.ShaderStateShard(GameRenderer::getPositionTexColorShader);
+	private static final Function<ResourceLocation, RenderType> GUI_TEXTURED = Util.memoize((resourceLocation) -> RenderType.create("gui_textured", DefaultVertexFormat.POSITION_TEX_COLOR, VertexFormat.Mode.QUADS, 786432, RenderType.CompositeState.builder().setTextureState(new RenderStateShard.TextureStateShard(resourceLocation, false, false)).setShaderState(POSITION_TEXTURE_COLOR_SHADER).setTransparencyState(RenderStateShard.TRANSLUCENT_TRANSPARENCY).setDepthTestState(RenderStateShard.LEQUAL_DEPTH_TEST).createCompositeState(false)));
+*///? }
 
 	/**
 	 * Creates a constraint for a fixed aspect ratio of an inside rectangle with a border.
@@ -171,7 +185,7 @@ public final class GuiHelper {
 //? if >= 1.21.4 {
 		return RenderType.guiTextured(texture);
 //? } else {
-		/*return RenderType.gui();
+		/*return GUI_TEXTURED.apply(texture);
 //
 *///? }
 	}

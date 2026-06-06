@@ -583,7 +583,7 @@ public class RouteMapGenerator implements IGui {
 //? if >= 1.21.4 {
 		return nativeImage.getPixel(x, y);
 //? } else {
-		/*return nativeImage.getPixelRGBA(x, y);
+		/*return convertNativeImageColor(nativeImage.getPixelRGBA(x, y));
 //
 *///? }
 	}
@@ -592,9 +592,13 @@ public class RouteMapGenerator implements IGui {
 //? if >= 1.21.4 {
 		nativeImage.setPixel(x, y, color);
 //? } else {
-		/*nativeImage.setPixelRGBA(x, y, color);
+		/*nativeImage.setPixelRGBA(x, y, convertNativeImageColor(color));
 //
 *///? }
+	}
+
+	private static int convertNativeImageColor(int color) {
+		return color & 0xFF00FF00 | (color & 0xFF0000) >> 16 | (color & 0x0000FF) << 16;
 	}
 
 	private static void setup(ObjectArrayList<Int2ObjectAVLTreeMap<StationPosition>> stationPositions, ObjectArrayList<LongArrayList> stationsIdLists, int[] colorIndices, float[] bounds, boolean passed, boolean reverse) {

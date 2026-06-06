@@ -18,7 +18,6 @@ jobs:
         with:
           java-version: 26
           distribution: 'temurin'
-          cache: gradle
       - name: Make Gradle wrapper executable
         run: chmod +x ./gradlew
       - name: Setup website files
