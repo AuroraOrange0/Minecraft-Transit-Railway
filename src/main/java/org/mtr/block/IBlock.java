@@ -125,10 +125,10 @@ public interface IBlock {
 
 	static <T extends Comparable<T>> T getStatePropertySafe(BlockState state, Property<T> property) {
 		try {
-			return state.hasProperty(property) ? state.getValue(property) : property.getPossibleValues().getFirst();
+			return state.hasProperty(property) ? state.getValue(property) : property.getPossibleValues().iterator().next();
 		} catch (Exception ignored) {
 		}
-		return property.getPossibleValues().getFirst();
+		return property.getPossibleValues().iterator().next();
 	}
 
 	enum DoubleBlockHalf implements StringRepresentable {

@@ -1,5 +1,13 @@
 package org.mtr.registry;
 
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.level.chunk.ChunkAccess;
+
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
+
 //? if fabric {
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerChunkEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
@@ -12,133 +20,137 @@ import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import org.mtr.neoforge.ModEventBus;
 *///? }
 
-import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.level.ServerLevel;
-import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.level.chunk.ChunkAccess;
-
-import java.util.function.BiConsumer;
-import java.util.function.Consumer;
-
 public final class EventRegistryServer {
 
 	public static void registerServerStarting(Consumer<MinecraftServer> consumer) {
-		//? if fabric {
+//? if fabric {
 		ServerLifecycleEvents.SERVER_STARTING.register(consumer::accept);
-		//? }
+//? }
 
-		//? if neoforge {
+//? if neoforge {
 		/*MainEventBus.serverStartingConsumer = consumer;
-		 *///? }
+//
+*///? }
 	}
 
 	public static void registerServerStarted(Consumer<MinecraftServer> consumer) {
-		//? if fabric {
+//? if fabric {
 		ServerLifecycleEvents.SERVER_STARTED.register(consumer::accept);
-		//? }
+//? }
 
-		//? if neoforge {
+//? if neoforge {
 		/*MainEventBus.serverStartedConsumer = consumer;
-		 *///? }
+//
+*///? }
 	}
 
 	public static void registerServerStopping(Consumer<MinecraftServer> consumer) {
-		//? if fabric {
+//? if fabric {
 		ServerLifecycleEvents.SERVER_STOPPING.register(consumer::accept);
-		//? }
+//? }
 
-		//? if neoforge {
+//? if neoforge {
 		/*MainEventBus.serverStoppingConsumer = consumer;
-		 *///? }
+//
+*///? }
 	}
 
 	public static void registerServerStopped(Consumer<MinecraftServer> consumer) {
-		//? if fabric {
+//? if fabric {
 		ServerLifecycleEvents.SERVER_STOPPED.register(consumer::accept);
-		//? }
+//? }
 
-		//? if neoforge {
+//? if neoforge {
 		/*MainEventBus.serverStoppedConsumer = consumer;
-		 *///? }
+//
+*///? }
 	}
 
 	public static void registerStartServerTick(Runnable runnable) {
-		//? if fabric {
+//? if fabric {
 		ServerTickEvents.START_SERVER_TICK.register(minecraftServer -> runnable.run());
-		//? }
+//? }
 
-		//? if neoforge {
+//? if neoforge {
 		/*MainEventBus.startServerTickRunnable = runnable;
-		 *///? }
+//
+*///? }
 	}
 
 	public static void registerEndServerTick(Runnable runnable) {
-		//? if fabric {
+//? if fabric {
 		ServerTickEvents.END_SERVER_TICK.register(minecraftServer -> runnable.run());
-		//? }
+//? }
 
-		//? if neoforge {
+//? if neoforge {
 		/*MainEventBus.endServerTickRunnable = runnable;
-		 *///? }
+//
+*///? }
 	}
 
 	public static void registerStartWorldTick(Consumer<ServerLevel> consumer) {
-		//? if fabric {
+//? if fabric {
 		ServerTickEvents.START_WORLD_TICK.register(consumer::accept);
-		//? }
+//? }
 
-		//? if neoforge {
+//? if neoforge {
 		/*MainEventBus.startWorldTickRunnable = consumer;
-		 *///? }
+//
+*///? }
 	}
 
 	public static void registerEndWorldTick(Consumer<ServerLevel> consumer) {
-		//? if fabric {
+//? if fabric {
 		ServerTickEvents.END_WORLD_TICK.register(consumer::accept);
-		//? }
+//? }
 
-		//? if neoforge {
+//? if neoforge {
 		/*MainEventBus.endWorldTickRunnable = consumer;
-		 *///? }
+//
+*///? }
 	}
 
 	public static void registerPlayerJoin(BiConsumer<MinecraftServer, ServerPlayer> consumer) {
-		//? if fabric {
+//? if fabric {
 		ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> consumer.accept(server, handler.player));
-		//? }
+//? }
 
-		//? if neoforge {
+//? if neoforge {
 		/*MainEventBus.playerJoinRunnable = consumer;
-		 *///? }
+//
+*///? }
 	}
 
 	public static void registerPlayerDisconnect(BiConsumer<MinecraftServer, ServerPlayer> consumer) {
-		//? if fabric {
+//? if fabric {
 		ServerPlayConnectionEvents.DISCONNECT.register((handler, server) -> consumer.accept(server, handler.player));
-		//? }
+//? }
 
-		//? if neoforge {
+//? if neoforge {
 		/*MainEventBus.playerDisconnectRunnable = consumer;
-		 *///? }
+//
+*///? }
 	}
 
 	public static void registerChunkLoad(BiConsumer<ServerLevel, ChunkAccess> consumer) {
-		//? if fabric {
+//? if fabric {
 		ServerChunkEvents.CHUNK_LOAD.register(consumer::accept);
-		//? }
+//? }
 
-		//? if neoforge {
+//? if neoforge {
 		/*ModEventBus.chunkLoadConsumer = consumer;
-		 *///? }
+//
+*///? }
 	}
 
 	public static void registerChunkUnload(BiConsumer<ServerLevel, ChunkAccess> consumer) {
-		//? if fabric {
+//? if fabric {
 		ServerChunkEvents.CHUNK_UNLOAD.register(consumer::accept);
-		//? }
+//? }
 
-		//? if neoforge {
+//? if neoforge {
 		/*ModEventBus.chunkUnloadConsumer = consumer;
-		 *///? }
+//
+*///? }
 	}
 }

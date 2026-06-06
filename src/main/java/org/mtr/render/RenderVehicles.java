@@ -451,7 +451,12 @@ public final class RenderVehicles {
 			Drawing.rotateXDegrees(matrixStack, 180);
 			Drawing.rotateYDegrees(matrixStack, 180);
 			final Minecraft minecraftClient = Minecraft.getInstance();
+//? if >= 1.21.4 {
 			minecraftClient.getEntityRenderDispatcher().render(playerEntity, 0, 0, 0, 0, matrixStack, minecraftClient.renderBuffers().bufferSource(), IGui.DEFAULT_LIGHT);
+//? } else {
+			/*minecraftClient.getEntityRenderDispatcher().render(playerEntity, 0, 0, 0, 0, 0, matrixStack, minecraftClient.renderBuffers().bufferSource(), IGui.DEFAULT_LIGHT);
+//
+*///? }
 			matrixStack.popPose();
 		});
 	}

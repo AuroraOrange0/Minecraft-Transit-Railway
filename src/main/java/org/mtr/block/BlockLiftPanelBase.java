@@ -17,7 +17,6 @@ import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
-import net.minecraft.world.level.ScheduledTickAccess;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.EntityBlock;
@@ -35,6 +34,12 @@ import org.mtr.registry.Items;
 
 import java.util.List;
 
+//? if >= 1.21.4 {
+import net.minecraft.world.level.ScheduledTickAccess;
+//? } else {
+/*import net.minecraft.world.level.LevelAccessor;
+ *///? }
+
 public abstract class BlockLiftPanelBase extends Block implements IBlock, TripleHorizontalBlock, EntityBlock {
 
 	private final boolean isOdd;
@@ -47,9 +52,19 @@ public abstract class BlockLiftPanelBase extends Block implements IBlock, Triple
 	}
 
 	@Override
+//? if >= 1.21.4 {
 	protected BlockState updateShape(BlockState state, LevelReader world, ScheduledTickAccess tickView, BlockPos pos, Direction direction, BlockPos neighborPos, BlockState neighborState, RandomSource random) {
+//? } else {
+	/*protected BlockState updateShape(BlockState state, Direction direction, BlockState neighborState, LevelAccessor world, BlockPos pos, BlockPos neighborPos) {
+//
+*///? }
 		if (isOdd) {
+//? if >= 1.21.4 {
 			return TripleHorizontalBlock.updateShape(state, direction, neighborState.is(this), super.updateShape(state, world, tickView, pos, direction, neighborPos, neighborState, random));
+//? } else {
+			/*return TripleHorizontalBlock.updateShape(state, direction, neighborState.is(this), super.updateShape(state, direction, neighborState, world, pos, neighborPos));
+//
+*///? }
 		} else {
 			if (IBlock.getSideDirection(state) == direction && !neighborState.is(this)) {
 				return Blocks.AIR.defaultBlockState();

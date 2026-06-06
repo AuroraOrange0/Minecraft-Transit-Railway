@@ -43,7 +43,12 @@ public class BlockEyeCandy extends BlockWaterloggable implements EntityBlock {
 	}
 
 	@Override
+//? if >= 1.21.4 {
 	protected VoxelShape getOcclusionShape(BlockState state) {
+//? } else {
+	/*protected VoxelShape getOcclusionShape(BlockState blockState, BlockGetter blockGetter, BlockPos blockPos) {
+//
+*///? }
 		// Prevents culling optimization mods from culling our fully transparent block
 		return Shapes.empty();
 	}

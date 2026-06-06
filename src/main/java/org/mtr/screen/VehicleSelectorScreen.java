@@ -6,7 +6,6 @@ import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.util.ARGB;
 import net.minecraft.util.FormattedCharSequence;
 import org.jspecify.annotations.Nullable;
 import org.mtr.MTR;
@@ -321,9 +320,9 @@ public final class VehicleSelectorScreen extends ScreenBase {
 
 	private static void drawVehicleIcon(Drawing drawing, int x, double y, boolean canAddCar, boolean smallIcon, int color) {
 		if (smallIcon) {
-			drawing.setVerticesWH(x + GuiHelper.DEFAULT_PADDING * 3 / 2F, y + GuiHelper.DEFAULT_PADDING * 3 / 2F, GuiHelper.DEFAULT_PADDING, GuiHelper.DEFAULT_PADDING).setColor(ARGB.opaque(color)).draw();
+			drawing.setVerticesWH(x + GuiHelper.DEFAULT_PADDING * 3 / 2F, y + GuiHelper.DEFAULT_PADDING * 3 / 2F, GuiHelper.DEFAULT_PADDING, GuiHelper.DEFAULT_PADDING).setColor((color | 0xFF000000)).draw();
 		} else {
-			drawing.setVerticesWH(x + GuiHelper.DEFAULT_PADDING, y + GuiHelper.DEFAULT_PADDING, GuiHelper.MINECRAFT_FONT_SIZE, GuiHelper.MINECRAFT_FONT_SIZE).setColor(ARGB.opaque(color)).draw();
+			drawing.setVerticesWH(x + GuiHelper.DEFAULT_PADDING, y + GuiHelper.DEFAULT_PADDING, GuiHelper.MINECRAFT_FONT_SIZE, GuiHelper.MINECRAFT_FONT_SIZE).setColor((color | 0xFF000000)).draw();
 		}
 		if (!canAddCar) {
 			drawing.setVerticesWH(x + GuiHelper.DEFAULT_PADDING + 1, y + GuiHelper.DEFAULT_PADDING + 1, GuiHelper.MINECRAFT_FONT_SIZE - 2, GuiHelper.MINECRAFT_FONT_SIZE - 2).setColor(GuiHelper.BACKGROUND_COLOR).draw();

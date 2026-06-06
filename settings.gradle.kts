@@ -26,7 +26,7 @@ stonecutter {
 			"1.21.4-neoforge" to "1.21.4",
 		)
 
-		vcsVersion = "1.21.1-fabric"
+		vcsVersion = "1.21.4-fabric"
 	}
 }
 

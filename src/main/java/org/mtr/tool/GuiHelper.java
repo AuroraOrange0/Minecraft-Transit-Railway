@@ -6,9 +6,10 @@ import gg.essential.elementa.components.UIWrappedText;
 import gg.essential.elementa.constraints.*;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.entity.layers.RenderLayer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.ARGB;
 import org.jspecify.annotations.Nullable;
 import org.mtr.core.tool.Utilities;
 import org.mtr.libraries.it.unimi.dsi.fastutil.ints.IntArrayList;
@@ -166,6 +167,15 @@ public final class GuiHelper {
 		);
 	}
 
+	public static RenderType getGuiTexturedRenderType(ResourceLocation texture) {
+//? if >= 1.21.4 {
+		return RenderType.guiTextured(texture);
+//? } else {
+		/*return RenderType.gui();
+//
+*///? }
+	}
+
 	/**
 	 * Draws a circle (without antialiasing). This can be used to indicate a platform number.
 	 * The circle is drawn by a series of vertical bars. Colours are applied as horizontal stripes across the circle.
@@ -236,7 +246,7 @@ public final class GuiHelper {
 					y + Math.max(circlePart.sliceStart, circleColorPart.sliceStart),
 					x + diameter - emptySpace,
 					y + Math.min(circlePart.sliceEnd, circleColorPart.sliceEnd)
-				).setColor(ARGB.opaque(circleColorPart.color)).draw();
+				).setColor((circleColorPart.color | 0xFF000000)).draw();
 			}
 			for (int i = 0; i < circleColorPartsToRemove; i++) {
 				circleColorParts.removeFirst();
@@ -259,7 +269,7 @@ public final class GuiHelper {
 		if (intensity != 0) {
 			final double r1 = shadowRadius > 0 ? shadowRadius : 0;
 			final double r2 = shadowRadius < 0 ? -shadowRadius : 0;
-			final int color = ARGB.color(0x11 * Math.abs(intensity), intensity > 0 ? BLACK_COLOR : WHITE_COLOR);
+			final int color = ((0x11 * Math.abs(intensity)) & 0xFF) << 24 | (intensity > 0 ? BLACK_COLOR : WHITE_COLOR) & 0x00FFFFFF;
 			final int color1 = shadowRadius > 0 ? color : 0;
 			final int color2 = shadowRadius < 0 ? color : 0;
 			drawing.setVertices(x1 - r1, y1 - r1, z, x1 - r1, y2 + r1, z, x1 + r2, y2 - r2, z, x1 + r2, y1 + r2, z).setColor(color2, color2, color1, color1).draw();
@@ -288,7 +298,7 @@ public final class GuiHelper {
 	}
 
 	private static void drawText(GuiGraphics context, @Nullable String text1, @Nullable Component text2, double x, double y, double z, int color) {
-		if ((text1 != null || text2 != null) && ARGB.alpha(color) != 0) {
+		if ((text1 != null || text2 != null) && (color & 0xFF000000) != 0) {
 			final PoseStack matrixStack = context.pose();
 			matrixStack.pushPose();
 			matrixStack.translate(x, y, z);

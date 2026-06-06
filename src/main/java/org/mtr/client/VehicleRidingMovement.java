@@ -114,7 +114,7 @@ public class VehicleRidingMovement {
 
 			final LocalPlayer clientPlayerEntity = minecraftClient.player;
 			if (clientPlayerEntity != null && clientPlayerEntity.isShiftKeyDown()) {
-				shiftHoldingTicks += minecraftClient.getDeltaTracker().getGameTimeDeltaTicks();
+				shiftHoldingTicks += MTRClient.getGameTimeDeltaTicks();
 			} else {
 				shiftHoldingTicks = 0;
 			}

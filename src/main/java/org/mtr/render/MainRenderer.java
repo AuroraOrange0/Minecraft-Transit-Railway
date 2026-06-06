@@ -324,7 +324,7 @@ public class MainRenderer {
 
 	private static long getMillisElapsed() {
 		final long millisElapsed = MTRClient.getGameMillis() - lastRenderedMillis;
-		final long gameMillisElapsed = (long) (Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaTicks() * 50);
+		final long gameMillisElapsed = (long) (MTRClient.getGameTimeDeltaTicks() * 50);
 		return Math.abs(gameMillisElapsed - millisElapsed) < 50 ? gameMillisElapsed : millisElapsed;
 	}
 

@@ -7,7 +7,6 @@ import gg.essential.elementa.constraints.*;
 import gg.essential.universal.UMinecraft;
 import gg.essential.universal.utils.ReleasedDynamicTexture;
 import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.util.ARGB;
 import org.jspecify.annotations.Nullable;
 import org.mtr.MTR;
 import org.mtr.client.MinecraftClientData;
@@ -339,7 +338,7 @@ public final class DepotScreen extends NameColorDataScreenBase<Depot> {
 			final int second = calendar.get(Calendar.SECOND);
 			final String departureString = String.format("%02d:%02d:%02d", hour, minute, second);
 			realTimeDeparturesForList.add(ListItem.createChild(
-				(drawing, x, y) -> drawing.setVerticesWH(x + GuiHelper.DEFAULT_PADDING, y + GuiHelper.DEFAULT_PADDING, GuiHelper.MINECRAFT_FONT_SIZE, GuiHelper.MINECRAFT_FONT_SIZE).setColor(ARGB.opaque(data.getColor())).draw(),
+				(drawing, x, y) -> drawing.setVerticesWH(x + GuiHelper.DEFAULT_PADDING, y + GuiHelper.DEFAULT_PADDING, GuiHelper.MINECRAFT_FONT_SIZE, GuiHelper.MINECRAFT_FONT_SIZE).setColor((data.getColor() | 0xFF000000)).draw(),
 				null,
 				GuiHelper.DEFAULT_PADDING + GuiHelper.MINECRAFT_FONT_SIZE,
 				new RealTimeDepartureForList(calendar.getTimeInMillis() - offset, departureString, i),

@@ -128,7 +128,7 @@ public final class SignResource extends SignResourceSchema {
 			final SignResource signResource = signResources[i];
 
 			if (signResource != null) {
-				final Drawing textureDrawing = new Drawing(matrixStack, vertexConsumerProvider.getBuffer(RenderType.guiTextured(signResource.textureId)));
+				final Drawing textureDrawing = new Drawing(matrixStack, vertexConsumerProvider.getBuffer(GuiHelper.getGuiTexturedRenderType(signResource.textureId)));
 				final ResourceLocation font = signResource.font.isEmpty() ? FontRenderHelper.MTR_FONT : ResourceLocation.parse(signResource.font);
 
 				if (signResource.signType == SignType.NORMAL) {

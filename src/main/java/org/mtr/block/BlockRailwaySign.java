@@ -19,7 +19,6 @@ import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
-import net.minecraft.world.level.ScheduledTickAccess;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.EntityBlock;
@@ -43,6 +42,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
+
+//? if >= 1.21.4 {
+import net.minecraft.world.level.ScheduledTickAccess;
+//? } else {
+/*import net.minecraft.world.level.LevelAccessor;
+ *///? }
 
 public class BlockRailwaySign extends Block implements IBlock, EntityBlock {
 
@@ -73,7 +78,12 @@ public class BlockRailwaySign extends Block implements IBlock, EntityBlock {
 	}
 
 	@Override
+//? if >= 1.21.4 {
 	protected BlockState updateShape(BlockState state, LevelReader world, ScheduledTickAccess tickView, BlockPos pos, Direction direction, BlockPos neighborPos, BlockState neighborState, RandomSource random) {
+//? } else {
+	/*protected BlockState updateShape(BlockState state, Direction direction, BlockState neighborState, LevelAccessor world, BlockPos pos, BlockPos neighborPos) {
+//
+*///? }
 		final Direction facing = IBlock.getStatePropertySafe(state, BlockStateProperties.HORIZONTAL_FACING);
 		final boolean isNext = direction == facing.getClockWise() || isRailwaySignMiddle(state) && direction == facing.getCounterClockWise();
 		if (isNext && !(neighborState.getBlock() instanceof BlockRailwaySign)) {

@@ -3,7 +3,6 @@ package org.mtr.widget;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.network.chat.Component;
-import net.minecraft.util.ARGB;
 import org.apache.commons.lang3.StringUtils;
 import org.jspecify.annotations.Nullable;
 import org.mtr.core.tool.Utilities;
@@ -72,7 +71,7 @@ public final class ColorSelectorWidget extends PopupWidgetBase {
 		hoverMouseZone = MouseZone.NONE;
 
 		// Draw the selected colour
-		drawing.setVerticesWH(controlsX, getY() + GuiHelper.DEFAULT_PADDING * 5 + GuiHelper.DEFAULT_LINE_SIZE * 4, CONTROLS_SIZE, CONTROLS_SIZE).setColor(ARGB.opaque(Color.HSBtoRGB(hue, saturation, brightness))).draw();
+		drawing.setVerticesWH(controlsX, getY() + GuiHelper.DEFAULT_PADDING * 5 + GuiHelper.DEFAULT_LINE_SIZE * 4, CONTROLS_SIZE, CONTROLS_SIZE).setColor(Color.HSBtoRGB(hue, saturation, brightness) | 0xFF000000).draw();
 
 		// Draw hue bar
 		final int hueBarX = controlsX - GuiHelper.DEFAULT_PADDING - GuiHelper.DEFAULT_LINE_SIZE;
@@ -82,7 +81,7 @@ public final class ColorSelectorWidget extends PopupWidgetBase {
 			final int hueBarStartY = getY() + GuiHelper.DEFAULT_PADDING;
 			final int hueBarY = hueBarStartY + drawHue;
 
-			drawing.setVerticesWH(hueBarX, hueBarY, GuiHelper.DEFAULT_LINE_SIZE, 1).setColor(ARGB.opaque(Color.HSBtoRGB(currentHue, 1, 1))).draw();
+			drawing.setVerticesWH(hueBarX, hueBarY, GuiHelper.DEFAULT_LINE_SIZE, 1).setColor(Color.HSBtoRGB(currentHue, 1, 1) | 0xFF000000).draw();
 
 			final boolean isDragging = draggingMouseZone == MouseZone.HUE && Math.clamp(mouseY, hueBarStartY, hueBarStartY + mainHeight - 1) == hueBarY;
 			final boolean isOver = mouseY == hueBarY && Utilities.isBetween(mouseX, hueBarX, hueBarX + GuiHelper.DEFAULT_LINE_SIZE - 1);
@@ -107,7 +106,7 @@ public final class ColorSelectorWidget extends PopupWidgetBase {
 				final int brightnessRectangleStartY = getY() + GuiHelper.DEFAULT_PADDING;
 				final int brightnessRectangleY = getY() + height - GuiHelper.DEFAULT_LINE_SIZE - GuiHelper.DEFAULT_PADDING - drawBrightness - 1;
 
-				drawing.setVerticesWH(saturationRectangleX, brightnessRectangleY, 1, 1).setColor(ARGB.opaque(Color.HSBtoRGB(hue, currentSaturation, currentBrightness))).draw();
+				drawing.setVerticesWH(saturationRectangleX, brightnessRectangleY, 1, 1).setColor(Color.HSBtoRGB(hue, currentSaturation, currentBrightness) | 0xFF000000).draw();
 
 				final boolean isDragging = draggingMouseZone == MouseZone.SATURATION_BRIGHTNESS && Math.clamp(mouseX, saturationRectangleStartX, saturationRectangleStartX + mainWidth - 1) == saturationRectangleX && Math.clamp(mouseY, brightnessRectangleStartY, brightnessRectangleStartY + mainHeight - 1) == brightnessRectangleY;
 				final boolean isOver = mouseX == saturationRectangleX && mouseY == brightnessRectangleY;
@@ -157,7 +156,7 @@ public final class ColorSelectorWidget extends PopupWidgetBase {
 		switch (index) {
 			case 0 -> {
 				if (colorCallback != null) {
-					colorCallback.accept(ARGB.transparent(new Color(Color.HSBtoRGB(hue, saturation, brightness)).getRGB()));
+					colorCallback.accept(new Color(Color.HSBtoRGB(hue, saturation, brightness)).getRGB() & 0x00FFFFFF);
 				}
 				setColorCallbackInternal(null);
 			}
@@ -174,7 +173,7 @@ public final class ColorSelectorWidget extends PopupWidgetBase {
 
 	public void setColorCallback(IntConsumer colorCallback, int oldColorRGB) {
 		setColorCallbackInternal(colorCallback);
-		oldColor = new Color(ARGB.transparent(oldColorRGB), true);
+		oldColor = new Color(oldColorRGB & 0x00FFFFFF, true);
 		setColor(oldColor);
 	}
 
@@ -201,7 +200,7 @@ public final class ColorSelectorWidget extends PopupWidgetBase {
 	}
 
 	private void updateTextFields() {
-		final Color color = new Color(ARGB.transparent(Color.HSBtoRGB(hue, saturation, brightness)), true);
+		final Color color = new Color(Color.HSBtoRGB(hue, saturation, brightness) & 0x00FFFFFF, true);
 		setTextField(colorTextField, color.getRGB(), 16);
 		setTextField(redTextField, color.getRed(), 10);
 		setTextField(greenTextField, color.getGreen(), 10);
@@ -212,7 +211,7 @@ public final class ColorSelectorWidget extends PopupWidgetBase {
 	private void textCallback(String text, int base, ColorCallback colorCallback) {
 		try {
 			final int value = Integer.parseInt(text, base);
-			colorCallback.accept(new Color(ARGB.transparent(Color.HSBtoRGB(hue, saturation, brightness))), base == 10 ? Math.clamp(value, 0, 0xFF) : value);
+			colorCallback.accept(new Color(Color.HSBtoRGB(hue, saturation, brightness) & 0x00FFFFFF), base == 10 ? Math.clamp(value, 0, 0xFF) : value);
 		} catch (Exception ignored) {
 		}
 	}

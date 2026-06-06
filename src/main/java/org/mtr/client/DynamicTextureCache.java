@@ -4,6 +4,7 @@ import com.mojang.blaze3d.platform.NativeImage;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.level.block.state.BlockState;
 import org.jspecify.annotations.Nullable;
 import org.mtr.MTR;
 import org.mtr.config.Config;
@@ -337,7 +338,7 @@ public class DynamicTextureCache implements IGui {
 						newNativeImage = new NativeImage(NativeImage.Format.RGBA, Math.min(newMaxImageSize, nativeImage.getWidth()), Math.min(newMaxImageSize, nativeImage.getHeight()), false);
 						for (int x = 0; x < Math.min(newMaxImageSize, nativeImage.getWidth()); x++) {
 							for (int y = 0; y < Math.min(newMaxImageSize, nativeImage.getHeight()); y++) {
-								newNativeImage.setPixel(x, y, nativeImage.getPixel(x, y));
+								RouteMapGenerator.setPixel(newNativeImage, x, y, RouteMapGenerator.getPixel(nativeImage, x, y));
 							}
 						}
 					} else {

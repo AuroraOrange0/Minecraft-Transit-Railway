@@ -33,19 +33,11 @@ jobs:
         run: npm run build --prefix website
       - name: Setup files
         run: ./gradlew setupFiles -PcrowdinApiKey="${{ secrets.CROWDIN_API_KEY }}" -PpatreonApiKey="${{ secrets.PATREON_API_KEY }}" --no-daemon
-      - name: Setup Fabric 1.21.4
-        run: ./gradlew "Set active project to 1.21.4-fabric" --no-daemon
-      - name: Build Fabric 1.21.4
-        run: ./gradlew 1.21.4-fabric:build --no-daemon
-      - name: Setup Neoforge 1.21.4
-        run: ./gradlew "Set active project to 1.21.4-neoforge" --no-daemon
-      - name: Build Neoforge 1.21.4
-        run: ./gradlew 1.21.4-neoforge:build --no-daemon
-
-# TODO fix build script
-#     - name: Capture release artifacts
-#       if: env.BUILD_ARTIFACTS == 'true'
-#       uses: actions/upload-artifact@main
-#       with:
-#         name: Minecraft Transit Railway
-#         path: build/release/
+      - name: Build
+        run: ./gradlew buildAndCollect --no-daemon
+      - name: Capture release artifacts
+        if: env.BUILD_ARTIFACTS == 'true'
+        uses: actions/upload-artifact@main
+        with:
+          name: Minecraft Transit Railway
+          path: build/release/

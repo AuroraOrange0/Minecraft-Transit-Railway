@@ -1,6 +1,9 @@
 package org.mtr.model;
 
 import com.mojang.blaze3d.vertex.VertexFormat;
+import net.minecraft.client.model.geom.ModelPart;
+import net.minecraft.client.model.geom.PartPose;
+import net.minecraft.client.model.geom.builders.CubeListBuilder;
 import net.minecraft.client.model.geom.builders.MeshDefinition;
 import net.minecraft.client.model.geom.builders.PartDefinition;
 import net.minecraft.resources.ResourceLocation;
@@ -70,7 +73,7 @@ public final class BlockbenchModelLoader extends ModelLoaderBase {
 						iterateChildren(blockbenchOutline, null, new GroupTransformations(), (uuid, groupTransformations) -> {
 							final BlockbenchElement blockbenchElement = uuidToBlockbenchElement.remove(uuid);
 							if (blockbenchElement != null) {
-								final ObjectObjectImmutablePair<AABB, ObjectObjectImmutablePair<StoredMatrixTransformations, IntIntImmutablePair>> modelPartDetails = blockbenchElement.setModelPart(modelPartData.clearChild(MTR.randomString()), groupTransformations);
+								final ObjectObjectImmutablePair<AABB, ObjectObjectImmutablePair<StoredMatrixTransformations, IntIntImmutablePair>> modelPartDetails = blockbenchElement.setModelPart(modelPartData.addOrReplaceChild(MTR.randomString(), CubeListBuilder.create(), PartPose.ZERO), groupTransformations);
 								mutableBox.add(modelPartDetails.left());
 								rawModelDisplayParts.add(modelPartDetails.right());
 							}

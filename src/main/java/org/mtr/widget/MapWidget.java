@@ -11,7 +11,6 @@ import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.ARGB;
 import org.joml.Matrix4f;
 import org.jspecify.annotations.Nullable;
 import org.mtr.MTRClient;
@@ -182,7 +181,7 @@ public final class MapWidget extends ClickableWidgetBase {
 				matrixStack.pushPose();
 				matrixStack.translate(getX() + x, getY() + y, 5);
 				Drawing.rotateZDegrees(matrixStack, player.getYRot() + 180);
-				new Drawing(matrixStack, RenderType.guiTextured(ResourceLocation.parse("textures/gui/sprites/mtr/dashboard_player_arrow.png")))
+				new Drawing(matrixStack, GuiHelper.getGuiTexturedRenderType(ResourceLocation.parse("textures/gui/sprites/mtr/dashboard_player_arrow.png")))
 					.setVerticesWH(-PLAYER_ARROW_SIZE / 2F, -PLAYER_ARROW_SIZE / 2F, PLAYER_ARROW_SIZE, PLAYER_ARROW_SIZE)
 					.setUv()
 					.draw();
@@ -446,10 +445,10 @@ public final class MapWidget extends ClickableWidgetBase {
 					GuiHelper.drawShadow(drawing, x1, y1, x2, y2, 2, shadowRadius, 1);
 
 					// Draw border
-					drawing.setVertices(x1, y1, x1 + borderSize, y2, 2).setColor(ARGB.opaque(area.getColor())).draw();
-					drawing.setVertices(x2 - borderSize, y1, x2, y2, 2).setColor(ARGB.opaque(area.getColor())).draw();
-					drawing.setVertices(x1, y1, x2, y1 + borderSize, 2).setColor(ARGB.opaque(area.getColor())).draw();
-					drawing.setVertices(x1, y2 - borderSize, x2, y2, 2).setColor(ARGB.opaque(area.getColor())).draw();
+					drawing.setVertices(x1, y1, x1 + borderSize, y2, 2).setColor((area.getColor() | 0xFF000000)).draw();
+					drawing.setVertices(x2 - borderSize, y1, x2, y2, 2).setColor((area.getColor() | 0xFF000000)).draw();
+					drawing.setVertices(x1, y1, x2, y1 + borderSize, 2).setColor((area.getColor() | 0xFF000000)).draw();
+					drawing.setVertices(x1, y2 - borderSize, x2, y2, 2).setColor((area.getColor() | 0xFF000000)).draw();
 
 					// Draw overlay text
 					final double clampedAreaWidth = areaWidth - Math.max(0, getX() - x1) - Math.max(0, x2 - getX() - width) - AREA_NAME_PADDING * 2;

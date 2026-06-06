@@ -9,7 +9,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.ARGB;
 import org.jspecify.annotations.Nullable;
 import org.mtr.client.CustomResourceLoader;
 import org.mtr.core.data.*;
@@ -92,7 +91,7 @@ public final class ListComponent<T> extends UIComponent {
 					clickAction = listItem::toggle;
 
 					// Draw the action button
-					deferredRenders.add(() -> new Drawing(matrixStack, RenderType.guiTextured(listItem.isExpanded() ? GuiHelper.CHEVRON_UP_TEXTURE_ID : GuiHelper.CHEVRON_DOWN_TEXTURE_ID))
+					deferredRenders.add(() -> new Drawing(matrixStack, RenderType.gui())
 						.setVerticesWH(leftBound + GuiHelper.DEFAULT_PADDING / 2F, startY + GuiHelper.DEFAULT_PADDING / 2F, GuiHelper.DEFAULT_ICON_SIZE, GuiHelper.DEFAULT_ICON_SIZE)
 						.setUv()
 						.draw()
@@ -112,7 +111,7 @@ public final class ListComponent<T> extends UIComponent {
 						}
 
 						// Draw the action button
-						deferredRenders.add(() -> new Drawing(matrixStack, RenderType.guiTextured(identifier))
+						deferredRenders.add(() -> new Drawing(matrixStack, RenderType.gui())
 							.setVerticesWH(leftBound + GuiHelper.DEFAULT_PADDING / 2F, startY + GuiHelper.DEFAULT_PADDING / 2F, GuiHelper.DEFAULT_ICON_SIZE, GuiHelper.DEFAULT_ICON_SIZE)
 							.setUv()
 							.draw()
@@ -187,7 +186,7 @@ public final class ListComponent<T> extends UIComponent {
 		final ObjectArrayList<ListItem<T>> dataList = new ObjectArrayList<>();
 
 		genericDataList.forEach(genericData -> dataList.add(ListItem.createChild(
-			(drawing, x, y) -> drawing.setVerticesWH(x + GuiHelper.DEFAULT_PADDING, y + GuiHelper.DEFAULT_PADDING, GuiHelper.MINECRAFT_FONT_SIZE, GuiHelper.MINECRAFT_FONT_SIZE).setColor(ARGB.opaque(getColor.applyAsInt(genericData))).draw(),
+			(drawing, x, y) -> drawing.setVerticesWH(x + GuiHelper.DEFAULT_PADDING, y + GuiHelper.DEFAULT_PADDING, GuiHelper.MINECRAFT_FONT_SIZE, GuiHelper.MINECRAFT_FONT_SIZE).setColor(getColor.applyAsInt(genericData) | 0xFF000000).draw(),
 			null,
 			GuiHelper.DEFAULT_PADDING + GuiHelper.MINECRAFT_FONT_SIZE,
 			genericData,
@@ -275,7 +274,7 @@ public final class ListComponent<T> extends UIComponent {
 					final int color = lastRoute.getColor();
 					Collections.sort(combinedRouteNames);
 					groupedRoutes.add(ListItem.createChild(
-						(drawing, x, y) -> drawing.setVerticesWH(x + GuiHelper.DEFAULT_PADDING, y + GuiHelper.DEFAULT_PADDING, GuiHelper.MINECRAFT_FONT_SIZE, GuiHelper.MINECRAFT_FONT_SIZE).setColor(ARGB.opaque(color)).draw(),
+						(drawing, x, y) -> drawing.setVerticesWH(x + GuiHelper.DEFAULT_PADDING, y + GuiHelper.DEFAULT_PADDING, GuiHelper.MINECRAFT_FONT_SIZE, GuiHelper.MINECRAFT_FONT_SIZE).setColor(color | 0xFF000000).draw(),
 						null,
 						GuiHelper.DEFAULT_PADDING + GuiHelper.MINECRAFT_FONT_SIZE,
 						lastRoute,
@@ -306,7 +305,7 @@ public final class ListComponent<T> extends UIComponent {
 
 				if (lastListItem == null || !routeKey.equals(lastKey)) {
 					currentListItem = ListItem.createParent(
-						(drawing, x, y) -> drawing.setVerticesWH(x + GuiHelper.DEFAULT_PADDING, y + GuiHelper.DEFAULT_PADDING, GuiHelper.MINECRAFT_FONT_SIZE, GuiHelper.MINECRAFT_FONT_SIZE).setColor(ARGB.opaque(route.getColor())).draw(),
+						(drawing, x, y) -> drawing.setVerticesWH(x + GuiHelper.DEFAULT_PADDING, y + GuiHelper.DEFAULT_PADDING, GuiHelper.MINECRAFT_FONT_SIZE, GuiHelper.MINECRAFT_FONT_SIZE).setColor(route.getColor() | 0xFF000000).draw(),
 						null,
 						GuiHelper.DEFAULT_PADDING + GuiHelper.MINECRAFT_FONT_SIZE,
 						Utilities.formatName(routeNameSplit[0]),
@@ -331,7 +330,7 @@ public final class ListComponent<T> extends UIComponent {
 
 		routePlatforms.forEach(routePlatformData -> {
 			final Platform platform = routePlatformData.getPlatform();
-			final int stationColor = platform.area == null ? GuiHelper.BLACK_COLOR : ARGB.opaque(platform.area.getColor());
+			final int stationColor = platform.area == null ? GuiHelper.BLACK_COLOR : (platform.area.getColor() | 0xFF000000);
 			final String customDestinationPrefix = routePlatformData.getCustomDestination().isEmpty() ? "" : (Route.destinationIsReset(routePlatformData.getCustomDestination()) ? "\"" : "*");
 			final String stationName = platform.area == null ? "" : Utilities.formatName(platform.area.getName());
 

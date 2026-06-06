@@ -311,7 +311,11 @@ public final class Blocks {
 		final ObjectHolder<Block> objectHolder = RegistryServer.registerBlock(registryName, settings -> blockFactory.apply(createDefaultBlockSettings(settings, blockPiston)));
 		RegistryServer.registerItem(registryName, settings -> {
 			final Block block = objectHolder.get();
-			return blockItemFactory.apply(block, settings.overrideDescription(formatBlockItemTranslationKey(block, registryName)));
+			return blockItemFactory.apply(block, settings
+//? if >= 1.21.4 {
+					.overrideDescription(formatBlockItemTranslationKey(block, registryName))
+//? }
+			);
 		}, itemGroupRegistryName);
 		return objectHolder;
 	}

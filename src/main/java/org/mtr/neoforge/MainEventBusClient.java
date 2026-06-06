@@ -30,7 +30,7 @@ public final class MainEventBusClient {
 	public static Consumer<ClientLevel> startWorldTickRunnable = null;
 	public static Consumer<ClientLevel> endWorldTickRunnable = null;
 	public static MTRClient.WorldRenderCallback worldRenderCallback = null;
-	public static BiConsumer<GuiGraphics, DeltaTracker> hudLayerRenderCallback = null;
+	public static Consumer<GuiGraphics> hudLayerRenderCallback = null;
 
 	@SubscribeEvent
 	public static void clientTickStart(ClientTickEvent.Pre event) {
@@ -84,7 +84,7 @@ public final class MainEventBusClient {
 	@SubscribeEvent
 	public static void guiRendering(RenderGuiEvent.Pre event) {
 		if (hudLayerRenderCallback != null) {
-			hudLayerRenderCallback.accept(event.getGuiGraphics(), event.getPartialTick());
+			hudLayerRenderCallback.accept(event.getGuiGraphics());
 		}
 	}
 }

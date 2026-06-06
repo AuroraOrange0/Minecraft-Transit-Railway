@@ -1,6 +1,5 @@
 package org.mtr.widget;
 
-import com.mojang.blaze3d.ProjectionType;
 import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.mojang.blaze3d.pipeline.TextureTarget;
 import com.mojang.blaze3d.systems.RenderSystem;
@@ -16,6 +15,12 @@ import org.mtr.tool.Drawing;
 
 import java.awt.*;
 import java.util.function.Consumer;
+
+//? if >= 1.21.4 {
+import com.mojang.blaze3d.ProjectionType;
+//? } else {
+/*import com.mojang.blaze3d.vertex.VertexSorting;
+ *///? }
 
 public final class PreviewBoxComponent extends SlotBackgroundComponent {
 
@@ -105,7 +110,13 @@ public final class PreviewBoxComponent extends SlotBackgroundComponent {
 	private void drawFrameBuffer() {
 		final RenderTarget oldFrameBuffer = Minecraft.getInstance().getMainRenderTarget();
 		final Matrix4f oldMatrix4f = RenderSystem.getProjectionMatrix();
+
+//? if >= 1.21.4 {
 		final ProjectionType oldProjectionType = RenderSystem.getProjectionType();
+//? } else {
+		/*final VertexSorting oldVertexSorting = RenderSystem.getVertexSorting();
+//
+*///? }
 
 		final double scaleFactor = Minecraft.getInstance().getWindow().getGuiScale();
 		final int width = (int) Math.round((getWidth() - 2) * scaleFactor);
@@ -115,17 +126,37 @@ public final class PreviewBoxComponent extends SlotBackgroundComponent {
 			if (framebuffer != null) {
 				framebuffer.destroyBuffers();
 			}
+
+//? if >= 1.21.4 {
 			framebuffer = new TextureTarget(width, height, true);
+//? } else {
+			/*framebuffer = new TextureTarget(width, height, true, false);
+//
+*///? }
+
 			framebuffer.setClearColor(0, 0, 0, 1);
 		}
 
 		RenderSystem.viewport(0, 0, framebuffer.width, framebuffer.height);
 		framebuffer.bindWrite(true);
 		RenderSystem.clearColor(0, 0, 0, 1);
+
+//? if >= 1.21.4 {
 		RenderSystem.clear(GL11.GL_COLOR_BUFFER_BIT | GL11.GL_DEPTH_BUFFER_BIT);
+//? } else {
+		/*RenderSystem.clear(GL11.GL_COLOR_BUFFER_BIT | GL11.GL_DEPTH_BUFFER_BIT, false);
+//
+*///? }
+
 		RenderSystem.enableDepthTest();
 		RenderSystem.depthMask(true);
+
+//? if >= 1.21.4 {
 		RenderSystem.setProjectionMatrix(new Matrix4f().perspective((float) Math.toRadians(60), (float) framebuffer.width / framebuffer.height, 0.01F, 1000), ProjectionType.PERSPECTIVE);
+//? } else {
+		/*RenderSystem.setProjectionMatrix(new Matrix4f().perspective((float) Math.toRadians(60), (float) framebuffer.width / framebuffer.height, 0.01F, 1000), VertexSorting.DISTANCE_TO_ORIGIN);
+//
+*///? }
 
 		final PoseStack matrixStack = new PoseStack();
 		matrixStack.translate(panX, -panY, 10990 + zoom); // TODO figure out why is this Z offset needed?
@@ -137,7 +168,14 @@ public final class PreviewBoxComponent extends SlotBackgroundComponent {
 		framebuffer.unbindWrite();
 		RenderSystem.viewport(0, 0, oldFrameBuffer.width, oldFrameBuffer.height);
 		oldFrameBuffer.bindWrite(true);
+
+//? if >= 1.21.4 {
 		RenderSystem.setProjectionMatrix(oldMatrix4f, oldProjectionType);
+//? } else {
+		/*RenderSystem.setProjectionMatrix(oldMatrix4f, oldVertexSorting);
+//
+*///? }
+
 	}
 
 	private static float getPlayerYaw() {

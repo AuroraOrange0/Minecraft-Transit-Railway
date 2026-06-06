@@ -42,14 +42,14 @@ public final class BetterButtonWidget extends ClickableWidgetBase {
 		final PoseStack matrixStack = context.pose();
 
 		// Draw background
-		new Drawing(matrixStack, RenderType.gui())
+		new Drawing(matrixStack, GuiHelper.getGuiTexturedRenderType(icon))
 			.setVerticesWH(getX(), getY(), width, height)
 			.setColor(isMouseOver(mouseX, mouseY) ? hoverColor : backgroundColor)
 			.draw();
 
 		// Draw icon
 		if (icon != null) {
-			new Drawing(matrixStack, RenderType.guiTextured(icon))
+			new Drawing(matrixStack, GuiHelper.getGuiTexturedRenderType(icon))
 				.setVerticesWH(getX() + (width - getContentWidth()) / 2F, getY() + GuiHelper.DEFAULT_PADDING / 2F, GuiHelper.DEFAULT_ICON_SIZE, GuiHelper.DEFAULT_ICON_SIZE)
 				.setUv()
 				.draw();

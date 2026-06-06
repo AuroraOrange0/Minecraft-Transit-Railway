@@ -5,7 +5,6 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.ARGB;
 import org.jspecify.annotations.Nullable;
 import org.mtr.client.CustomResourceLoader;
 import org.mtr.core.data.*;
@@ -52,7 +51,7 @@ public final class ScrollableListWidget<T> extends ScrollablePanelWidget {
 		ListItem.iterateData(dataList, filter, (index, indexList, listItem) -> {
 			final int startX = getX();
 			final int endX = getX() + width - getScrollbarWidth();
-			final double startY = getY() - scrollAmount() + GuiHelper.DEFAULT_LINE_SIZE * index;
+			final double startY = getY() - scrollAmount + GuiHelper.DEFAULT_LINE_SIZE * index;
 
 			if (startY + GuiHelper.DEFAULT_LINE_SIZE > getY()) {
 				final double startYBottomLine = startY + GuiHelper.DEFAULT_LINE_SIZE - 1;
@@ -68,7 +67,7 @@ public final class ScrollableListWidget<T> extends ScrollablePanelWidget {
 						clickAction = listItem::toggle;
 
 						// Draw the action button
-						deferredRenders.add(() -> new Drawing(matrixStack, RenderType.guiTextured(listItem.isExpanded() ? GuiHelper.CHEVRON_UP_TEXTURE_ID : GuiHelper.CHEVRON_DOWN_TEXTURE_ID))
+						deferredRenders.add(() -> new Drawing(matrixStack, GuiHelper.getGuiTexturedRenderType(listItem.isExpanded() ? GuiHelper.CHEVRON_UP_TEXTURE_ID : GuiHelper.CHEVRON_DOWN_TEXTURE_ID))
 							.setVerticesWH(leftBound + GuiHelper.DEFAULT_PADDING / 2F, startY + GuiHelper.DEFAULT_PADDING / 2F, GuiHelper.DEFAULT_ICON_SIZE, GuiHelper.DEFAULT_ICON_SIZE)
 							.setUv()
 							.draw()
@@ -88,7 +87,7 @@ public final class ScrollableListWidget<T> extends ScrollablePanelWidget {
 							}
 
 							// Draw the action button
-							deferredRenders.add(() -> new Drawing(matrixStack, RenderType.guiTextured(identifier))
+							deferredRenders.add(() -> new Drawing(matrixStack, GuiHelper.getGuiTexturedRenderType(identifier))
 								.setVerticesWH(leftBound + GuiHelper.DEFAULT_PADDING / 2F, startY + GuiHelper.DEFAULT_PADDING / 2F, GuiHelper.DEFAULT_ICON_SIZE, GuiHelper.DEFAULT_ICON_SIZE)
 								.setUv()
 								.draw()
@@ -215,7 +214,7 @@ public final class ScrollableListWidget<T> extends ScrollablePanelWidget {
 		final ObjectArrayList<ListItem<T>> dataList = new ObjectArrayList<>();
 
 		sortedAreas.forEach(area -> dataList.add(ListItem.createChild(
-			(drawing, x, y) -> drawing.setVerticesWH(x + GuiHelper.DEFAULT_PADDING, y + GuiHelper.DEFAULT_PADDING, GuiHelper.MINECRAFT_FONT_SIZE, GuiHelper.MINECRAFT_FONT_SIZE).setColor(ARGB.opaque(area.getColor())).draw(),
+			(drawing, x, y) -> drawing.setVerticesWH(x + GuiHelper.DEFAULT_PADDING, y + GuiHelper.DEFAULT_PADDING, GuiHelper.MINECRAFT_FONT_SIZE, GuiHelper.MINECRAFT_FONT_SIZE).setColor((area.getColor() | 0xFF000000)).draw(),
 			null,
 			GuiHelper.DEFAULT_PADDING + GuiHelper.MINECRAFT_FONT_SIZE,
 			area,
@@ -290,7 +289,7 @@ public final class ScrollableListWidget<T> extends ScrollablePanelWidget {
 
 			if (lastListItem == null || !routeKey.equals(lastKey)) {
 				currentListItem = ListItem.createParent(
-					(drawing, x, y) -> drawing.setVerticesWH(x + GuiHelper.DEFAULT_PADDING, y + GuiHelper.DEFAULT_PADDING, GuiHelper.MINECRAFT_FONT_SIZE, GuiHelper.MINECRAFT_FONT_SIZE).setColor(ARGB.opaque(route.getColor())).draw(),
+					(drawing, x, y) -> drawing.setVerticesWH(x + GuiHelper.DEFAULT_PADDING, y + GuiHelper.DEFAULT_PADDING, GuiHelper.MINECRAFT_FONT_SIZE, GuiHelper.MINECRAFT_FONT_SIZE).setColor((route.getColor() | 0xFF000000)).draw(),
 					null,
 					GuiHelper.DEFAULT_PADDING + GuiHelper.MINECRAFT_FONT_SIZE,
 					Utilities.formatName(routeNameSplit[0]),
@@ -314,7 +313,7 @@ public final class ScrollableListWidget<T> extends ScrollablePanelWidget {
 
 		routePlatforms.forEach(routePlatformData -> {
 			final Platform platform = routePlatformData.getPlatform();
-			final int stationColor = platform.area == null ? GuiHelper.BLACK_COLOR : ARGB.opaque(platform.area.getColor());
+			final int stationColor = platform.area == null ? GuiHelper.BLACK_COLOR : (platform.area.getColor() | 0xFF000000);
 			final String customDestinationPrefix = routePlatformData.getCustomDestination().isEmpty() ? "" : (Route.destinationIsReset(routePlatformData.getCustomDestination()) ? "\"" : "*");
 			final String stationName = platform.area == null ? "" : Utilities.formatName(platform.area.getName());
 

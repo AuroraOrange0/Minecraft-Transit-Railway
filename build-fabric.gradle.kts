@@ -104,8 +104,10 @@ tasks {
 	register<Copy>("buildAndCollect") {
 		description = "Builds the mod and collects the JAR and sources JAR into the build/libs directory with versioned naming."
 		group = "build"
+		outputs.upToDateWhen { false }
 		from(remapJar.map { it.archiveFile }, remapSourcesJar.map { it.archiveFile })
-		into(rootProject.layout.buildDirectory.file("libs/${project.property("mod.version")}"))
+		into(rootProject.layout.buildDirectory.file("release"))
+		rename("${project.property("mod.id")}-([^-]+)-([^-]+)-([a-z]+)(-sources|)\\.jar", "${project.property("mod.id").toString().uppercase()}-$3-$1-$2$4.jar")
 		dependsOn("build")
 	}
 

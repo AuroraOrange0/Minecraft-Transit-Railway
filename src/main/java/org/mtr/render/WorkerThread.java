@@ -236,7 +236,12 @@ public final class WorkerThread {
 		@Override
 		public boolean isOpaqueFullCube(int x, int y, int z) {
 			final BlockPos blockPos = new BlockPos(x, y, z);
+//? if >= 1.21.4 {
 			return clientWorld != null && clientWorld.getBlockState(blockPos).isSolidRender();
+//? } else {
+			/*return clientWorld != null && clientWorld.getBlockState(blockPos).isSolid();
+//
+*///? }
 		}
 
 		@Override

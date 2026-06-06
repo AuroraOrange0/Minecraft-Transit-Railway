@@ -17,6 +17,7 @@ import org.jspecify.annotations.Nullable;
 import org.mtr.cache.CachedFileResource;
 import org.mtr.libraries.it.unimi.dsi.fastutil.bytes.ByteArrayList;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import org.mtr.model.NewOptimizedModel;
 import org.mtr.tool.Drawing;
 
 import java.awt.*;
@@ -82,7 +83,13 @@ public final class MapTileResource extends CachedFileResource {
 					if (mapType == MapTileProvider.MapType.DYNAMIC && y < topY) {
 						int currentY = y;
 						while (true) {
-							if (currentY < world.getMinY() || !world.isEmptyBlock(new BlockPos(blockX, currentY, blockZ))) {
+//? if >= 1.21.4 {
+							final int minY = world.getMinY();
+//? } else {
+							/*final int minY = world.getMinBuildHeight();
+//
+*///? }
+							if (currentY < minY || !world.isEmptyBlock(new BlockPos(blockX, currentY, blockZ))) {
 								break;
 							} else {
 								currentY--;
@@ -94,7 +101,7 @@ public final class MapTileResource extends CachedFileResource {
 					}
 
 					// Shade or highlight based on the previous row's elevation
-					final float elevationShadow = previousY == null ? 0 : blockY > previousY ? 1 : blockY < previousY ? 0.8F : 0.9F;
+					final float elevationShadow = previousY == null ? 0 : (blockY > previousY ? 1 : (blockY < previousY ? 0.8F : 0.9F));
 					previousY = blockY;
 
 					// If there is no elevation data of the row above, don't draw
@@ -136,7 +143,7 @@ public final class MapTileResource extends CachedFileResource {
 		} else {
 			final boolean[] noVertices = {true};
 
-			final VertexBuffer vertexBuffer = VertexBuffer.uploadStatic(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR, vertexConsumer -> {
+			final VertexBuffer vertexBuffer = NewOptimizedModel.createVertexBuffer(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR, vertexConsumer -> {
 				final Drawing drawing = new Drawing(vertexConsumer);
 				int pixelOffsetX = 0;
 				int pixelOffsetY = 0;

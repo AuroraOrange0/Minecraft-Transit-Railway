@@ -380,7 +380,7 @@ public final class MTRClient {
 			ReleasedDynamicTextureRegistry.INSTANCE.reload();
 		});
 		EventRegistryClient.registerWorldRenderEvent(MainRenderer::render);
-		EventRegistryClient.registerHudLayerRenderEvent((context, renderTickCounter) -> DrivingGuiRenderer.render(context));
+		EventRegistryClient.registerHudLayerRenderEvent(context -> DrivingGuiRenderer.render(context));
 
 		Config.init(Minecraft.getInstance().gameDirectory.toPath());
 
@@ -451,6 +451,15 @@ public final class MTRClient {
 
 	public static float getGameTick() {
 		return gameMillis / 50F;
+	}
+
+	public static float getGameTimeDeltaTicks() {
+//? if >= 1.21.4 {
+		return Minecraft.getInstance().getDeltaTracker().getGameTimeDeltaTicks();
+//? } else {
+		/*return Minecraft.getInstance().getTimer().getGameTimeDeltaTicks();
+//
+*///? }
 	}
 
 	public static void processUniqueWorldId(String uniqueWorldId) {

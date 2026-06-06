@@ -61,9 +61,9 @@ public class BetaWarningScreen extends ScreenBase implements IGui, Utilities {
 		context.drawCenteredString(font, openTime < FORCE_OPEN_DURATION ? String.format("Please read the above carefully to continue! (%s)", (FORCE_OPEN_DURATION - openTime) / MILLIS_PER_SECOND) : "Press ESC to continue", 0, 0, ARGB_WHITE);
 		context.pose().popPose();
 
-		context.blitSprite(RenderType::guiTextured, ResourceLocation.parse("mtr/patreon"), width / 2 - BUTTON_WIDTH / 2 - SQUARE_SIZE, height - SQUARE_SIZE * 3 - TEXT_PADDING, SQUARE_SIZE, SQUARE_SIZE);
+		drawSprite(context, ResourceLocation.fromNamespaceAndPath("mtr", "patreon"), width / 2 - BUTTON_WIDTH / 2 - SQUARE_SIZE, height - SQUARE_SIZE * 3 - TEXT_PADDING, SQUARE_SIZE, SQUARE_SIZE);
 		final int youTubeIconPadding = Math.round(SQUARE_SIZE * (90F / 64 - 1) / 2);
-		context.blitSprite(RenderType::guiTextured, ResourceLocation.parse("mtr/youtube"), width / 2 + BUTTON_WIDTH / 2 - youTubeIconPadding, height - SQUARE_SIZE * 3 - TEXT_PADDING, SQUARE_SIZE * 90 / 64, SQUARE_SIZE);
+		drawSprite(context, ResourceLocation.fromNamespaceAndPath("mtr", "youtube"), width / 2 + BUTTON_WIDTH / 2 - youTubeIconPadding, height - SQUARE_SIZE * 3 - TEXT_PADDING, SQUARE_SIZE * 90 / 64, SQUARE_SIZE);
 	}
 
 	@Override
@@ -106,5 +106,14 @@ public class BetaWarningScreen extends ScreenBase implements IGui, Utilities {
 		} else {
 			openTime = FORCE_OPEN_DURATION;
 		}
+	}
+
+	private static void drawSprite(GuiGraphics context, ResourceLocation resourceLocation, int x, int y, int width, int height) {
+//? if >= 1.21.4 {
+		context.blitSprite(RenderType::guiTextured, resourceLocation, x, y, width, height);
+//? } else {
+		/*context.blitSprite(resourceLocation, x, y, width, height);
+//
+*///? }
 	}
 }

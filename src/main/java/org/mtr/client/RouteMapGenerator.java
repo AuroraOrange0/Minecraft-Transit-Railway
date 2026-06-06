@@ -109,7 +109,7 @@ public class RouteMapGenerator implements IGui {
 			final NativeImage nativeImage;
 			if (colors.isEmpty()) {
 				nativeImage = new NativeImage(NativeImage.Format.RGBA, 1, 1, false);
-				nativeImage.setPixel(0, 0, 0);
+				setPixel(nativeImage, 0, 0, 0);
 			} else {
 				nativeImage = new NativeImage(NativeImage.Format.RGBA, 1, colors.size(), false);
 				for (int i = 0; i < colors.size(); i++) {
@@ -556,7 +556,7 @@ public class RouteMapGenerator implements IGui {
 				return nativeImage;
 			} else {
 				final NativeImage nativeImage = new NativeImage(NativeImage.Format.RGBA, 1, 1, false);
-				nativeImage.setPixel(0, 0, transparentWhite ? 0 : ARGB_WHITE);
+				setPixel(nativeImage, 0, 0, transparentWhite ? 0 : ARGB_WHITE);
 				return nativeImage;
 			}
 		} catch (Exception e) {
@@ -577,6 +577,24 @@ public class RouteMapGenerator implements IGui {
 		final float xOffset = (availableWidth - imageWidth * scale) / 2;
 		final float x = xOffset - Math.max(0, step - delayTime) * scale / slideTime;
 		IDrawing.drawTexture(matrixStack, vertexConsumer, Math.max(x, 0), 0, imageWidth * scale + Math.min(x, 0), availableHeight, Math.max(-x, 0) / imageWidth / scale, (float) row / rows, 1, (float) (row + 1) / rows, Direction.UP, ARGB_WHITE, DEFAULT_LIGHT);
+	}
+
+	public static int getPixel(NativeImage nativeImage, int x, int y) {
+//? if >= 1.21.4 {
+		return nativeImage.getPixel(x, y);
+//? } else {
+		/*return nativeImage.getPixelRGBA(x, y);
+//
+*///? }
+	}
+
+	public static void setPixel(NativeImage nativeImage, int x, int y, int color) {
+//? if >= 1.21.4 {
+		nativeImage.setPixel(x, y, color);
+//? } else {
+		/*nativeImage.setPixelRGBA(x, y, color);
+//
+*///? }
 	}
 
 	private static void setup(ObjectArrayList<Int2ObjectAVLTreeMap<StationPosition>> stationPositions, ObjectArrayList<LongArrayList> stationsIdLists, int[] colorIndices, float[] bounds, boolean passed, boolean reverse) {
@@ -787,10 +805,10 @@ public class RouteMapGenerator implements IGui {
 						final float percentY1 = ceilY - pixelY;
 						final float percentX2 = pixelX - floorX;
 						final float percentY2 = pixelY - floorY;
-						final int pixel1 = nativeImageResource.getPixel(Math.clamp(floorX, 0, resourceWidth - 1), Math.clamp(floorY, 0, resourceHeight - 1));
-						final int pixel2 = nativeImageResource.getPixel(Math.clamp(ceilX, 0, resourceWidth - 1), Math.clamp(floorY, 0, resourceHeight - 1));
-						final int pixel3 = nativeImageResource.getPixel(Math.clamp(floorX, 0, resourceWidth - 1), Math.clamp(ceilY, 0, resourceHeight - 1));
-						final int pixel4 = nativeImageResource.getPixel(Math.clamp(ceilX, 0, resourceWidth - 1), Math.clamp(ceilY, 0, resourceHeight - 1));
+						final int pixel1 = getPixel(nativeImageResource, Math.clamp(floorX, 0, resourceWidth - 1), Math.clamp(floorY, 0, resourceHeight - 1));
+						final int pixel2 = getPixel(nativeImageResource, Math.clamp(ceilX, 0, resourceWidth - 1), Math.clamp(floorY, 0, resourceHeight - 1));
+						final int pixel3 = getPixel(nativeImageResource, Math.clamp(floorX, 0, resourceWidth - 1), Math.clamp(ceilY, 0, resourceHeight - 1));
+						final int pixel4 = getPixel(nativeImageResource, Math.clamp(ceilX, 0, resourceWidth - 1), Math.clamp(ceilY, 0, resourceHeight - 1));
 						final int newColor;
 						if (useActualColor) {
 							newColor = pixel1;
@@ -814,7 +832,7 @@ public class RouteMapGenerator implements IGui {
 		if (Utilities.isBetween(x, 0, nativeImage.getWidth() - 1) && Utilities.isBetween(y, 0, nativeImage.getHeight() - 1)) {
 			final float percent = (float) ((color >> 24) & 0xFF) / 0xFF;
 			if (percent > 0) {
-				final int existingPixel = nativeImage.getPixel(x, y);
+				final int existingPixel = getPixel(nativeImage, x, y);
 				final boolean existingTransparent = ((existingPixel >> 24) & 0xFF) == 0;
 				final int r1 = existingTransparent ? 0xFF : ((existingPixel >> 16) & 0xFF);
 				final int g1 = existingTransparent ? 0xFF : ((existingPixel >> 8) & 0xFF);
@@ -830,15 +848,15 @@ public class RouteMapGenerator implements IGui {
 
 	private static void drawPixelSafe(NativeImage nativeImage, int x, int y, int color) {
 		if (Utilities.isBetween(x, 0, nativeImage.getWidth() - 1) && Utilities.isBetween(y, 0, nativeImage.getHeight() - 1)) {
-			nativeImage.setPixel(x, y, color);
+			setPixel(nativeImage, x, y, color);
 		}
 	}
 
 	private static void clearColor(NativeImage nativeImage, int color) {
 		for (int x = 0; x < nativeImage.getWidth(); x++) {
 			for (int y = 0; y < nativeImage.getHeight(); y++) {
-				if (nativeImage.getPixel(x, y) == color) {
-					nativeImage.setPixel(x, y, 0);
+				if (getPixel(nativeImage, x, y) == color) {
+					setPixel(nativeImage, x, y, 0);
 				}
 			}
 		}

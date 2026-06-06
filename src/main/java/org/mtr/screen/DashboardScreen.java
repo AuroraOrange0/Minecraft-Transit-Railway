@@ -4,10 +4,10 @@ import gg.essential.universal.UMinecraft;
 import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.ARGB;
 import net.minecraft.util.FormattedCharSequence;
 import org.jspecify.annotations.Nullable;
 import org.mtr.MTRClient;
@@ -249,11 +249,11 @@ public final class DashboardScreen extends ScreenBase {
 		addRenderableWidget(zoomInButton);
 		addRenderableWidget(zoomOutButton);
 
-		colorSelector = new ColorSelectorWidget(width / 2, () -> enableControls(true), this::renderBlurredBackground);
+		colorSelector = new ColorSelectorWidget(width / 2, () -> enableControls(true), this::renderBlurredBackgroundHelper);
 		colorSelector.setPosition(width / 4, height * 2);
 		addRenderableWidget(colorSelector);
 
-		deleteConfirmationWidget = new DeleteConfirmationWidget(width / 2, () -> enableControls(true), this::renderBlurredBackground);
+		deleteConfirmationWidget = new DeleteConfirmationWidget(width / 2, () -> enableControls(true), this::renderBlurredBackgroundHelper);
 		deleteConfirmationWidget.setPosition(width / 4, height * 2);
 		addRenderableWidget(deleteConfirmationWidget);
 	}
@@ -376,7 +376,7 @@ public final class DashboardScreen extends ScreenBase {
 		if (colorSelector != null && data != null) {
 			colorSelector.setColorCallback(color -> {
 				data.setColor(color);
-				openColorSelectorButton.setBackgroundColor(ARGB.opaque(color));
+				openColorSelectorButton.setBackgroundColor(color | 0xFF000000);
 			}, data.getColor());
 			colorSelector.setY((height - colorSelector.getHeight()) / 2);
 			enableControls(false);
@@ -441,7 +441,7 @@ public final class DashboardScreen extends ScreenBase {
 
 		stationNameTextField.setText(editingArea.getName());
 		depotNameTextField.setText(editingArea.getName());
-		openColorSelectorButton.setBackgroundColor(ARGB.opaque(editingArea.getColor()));
+		openColorSelectorButton.setBackgroundColor(editingArea.getColor() | 0xFF000000);
 
 		final boolean isStation = editingArea instanceof Station;
 		tabGroupWidget.selectTab(isStation ? 0 : 2);
@@ -453,7 +453,7 @@ public final class DashboardScreen extends ScreenBase {
 		setEditingData(null, editingRoute);
 
 		routeNameTextField.setText(editingRoute.getName());
-		openColorSelectorButton.setBackgroundColor(ARGB.opaque(editingRoute.getColor()));
+		openColorSelectorButton.setBackgroundColor(editingRoute.getColor() | 0xFF000000);
 
 		tabGroupWidget.selectTab(1);
 		mapWidget.setShowStations(true);
@@ -504,5 +504,14 @@ public final class DashboardScreen extends ScreenBase {
 
 	private boolean isValidRoutePlatformIndex() {
 		return editingRoute != null && editingRoutePlatformIndex >= 0 && editingRoutePlatformIndex < editingRoute.getRoutePlatforms().size();
+	}
+
+	private void renderBlurredBackgroundHelper() {
+//? if >= 1.21.4 {
+		renderBlurredBackground();
+		//? } else {
+		/*renderBlurredBackground(0);
+//
+*///? }
 	}
 }
