@@ -7,6 +7,7 @@ plugins {
 	id("net.fabricmc.fabric-loom-remap")
 	id("dev.kikugie.fletching-table.fabric") version "+"
 	id("io.freefair.lombok") version "+"
+	id("com.gradleup.shadow") version "+"
 }
 
 base.archivesName = property("mod.id") as String
@@ -32,10 +33,32 @@ val requiredJava = when {
 	else -> JavaVersion.VERSION_26
 }
 
+configurations {
+	create("shadowBundle") {
+		isCanBeResolved = true
+		isCanBeConsumed = false
+	}
+}
+
 java {
 	withSourcesJar()
 	targetCompatibility = requiredJava
 	sourceCompatibility = requiredJava
+}
+
+fun DependencyHandlerScope.modImplementationAndInclude(notation: Any) {
+	modImplementation(notation)
+	include(notation)
+}
+
+fun DependencyHandlerScope.implementationAndInclude(notation: Any) {
+	implementation(notation)
+	include(notation)
+}
+
+fun DependencyHandlerScope.implementationAndShadow(notation: Any) {
+	implementation(notation)
+	add("shadowBundle", notation)
 }
 
 dependencies {
@@ -44,14 +67,14 @@ dependencies {
 
 	modImplementation("net.fabricmc:fabric-loader:${property("dependency.fabric_loader")}")
 	modImplementation("net.fabricmc.fabric-api:fabric-api:${property("dependency.fabric_api")}")
-	modImplementation("gg.essential:universalcraft-${property("dependency.universal_craft_minecraft")}-fabric:${property("dependency.universal_craft")}")
 	modImplementation(fletchingTable.modrinth("modmenu", sc.current.version))
+	modImplementationAndInclude("gg.essential:universalcraft-${property("dependency.universal_craft_minecraft")}-fabric:${property("dependency.universal_craft")}")
 
-	implementation("org.mtr:transport-simulation-core:+")
-	implementation("com.logisticscraft:occlusionculling:+")
-	implementation("gg.essential:elementa:${property("dependency.elementa")}")
+	implementationAndShadow("org.mtr:transport-simulation-core:+")
+	implementationAndShadow("com.logisticscraft:occlusionculling:+")
+	implementationAndInclude("gg.essential:elementa:${property("dependency.elementa")}")
+	implementationAndInclude("net.fabricmc:fabric-language-kotlin:+")
 	implementation("org.jspecify:jspecify:+")
-	implementation("net.fabricmc:fabric-language-kotlin:+")
 
 	testImplementation("org.junit.jupiter:junit-jupiter-api:5.+")
 	testImplementation("org.junit.platform:junit-platform-launcher:1.+")
@@ -88,6 +111,17 @@ tasks {
 	javadoc {
 		// Suppress "missing" doclint only (generated classes don't need javadoc)
 		(options as StandardJavadocDocletOptions).addStringOption("Xdoclint:all,-missing", "-quiet")
+	}
+
+	shadowJar {
+		configurations = listOf(project.configurations["shadowBundle"])
+		minimize()
+		relocate("com.logisticscraft", "org.mtr.libraries.com.logisticscraft")
+		relocate("de.javagl", "org.mtr.libraries.de.javagl")
+	}
+
+	remapJar {
+		inputFile.set(shadowJar.get().archiveFile)
 	}
 
 	withType<JavaCompile>().configureEach {

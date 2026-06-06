@@ -65,7 +65,11 @@ public final class RegistryServer {
 
 	public static ObjectHolder<Block> registerBlock(String registryName, Function<BlockBehaviour.Properties, Block> factory) {
 //? if fabric {
-		return register(BuiltInRegistries.BLOCK, Registries.BLOCK, registryName, dataRegistryKey -> factory.apply(BlockBehaviour.Properties.of()));
+		return register(BuiltInRegistries.BLOCK, Registries.BLOCK, registryName, dataRegistryKey -> factory.apply(BlockBehaviour.Properties.of()
+//? if >= 1.21.4 {
+				.setId(dataRegistryKey)
+//? }
+		));
 //? }
 
 //? if neoforge {
@@ -79,7 +83,11 @@ public final class RegistryServer {
 
 	public static ObjectHolder<Item> registerItem(String registryName, Function<Item.Properties, Item> factory, @Nullable String itemGroupRegistryName) {
 //? if fabric {
-		final ObjectHolder<Item> objectHolder = register(BuiltInRegistries.ITEM, Registries.ITEM, registryName, dataRegistryKey -> factory.apply(new Item.Properties()));
+		final ObjectHolder<Item> objectHolder = register(BuiltInRegistries.ITEM, Registries.ITEM, registryName, dataRegistryKey -> factory.apply(new Item.Properties()
+//? if >= 1.21.4 {
+				.setId(dataRegistryKey)
+//? }
+		));
 		if (itemGroupRegistryName != null) {
 			ITEM_GROUP_ENTRIES.computeIfAbsent(itemGroupRegistryName, key -> new ObjectArrayList<>()).add(objectHolder::get);
 		}

@@ -7,6 +7,7 @@ plugins {
 	id("net.neoforged.moddev")
 	id("dev.kikugie.fletching-table.neoforge") version "+"
 	id("io.freefair.lombok") version "+"
+	id("com.gradleup.shadow") version "+"
 }
 
 base.archivesName = property("mod.id") as String
@@ -32,19 +33,31 @@ val requiredJava = when {
 	else -> JavaVersion.VERSION_26
 }
 
+configurations {
+	create("shadowBundle") {
+		isCanBeResolved = true
+		isCanBeConsumed = false
+	}
+}
+
 java {
 	withSourcesJar()
 	targetCompatibility = requiredJava
 	sourceCompatibility = requiredJava
 }
 
+fun DependencyHandlerScope.implementationAndShadow(notation: Any) {
+	implementation(notation)
+	add("shadowBundle", notation)
+}
+
 dependencies {
-	implementation("org.mtr:transport-simulation-core:+")
-	implementation("com.logisticscraft:occlusionculling:+")
-	implementation("gg.essential:elementa:${property("dependency.elementa")}")
-	implementation("gg.essential:universalcraft-${property("dependency.universal_craft_minecraft")}-neoforge:${property("dependency.universal_craft")}")
-	implementation("org.jspecify:jspecify:+")
+	implementationAndShadow("org.mtr:transport-simulation-core:+")
+	implementationAndShadow("com.logisticscraft:occlusionculling:+")
+	implementationAndShadow("gg.essential:elementa:${property("dependency.elementa")}")
+	implementationAndShadow("gg.essential:universalcraft-${property("dependency.universal_craft_minecraft")}-neoforge:${property("dependency.universal_craft")}")
 	implementation("net.fabricmc:fabric-language-kotlin:+")
+	implementation("org.jspecify:jspecify:+")
 
 	testImplementation("org.junit.jupiter:junit-jupiter-api:5.+")
 	testImplementation("org.junit.platform:junit-platform-launcher:1.+")
@@ -95,6 +108,14 @@ tasks {
 		(options as StandardJavadocDocletOptions).addStringOption("Xdoclint:all,-missing", "-quiet")
 	}
 
+	shadowJar {
+		configurations = listOf(project.configurations["shadowBundle"])
+		minimize()
+		relocate("com.logisticscraft", "org.mtr.libraries.com.logisticscraft")
+		relocate("de.javagl", "org.mtr.libraries.de.javagl")
+		relocate("gg.essential", "org.mtr.libraries.gg.essential")
+	}
+
 	withType<JavaCompile>().configureEach {
 		options.compilerArgs.addAll(
 			listOf(
@@ -110,9 +131,9 @@ tasks {
 		description = "Builds the mod and collects the JAR and sources JAR into the build/libs directory with versioned naming."
 		group = "build"
 		outputs.upToDateWhen { false }
-		from(jar.map { it.archiveFile })
+		from(shadowJar.map { it.archiveFile })
 		into(rootProject.layout.buildDirectory.file("release"))
-		rename("${project.property("mod.id")}-([^-]+)-([^-]+)-([a-z]+)(-sources|)\\.jar", "${project.property("mod.id").toString().uppercase()}-$3-$1-$2$4.jar")
+		rename("${project.property("mod.id")}-([^-]+)-([^-]+)-([a-z]+)-all\\.jar", "${project.property("mod.id").toString().uppercase()}-$3-$1-$2.jar")
 		dependsOn("build")
 	}
 

@@ -42,7 +42,7 @@ public final class BetterButtonWidget extends ClickableWidgetBase {
 		final PoseStack matrixStack = context.pose();
 
 		// Draw background
-		new Drawing(matrixStack, GuiHelper.getGuiTexturedRenderType(icon))
+		new Drawing(matrixStack, RenderType.gui())
 			.setVerticesWH(getX(), getY(), width, height)
 			.setColor(isMouseOver(mouseX, mouseY) ? hoverColor : backgroundColor)
 			.draw();
