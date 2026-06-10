@@ -19,7 +19,7 @@ public abstract class WindowBase extends WindowScreen {
 	private final Screen previousScreenLegacy;
 
 	public WindowBase(@Nullable WindowScreen previousScreen) {
-		super(ElementaVersion.V10);
+		super(ElementaVersion.V11);
 		this.previousScreen = previousScreen;
 		previousScreenLegacy = null;
 	}
@@ -32,7 +32,7 @@ public abstract class WindowBase extends WindowScreen {
 	}
 
 	public WindowBase() {
-		this((WindowScreen) null);
+		this(null);
 	}
 
 	@Override
@@ -63,10 +63,12 @@ public abstract class WindowBase extends WindowScreen {
 		}
 	}
 
-	/**
-	 * Implicit override
-	 */
+	@Override
 	public final boolean isPauseScreen() {
 		return false;
+	}
+
+	public final void markScreenForClose() {
+		closeScreen = true;
 	}
 }

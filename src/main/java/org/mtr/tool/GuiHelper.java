@@ -148,13 +148,13 @@ public final class GuiHelper {
 	}
 
 	/**
-	 * Creates a scrollable list component with a black background.
+	 * Creates a scrollable list component with the default dark background.
 	 *
 	 * @param slotBackgroundComponent the parent container
 	 * @return the {@link ListComponent}
 	 */
 	public static <T> ListComponent<T> createListComponent(SlotBackgroundComponent slotBackgroundComponent) {
-		slotBackgroundComponent.setBackgroundColor(Color.BLACK);
+		slotBackgroundComponent.setBackgroundColor(new Color(GuiHelper.BACKGROUND_COLOR));
 
 		final ScrollPanelComponent scrollPanelComponent = (ScrollPanelComponent) new ScrollPanelComponent(false)
 			.setChildOf(slotBackgroundComponent)
@@ -293,7 +293,7 @@ public final class GuiHelper {
 		}
 	}
 
-	public static void drawShadowWH(Drawing drawing, int x, int y, int width, int height, int z, double shadowRadius, int intensity) {
+	public static void drawShadowWH(Drawing drawing, float x, float y, float width, float height, int z, double shadowRadius, int intensity) {
 		drawShadow(drawing, x, y, x + width, y + height, z, shadowRadius, intensity);
 	}
 

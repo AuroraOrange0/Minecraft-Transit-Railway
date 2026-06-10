@@ -48,12 +48,12 @@ public final class StationScreen extends NameColorDataScreenBase<Station> {
 	private final TextInputComponent stationExitDestinationTextInput;
 	private final ButtonComponent editExitButton;
 
-	public StationScreen(Station station, @Nullable ScreenBase previousScreenLegacy) {
+	public StationScreen(Station station, @Nullable WindowBase previousScreen) {
 		super(station, ObjectImmutableList.of(
 			new ObjectObjectImmutablePair<>(ReleasedDynamicTextureRegistry.BRUSH_TEXTURE.get(), TranslationProvider.GUI_MTR_STATION.getString()),
 			new ObjectObjectImmutablePair<>(ReleasedDynamicTextureRegistry.POPPY_TEXTURE.get(), TranslationProvider.GUI_MTR_STATION_COLOR.getString()),
 			new ObjectObjectImmutablePair<>(ReleasedDynamicTextureRegistry.EXIT_TEXTURE.get(), TranslationProvider.GUI_MTR_EXITS.getString())
-		), TranslationProvider.GUI_MTR_STATION_NAME, name -> TranslationProvider.GUI_MTR_STATION.getString(Utilities.formatName(name)), TranslationProvider.GUI_MTR_STATION_COLOR, previousScreenLegacy);
+		), TranslationProvider.GUI_MTR_STATION_NAME, name -> TranslationProvider.GUI_MTR_STATION.getString(Utilities.formatName(name)), TranslationProvider.GUI_MTR_STATION_COLOR, previousScreen);
 
 		GuiHelper.createLabel(firstTabScrollComponent, TranslationProvider.GUI_MTR_ZONE.getString());
 

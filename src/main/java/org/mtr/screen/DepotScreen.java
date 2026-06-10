@@ -57,8 +57,8 @@ public final class DepotScreen extends NameColorDataScreenBase<Depot> {
 	private static final int FREQUENCY_MULTIPLIER = 4;
 	private static final Long2LongAVLTreeMap DEPOT_GENERATION_START_TIME = new Long2LongAVLTreeMap();
 
-	public DepotScreen(Depot depot, @Nullable ScreenBase previousScreenLegacy) {
-		super(depot, getTabs(depot), TranslationProvider.GUI_MTR_DEPOT_NAME, name -> TranslationProvider.GUI_MTR_DEPOT.getString(Utilities.formatName(name)), TranslationProvider.GUI_MTR_DEPOT_COLOR, previousScreenLegacy);
+	public DepotScreen(Depot depot, @Nullable WindowBase previousScreen) {
+		super(depot, getTabs(depot), TranslationProvider.GUI_MTR_DEPOT_NAME, name -> TranslationProvider.GUI_MTR_DEPOT.getString(Utilities.formatName(name)), TranslationProvider.GUI_MTR_DEPOT_COLOR, previousScreen);
 		depotInstructionsLabel = GuiHelper.createLabel(firstTabScrollComponent, "");
 
 		final ButtonComponent editInstructionsButton = (ButtonComponent) new ButtonComponent(true)

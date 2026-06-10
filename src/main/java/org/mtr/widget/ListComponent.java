@@ -91,7 +91,7 @@ public final class ListComponent<T> extends UIComponent {
 					clickAction = listItem::toggle;
 
 					// Draw the action button
-					deferredRenders.add(() -> new Drawing(matrixStack, RenderType.gui())
+					deferredRenders.add(() -> new Drawing(matrixStack, GuiHelper.getGuiTexturedRenderType(listItem.isExpanded() ? GuiHelper.CHEVRON_UP_TEXTURE_ID : GuiHelper.CHEVRON_DOWN_TEXTURE_ID))
 						.setVerticesWH(leftBound + GuiHelper.DEFAULT_PADDING / 2F, startY + GuiHelper.DEFAULT_PADDING / 2F, GuiHelper.DEFAULT_ICON_SIZE, GuiHelper.DEFAULT_ICON_SIZE)
 						.setUv()
 						.draw()
@@ -111,7 +111,7 @@ public final class ListComponent<T> extends UIComponent {
 						}
 
 						// Draw the action button
-						deferredRenders.add(() -> new Drawing(matrixStack, RenderType.gui())
+						deferredRenders.add(() -> new Drawing(matrixStack, GuiHelper.getGuiTexturedRenderType(identifier))
 							.setVerticesWH(leftBound + GuiHelper.DEFAULT_PADDING / 2F, startY + GuiHelper.DEFAULT_PADDING / 2F, GuiHelper.DEFAULT_ICON_SIZE, GuiHelper.DEFAULT_ICON_SIZE)
 							.setUv()
 							.draw()
@@ -325,7 +325,7 @@ public final class ListComponent<T> extends UIComponent {
 		listComponent.setData(groupedRoutes);
 	}
 
-	public static void setRoutePlatforms(ScrollableListWidget<RoutePlatformData> scrollableListWidget, ObjectArrayList<RoutePlatformData> routePlatforms, ObjectArrayList<ObjectObjectImmutablePair<ResourceLocation, ListItem.ActionConsumer<RoutePlatformData>>> actions) {
+	public static void setRoutePlatforms(ListComponent<RoutePlatformData> scrollableListWidget, ObjectArrayList<RoutePlatformData> routePlatforms, ObjectArrayList<ObjectObjectImmutablePair<ResourceLocation, ListItem.ActionConsumer<RoutePlatformData>>> actions) {
 		final ObjectArrayList<ListItem<RoutePlatformData>> dataList = new ObjectArrayList<>();
 
 		routePlatforms.forEach(routePlatformData -> {

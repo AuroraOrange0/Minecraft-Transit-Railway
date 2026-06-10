@@ -58,8 +58,8 @@ public final class SidingScreen extends NameColorDataScreenBase<Siding> {
 	private static final int MAX_DRIVABLE_TIMEOUT = 10; // 10 minutes
 	private static final int LEFT_WIDTH = 96;
 
-	public SidingScreen(Siding siding, ScreenBase previousScreenLegacy) {
-		super(siding, getTabs(siding), TranslationProvider.GUI_MTR_SIDING_NUMBER, name -> (Utilities.formatName(siding.getDepotName()) + "   " + TranslationProvider.GUI_MTR_SIDING.getString(Utilities.formatName(name))).trim(), null, previousScreenLegacy);
+	public SidingScreen(Siding siding, @Nullable WindowBase previousScreen) {
+		super(siding, getTabs(siding), TranslationProvider.GUI_MTR_SIDING_NUMBER, name -> (Utilities.formatName(siding.getDepotName()) + "   " + TranslationProvider.GUI_MTR_SIDING.getString(Utilities.formatName(name))).trim(), null, previousScreen);
 
 		selectedVehiclesText = GuiHelper.createLabel(firstTabScrollComponent, "");
 

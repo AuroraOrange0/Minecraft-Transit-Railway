@@ -38,9 +38,9 @@ public abstract class NameColorDataScreenBase<T extends NameColorDataBase> exten
 		TranslationProvider.TranslationHolder nameLabel,
 		Function<String, String> nameLabelFormatter,
 		TranslationProvider.@Nullable TranslationHolder colorLabel,
-		@Nullable ScreenBase previousScreenLegacy
+		@Nullable WindowBase previousScreen
 	) {
-		super(previousScreenLegacy);
+		super(previousScreen);
 		this.data = data;
 		this.nameLabelFormatter = nameLabelFormatter;
 

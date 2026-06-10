@@ -32,10 +32,10 @@ public final class PlatformScreen extends NameColorDataScreenBase<Platform> {
 	private static final int MAX_DWELL_TIME_MINUTES = 10; // 10 minutes
 	private static final int LEFT_WIDTH = 96;
 
-	public PlatformScreen(Platform platform, ScreenBase previousScreenLegacy) {
+	public PlatformScreen(Platform platform, @Nullable WindowBase previousScreen) {
 		super(platform, ObjectImmutableList.of(
 			new ObjectObjectImmutablePair<>(ReleasedDynamicTextureRegistry.BRUSH_TEXTURE.get(), TranslationProvider.GUI_MTR_PLATFORM.getString())
-		), TranslationProvider.GUI_MTR_PLATFORM_NUMBER, name -> (Utilities.formatName(platform.getStationName()) + "   " + TranslationProvider.GUI_MTR_PLATFORM.getString(Utilities.formatName(name))).trim(), null, previousScreenLegacy);
+		), TranslationProvider.GUI_MTR_PLATFORM_NUMBER, name -> (Utilities.formatName(platform.getStationName()) + "   " + TranslationProvider.GUI_MTR_PLATFORM.getString(Utilities.formatName(name))).trim(), null, previousScreen);
 
 		if (!platform.getTransportMode().continuousMovement) {
 			GuiHelper.createLabel(firstTabScrollComponent, TranslationProvider.GUI_MTR_DWELL_TIME.getString());

@@ -37,11 +37,11 @@ public final class RouteScreen extends NameColorDataScreenBase<Route> {
 	@Nullable
 	private final CheckboxComponent isAnticlockwiseCheckbox;
 
-	public RouteScreen(Route route, @Nullable ScreenBase previousScreenLegacy) {
+	public RouteScreen(Route route, @Nullable WindowBase previousScreen) {
 		super(route, ObjectImmutableList.of(
 			new ObjectObjectImmutablePair<>(ReleasedDynamicTextureRegistry.BRUSH_TEXTURE.get(), TranslationProvider.GUI_MTR_ROUTES.getString()),
 			new ObjectObjectImmutablePair<>(ReleasedDynamicTextureRegistry.POPPY_TEXTURE.get(), TranslationProvider.GUI_MTR_ROUTE_COLOR.getString())
-		), TranslationProvider.GUI_MTR_ROUTE_NAME, Utilities::formatName, TranslationProvider.GUI_MTR_ROUTE_COLOR, previousScreenLegacy);
+		), TranslationProvider.GUI_MTR_ROUTE_NAME, Utilities::formatName, TranslationProvider.GUI_MTR_ROUTE_COLOR, previousScreen);
 
 		GuiHelper.createLabel(firstTabScrollComponent, TranslationProvider.GUI_MTR_ROUTE_NUMBER.getString());
 

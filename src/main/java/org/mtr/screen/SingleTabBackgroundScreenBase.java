@@ -22,7 +22,7 @@ public abstract class SingleTabBackgroundScreenBase extends WindowBase {
 	private final BackgroundComponent backgroundComponent;
 
 	protected SingleTabBackgroundScreenBase(String title) {
-		this((WindowBase) null, title);
+		this(null, title);
 	}
 
 	protected SingleTabBackgroundScreenBase(@Nullable WindowBase previousScreen, String title) {
