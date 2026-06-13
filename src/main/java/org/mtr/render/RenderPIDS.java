@@ -112,7 +112,7 @@ public class RenderPIDS<T extends BlockPIDSBase.BlockEntityBase> extends BlockEn
 
 		final Integer customizedColor = entity.customizedColor();
 		final Color textColor = customizedColor == null ? new Color(entity.textColor()) : new Color(customizedColor);
-		final Color textColorArrived = new Color(entity.textColorArrived());
+		final Color textColorArrived = entity.textColorArrived() == entity.textColor() ? textColor : new Color(entity.textColorArrived());
 
 		for (int i = 0; i < entity.maxArrivals; i++) {
 			final int languageTicks = (int) Math.floor(MTRClient.getGameTick()) / SWITCH_LANGUAGE_TICKS;
