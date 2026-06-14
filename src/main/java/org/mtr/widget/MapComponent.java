@@ -52,7 +52,7 @@ import java.util.stream.Collectors;
 public final class MapComponent extends UIComponent {
 
 	@Nullable
-	private AreaBase<?, ?> editingArea;
+	private SimpleAreaBase editingArea;
 	@Nullable
 	private Route editingRoute;
 	private double lastClickedX;
@@ -74,7 +74,7 @@ public final class MapComponent extends UIComponent {
 	private final Object2ObjectAVLTreeMap<Position, ObjectArrayList<Siding>> flatPositionToSidingsMap;
 
 	private final Long2FloatAVLTreeMap tileOpacityValues = new Long2FloatAVLTreeMap();
-	private final ObjectArraySet<Station> hoverStations = new ObjectArraySet<>();
+	private final ObjectArraySet<SimpleAreaBase> hoverStationsHomesLandmarks = new ObjectArraySet<>();
 	private final ObjectArraySet<Platform> hoverPlatforms = new ObjectArraySet<>();
 	private final ObjectArraySet<Depot> hoverDepots = new ObjectArraySet<>();
 	private final ObjectArraySet<Siding> hoverSidings = new ObjectArraySet<>();
@@ -83,12 +83,12 @@ public final class MapComponent extends UIComponent {
 	private final GuiAnimation guiAnimationY = new GuiAnimation();
 	private final GuiAnimation guiAnimationScale = new GuiAnimation();
 
-	private final UIBlock stationsPopupBlock;
+	private final UIBlock stationsHomesLandmarksPopupBlock;
 	private final UIBlock platformsPopupBlock;
 	private final UIBlock depotsPopupBlock;
 	private final UIBlock sidingsPopupBlock;
 
-	private final ListComponent<Station> stationsPopupListComponent;
+	private final ListComponent<SimpleAreaBase> stationsHomesLandmarksPopupListComponent;
 	private final ListComponent<Platform> platformsPopupListComponent;
 	private final ListComponent<Depot> depotsPopupListComponent;
 	private final ListComponent<Siding> sidingsPopupListComponent;
@@ -108,15 +108,15 @@ public final class MapComponent extends UIComponent {
 	private static final int ANIMATION_DURATION_FAST = 200;
 	private static final int DRAG_TIMEOUT_MILLIS = 2000;
 
-	public MapComponent(DashboardScreen dashboardScreen, TransportMode transportMode, Consumer<AreaBase<?, ?>> onStartEditingArea, BiConsumer<NameColorDataBase, DeleteDataRequest> onDeleteData) {
+	public MapComponent(DashboardScreen dashboardScreen, TransportMode transportMode, Consumer<SimpleAreaBase> onStartEditingArea, BiConsumer<NameColorDataBase, DeleteDataRequest> onDeleteData) {
 		this.transportMode = transportMode;
 
-		stationsPopupBlock = createPopupBlock();
+		stationsHomesLandmarksPopupBlock = createPopupBlock();
 		platformsPopupBlock = createPopupBlock();
 		depotsPopupBlock = createPopupBlock();
 		sidingsPopupBlock = createPopupBlock();
 
-		stationsPopupListComponent = createPopupListComponent(stationsPopupBlock);
+		stationsHomesLandmarksPopupListComponent = createPopupListComponent(stationsHomesLandmarksPopupBlock);
 		platformsPopupListComponent = createPopupListComponent(platformsPopupBlock);
 		depotsPopupListComponent = createPopupListComponent(depotsPopupBlock);
 		sidingsPopupListComponent = createPopupListComponent(sidingsPopupBlock);
@@ -175,8 +175,8 @@ public final class MapComponent extends UIComponent {
 					final DoubleDoubleImmutablePair worldPos1 = coordsToWorldPos(lastClickedX - left, lastClickedY - top);
 					final DoubleDoubleImmutablePair worldPos2 = coordsToWorldPos(mouseX - left, mouseY - top);
 					editingArea.setCorners(
-						new Position((int) Math.floor(worldPos1.leftDouble()), Long.MIN_VALUE, (int) Math.floor(worldPos1.rightDouble())),
-						new Position((int) Math.floor(worldPos2.leftDouble()), Long.MAX_VALUE, (int) Math.floor(worldPos2.rightDouble()))
+						new Position((int) Math.floor(worldPos1.leftDouble()), editingArea.getMinY(), (int) Math.floor(worldPos1.rightDouble())),
+						new Position((int) Math.floor(worldPos2.leftDouble()), editingArea.getMaxY(), (int) Math.floor(worldPos2.rightDouble()))
 					);
 				}
 			}
@@ -198,14 +198,22 @@ public final class MapComponent extends UIComponent {
 
 			if (!showPopup) {
 				if (Math.abs(lastClickedX - mouseX) < 1 && Math.abs(lastClickedY - mouseY) < 1) {
-					if (!hoverStations.isEmpty()) {
-						showPopup(stationsPopupBlock, hoverStations.size(), mouseX - left, mouseY - top);
-						ListComponent.setAreas(stationsPopupListComponent, hoverStations, null, hasPermission ? ObjectArrayList.of(
-							new ObjectObjectImmutablePair<>(GuiHelper.SELECT_TEXTURE_ID, (indexList, station) -> onStartEditingArea.accept(station)),
-							new ObjectObjectImmutablePair<>(GuiHelper.EDIT_TEXTURE_ID, (indexList, station) -> UMinecraft.setCurrentScreenObj(new StationScreen(station, dashboardScreen))),
-							new ObjectObjectImmutablePair<>(GuiHelper.DELETE_TEXTURE_ID, (indexList, station) -> onDeleteData.accept(station, new DeleteDataRequest().addStationId(station.getId())))
+					if (!hoverStationsHomesLandmarks.isEmpty()) {
+						showPopup(stationsHomesLandmarksPopupBlock, hoverStationsHomesLandmarks.size(), mouseX - left, mouseY - top);
+						ListComponent.setAreas(stationsHomesLandmarksPopupListComponent, hoverStationsHomesLandmarks, null, hasPermission ? ObjectArrayList.of(
+							new ObjectObjectImmutablePair<>(GuiHelper.SELECT_TEXTURE_ID, (indexList, area) -> onStartEditingArea.accept(area)),
+							new ObjectObjectImmutablePair<>(GuiHelper.EDIT_TEXTURE_ID, (indexList, area) -> UMinecraft.setCurrentScreenObj(switch (area) {
+								case Home home -> new HomeScreen(home, dashboardScreen);
+								case Landmark landmark -> new LandmarkScreen(landmark, dashboardScreen);
+								default -> new StationScreen((Station) area, dashboardScreen);
+							})),
+							new ObjectObjectImmutablePair<>(GuiHelper.DELETE_TEXTURE_ID, (indexList, area) -> onDeleteData.accept(area, switch (area) {
+								case Home ignored -> new DeleteDataRequest().addHomeId(area.getId());
+								case Landmark ignored -> new DeleteDataRequest().addLandmarkId(area.getId());
+								default -> new DeleteDataRequest().addStationId(area.getId());
+							}))
 						) : new ObjectArrayList<>());
-						stationsPopupListComponent.tryTrigger();
+						stationsHomesLandmarksPopupListComponent.tryTrigger();
 					}
 					if (!hoverPlatforms.isEmpty()) {
 						showPopup(platformsPopupBlock, hoverPlatforms.size(), mouseX - left, mouseY - top);
@@ -341,7 +349,7 @@ public final class MapComponent extends UIComponent {
 		}
 
 		final Drawing drawing = new Drawing(matrixStack, RenderType.gui()).setGuiBoundsWH(left, top, width, height);
-		hoverStations.clear();
+		hoverStationsHomesLandmarks.clear();
 		hoverPlatforms.clear();
 		hoverDepots.clear();
 		hoverSidings.clear();
@@ -354,14 +362,26 @@ public final class MapComponent extends UIComponent {
 			drawSavedRails(drawing, deferredRenders, flatPositionToSidingsMap, !showPopup && editingArea == null && editingRoute == null ? hoverSidings : null, mouseX, mouseY);
 		}
 
-		// Stations and depots
+		// Stations, depots, homes, and landmarks
 		final boolean canHoverAreas = !showPopup && editingArea == null && editingRoute == null && hoverPlatforms.isEmpty() && hoverSidings.isEmpty();
 		if (showStations) {
 			final ObjectArraySet<Station> stations = new ObjectArraySet<>(MinecraftClientData.getDashboardInstance().stations);
 			if (editingArea != null && editingArea instanceof Station) {
 				stations.add((Station) editingArea);
 			}
-			drawAreas(drawing, deferredRenders, stations, canHoverAreas ? hoverStations : null, mouseX, mouseY);
+			drawAreas(drawing, deferredRenders, stations, canHoverAreas ? hoverStationsHomesLandmarks : null, mouseX, mouseY);
+
+			final ObjectArraySet<Home> homes = new ObjectArraySet<>(MinecraftClientData.getDashboardInstance().homes);
+			if (editingArea != null && editingArea instanceof Home) {
+				homes.add((Home) editingArea);
+			}
+			drawAreas(drawing, deferredRenders, homes, canHoverAreas ? hoverStationsHomesLandmarks : null, mouseX, mouseY);
+
+			final ObjectArraySet<Landmark> landmarks = new ObjectArraySet<>(MinecraftClientData.getDashboardInstance().landmarks);
+			if (editingArea != null && editingArea instanceof Landmark) {
+				landmarks.add((Landmark) editingArea);
+			}
+			drawAreas(drawing, deferredRenders, landmarks, canHoverAreas ? hoverStationsHomesLandmarks : null, mouseX, mouseY);
 		}
 		if (showDepots) {
 			final ObjectArraySet<Depot> depots = new ObjectArraySet<>(MinecraftClientData.getDashboardInstance().depots);
@@ -373,7 +393,7 @@ public final class MapComponent extends UIComponent {
 
 		// Hover popup
 		if (showPopup) {
-			showPopup = checkPopupHover(stationsPopupBlock, drawing, mouseX, mouseY) ||
+			showPopup = checkPopupHover(stationsHomesLandmarksPopupBlock, drawing, mouseX, mouseY) ||
 				checkPopupHover(platformsPopupBlock, drawing, mouseX, mouseY) ||
 				checkPopupHover(depotsPopupBlock, drawing, mouseX, mouseY) ||
 				checkPopupHover(sidingsPopupBlock, drawing, mouseX, mouseY);
@@ -401,7 +421,7 @@ public final class MapComponent extends UIComponent {
 		scale(amount, false);
 	}
 
-	public <T extends AreaBase<T, U>, U extends SavedRailBase<U, T>> void find(T savedArea) {
+	public <T extends SimpleAreaBase> void find(T savedArea) {
 		guiAnimationX.animate((savedArea.getMinX() + savedArea.getMaxX() + 1) / 2F, ANIMATION_DURATION);
 		guiAnimationY.animate((savedArea.getMinZ() + savedArea.getMaxZ() + 1) / 2F, ANIMATION_DURATION);
 		final double scaleX = Math.max(1F, getWidth() - GuiHelper.DEFAULT_LINE_SIZE) / (savedArea.getMaxX() - savedArea.getMinX() + 1);
@@ -409,7 +429,7 @@ public final class MapComponent extends UIComponent {
 		guiAnimationScale.animate(Math.clamp(Math.min(scaleX, scaleY), SCALE_LOWER_LIMIT, SCALE_UPPER_LIMIT), ANIMATION_DURATION);
 	}
 
-	public void startEditingArea(AreaBase<?, ?> editingArea) {
+	public void startEditingArea(SimpleAreaBase editingArea) {
 		this.editingArea = editingArea;
 	}
 
@@ -436,7 +456,7 @@ public final class MapComponent extends UIComponent {
 		}
 	}
 
-	private <T extends SavedRailBase<T, U>, U extends AreaBase<U, T>> void drawAreas(Drawing drawing, ObjectArrayList<Consumer<PoseStack>> deferredRenders, ObjectArraySet<U> areas, @Nullable ObjectArraySet<U> hoverDataList, float mouseX, float mouseY) {
+	private <T extends SimpleAreaBase, U extends T> void drawAreas(Drawing drawing, ObjectArrayList<Consumer<PoseStack>> deferredRenders, ObjectArraySet<U> areas, @Nullable ObjectArraySet<T> hoverDataList, float mouseX, float mouseY) {
 		final float width = getWidth();
 		final float height = getHeight();
 		final float left = getLeft();

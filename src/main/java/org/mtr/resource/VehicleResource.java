@@ -76,6 +76,7 @@ public final class VehicleResource extends VehicleResourceSchema {
 		TransportMode transportMode,
 		double length,
 		double width,
+		long capacity,
 		double bogie1Position,
 		double bogie2Position,
 		double couplingPadding1,
@@ -107,6 +108,7 @@ public final class VehicleResource extends VehicleResourceSchema {
 			transportMode,
 			length,
 			width,
+			capacity,
 			bogie1Position,
 			bogie2Position,
 			couplingPadding1,
@@ -222,6 +224,10 @@ public final class VehicleResource extends VehicleResourceSchema {
 
 	public double getWidth() {
 		return width;
+	}
+
+	public long getCapacity() {
+		return capacity;
 	}
 
 	public double getBogie1Position() {

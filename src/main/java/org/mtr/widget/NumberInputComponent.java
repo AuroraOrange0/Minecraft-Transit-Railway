@@ -20,6 +20,8 @@ public final class NumberInputComponent extends UIContainer {
 	private boolean isDragging;
 	private boolean disabled;
 	private float oldWidth;
+	private boolean highlighted1;
+	private boolean highlighted2;
 
 	private final double min;
 	private final double max;
@@ -33,9 +35,17 @@ public final class NumberInputComponent extends UIContainer {
 	private static final int TEXT_INPUT_HEIGHT = 20;
 	private static final int SLIDER_HEIGHT = 8;
 	public static final int HEIGHT = TEXT_INPUT_HEIGHT + SLIDER_HEIGHT;
-	private static final int SLIDER_HANDLE_WIDTH = 6;
+	public static final int SLIDER_HANDLE_WIDTH = 6;
 
 	public NumberInputComponent(double min, double max, double step, boolean allowDecimal, @Nullable DoubleConsumer onChange) {
+		this(min, max, step, allowDecimal, false, onChange);
+	}
+
+	public NumberInputComponent(int max) {
+		this(0, max, 1, false, true, null);
+	}
+
+	private NumberInputComponent(double min, double max, double step, boolean allowDecimal, boolean noTextInput, @Nullable DoubleConsumer onChange) {
 		this.step = step <= 0 ? 1 : step;
 		this.min = min;
 		this.max = Math.max(max, min + this.step);
@@ -48,6 +58,10 @@ public final class NumberInputComponent extends UIContainer {
 			.setWidth(new RelativeConstraint())
 			.setHeight(new PixelConstraint(TEXT_INPUT_HEIGHT));
 
+		if (noTextInput) {
+			textInputComponent.hide(true);
+		}
+
 		final StitchedImageComponent sliderBackgroundComponent = (StitchedImageComponent) new StitchedImageComponent(200, 20, 4, 0, ReleasedDynamicTextureRegistry.BUTTON_DISABLED_TEXTURE.get())
 			.setChildOf(this)
 			.setY(new SiblingConstraint())
@@ -59,9 +73,9 @@ public final class NumberInputComponent extends UIContainer {
 			.setWidth(new PixelConstraint(SLIDER_HANDLE_WIDTH))
 			.setHeight(new RelativeConstraint());
 
-		sliderBackgroundComponent.onMouseEnterRunnable(() -> setHighlighted(true));
-		sliderBackgroundComponent.onMouseLeaveRunnable(() -> setHighlighted(false));
-		setHighlighted(false);
+		sliderBackgroundComponent.onMouseEnterRunnable(() -> setHighlighted(true, highlighted2));
+		sliderBackgroundComponent.onMouseLeaveRunnable(() -> setHighlighted(false, highlighted2));
+		setHighlighted(false, highlighted2);
 		setDisabled(false);
 		setHeight(new ChildBasedSizeConstraint());
 
@@ -136,6 +150,10 @@ public final class NumberInputComponent extends UIContainer {
 		textInputComponent.setSuffix(text);
 	}
 
+	public void overrideHighlighted(boolean highlighted) {
+		setHighlighted(highlighted1, highlighted);
+	}
+
 	public void setValue(double value) {
 		setValue(value, true);
 	}
@@ -154,13 +172,15 @@ public final class NumberInputComponent extends UIContainer {
 		setValue((position - SLIDER_HANDLE_WIDTH / 2F) / (getWidth() - SLIDER_HANDLE_WIDTH) * (max - min) + min, true);
 	}
 
-	private void setHighlighted(boolean highlighted) {
-		sliderHandleComponent.setActiveTexture(disabled ? 1 : (highlighted ? 2 : 0));
+	private void setHighlighted(boolean highlighted1, boolean highlighted2) {
+		this.highlighted1 = highlighted1;
+		this.highlighted2 = highlighted2;
+		sliderHandleComponent.setActiveTexture(highlighted1 || highlighted2 ? 2 : 0);
 	}
 
 	public void setDisabled(boolean disabled) {
 		this.disabled = disabled;
 		textInputComponent.setDisabled(disabled);
-		setHighlighted(false);
+		setHighlighted(false, false);
 	}
 }

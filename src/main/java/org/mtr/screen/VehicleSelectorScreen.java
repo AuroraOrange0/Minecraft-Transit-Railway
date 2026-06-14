@@ -315,7 +315,7 @@ public final class VehicleSelectorScreen extends ScreenBase {
 	}
 
 	private static VehicleCar toVehicleCar(VehicleResource vehicleResource) {
-		return new VehicleCar(vehicleResource.getId(), vehicleResource.getLength(), vehicleResource.getWidth(), vehicleResource.getBogie1Position(), vehicleResource.getBogie2Position(), vehicleResource.getCouplingPadding1(), vehicleResource.getCouplingPadding2());
+		return new VehicleCar(vehicleResource.getId(), vehicleResource.getLength(), vehicleResource.getWidth(), vehicleResource.getCapacity(), vehicleResource.getBogie1Position(), vehicleResource.getBogie2Position(), vehicleResource.getCouplingPadding1(), vehicleResource.getCouplingPadding2());
 	}
 
 	private static void drawVehicleIcon(Drawing drawing, int x, double y, boolean canAddCar, boolean smallIcon, int color) {

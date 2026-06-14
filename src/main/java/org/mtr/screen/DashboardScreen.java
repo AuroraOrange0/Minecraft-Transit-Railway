@@ -1,14 +1,19 @@
 package org.mtr.screen;
 
+import com.mojang.authlib.minecraft.client.MinecraftClient;
 import gg.essential.elementa.components.UIBlock;
 import gg.essential.elementa.components.UIContainer;
 import gg.essential.elementa.components.UIWrappedText;
 import gg.essential.elementa.constraints.*;
 import gg.essential.universal.UMinecraft;
 import net.minecraft.Util;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import org.jspecify.annotations.Nullable;
+import org.mtr.MTR;
 import org.mtr.MTRClient;
 import org.mtr.client.MinecraftClientData;
 import org.mtr.core.data.*;
@@ -33,9 +38,9 @@ import java.util.stream.Collectors;
 
 public final class DashboardScreen extends WindowBase {
 
-	private int currentTab = 0;
+	private Tab currentTab = Tab.STATIONS;
 	@Nullable
-	private AreaBase<?, ?> editingArea;
+	private SimpleAreaBase editingArea;
 	@Nullable
 	private Route editingRoute;
 	private int editingRoutePlatformIndex = -1;
@@ -47,6 +52,8 @@ public final class DashboardScreen extends WindowBase {
 	private final ButtonComponent stationsTabButton;
 	private final ButtonComponent routesTabButton;
 	private final ButtonComponent depotsTabButton;
+	private final ButtonComponent homesTabButton;
+	private final ButtonComponent landmarksTabButton;
 
 	private final ListComponent<Station> stationsListComponent = new ListComponent<>();
 	private final ListComponent<Platform> stationPlatformsListComponent = new ListComponent<>();
@@ -54,11 +61,15 @@ public final class DashboardScreen extends WindowBase {
 	private final ListComponent<RoutePlatformData> routePlatformsListComponent = new ListComponent<>();
 	private final ListComponent<Depot> depotsListComponent = new ListComponent<>();
 	private final ListComponent<Siding> depotSidingsListComponent = new ListComponent<>();
+	private final ListComponent<Home> homesListComponent = new ListComponent<>();
+	private final ListComponent<Landmark> landmarksListComponent = new ListComponent<>();
 
 	private final TextInputComponent stationNameTextInput = new TextInputComponent();
 	private final TextInputComponent routeNameTextInput = new TextInputComponent();
 	private final TextInputComponent depotNameTextInput = new TextInputComponent();
 	private final TextInputComponent routeDestinationTextInput = new TextInputComponent();
+	private final TextInputComponent homeNameTextInput = new TextInputComponent();
+	private final TextInputComponent landmarkNameTextInput = new TextInputComponent();
 
 	private final UIContainer stationsTabContainer;
 	private final UIContainer stationPlatformsTabContainer;
@@ -67,6 +78,10 @@ public final class DashboardScreen extends WindowBase {
 	private final UIContainer routeDestinationTabContainer;
 	private final UIContainer depotsTabContainer;
 	private final UIContainer depotSidingsTabContainer;
+	private final UIContainer homesTabContainer;
+	private final UIContainer homeTabContainer;
+	private final UIContainer landmarksTabContainer;
+	private final UIContainer landmarkTabContainer;
 
 	private static final int PANEL_WIDTH = 144;
 
@@ -85,26 +100,42 @@ public final class DashboardScreen extends WindowBase {
 
 		stationsTabButton = (ButtonComponent) new ButtonComponent(false)
 			.setChildOf(tabButtonsContainer)
-			.setWidth(new PixelConstraint(PANEL_WIDTH / 3F));
+			.setWidth(new PixelConstraint((float) PANEL_WIDTH / Tab.values().length));
 
 		stationsTabButton.setText(TranslationProvider.GUI_MTR_STATIONS.getString());
-		stationsTabButton.onClick(() -> stopEditingAndSelectTab(0));
+		stationsTabButton.onClick(() -> stopEditingAndSelectTab(Tab.STATIONS));
 
 		routesTabButton = (ButtonComponent) new ButtonComponent(false)
 			.setChildOf(tabButtonsContainer)
 			.setX(new SiblingConstraint())
-			.setWidth(new PixelConstraint(PANEL_WIDTH / 3F));
+			.setWidth(new PixelConstraint((float) PANEL_WIDTH / Tab.values().length));
 
 		routesTabButton.setText(TranslationProvider.GUI_MTR_ROUTES.getString());
-		routesTabButton.onClick(() -> stopEditingAndSelectTab(1));
+		routesTabButton.onClick(() -> stopEditingAndSelectTab(Tab.ROUTES));
 
 		depotsTabButton = (ButtonComponent) new ButtonComponent(false)
 			.setChildOf(tabButtonsContainer)
 			.setX(new SiblingConstraint())
-			.setWidth(new PixelConstraint(PANEL_WIDTH / 3F));
+			.setWidth(new PixelConstraint((float) PANEL_WIDTH / Tab.values().length));
 
 		depotsTabButton.setText(TranslationProvider.GUI_MTR_DEPOTS.getString());
-		depotsTabButton.onClick(() -> stopEditingAndSelectTab(2));
+		depotsTabButton.onClick(() -> stopEditingAndSelectTab(Tab.DEPOTS));
+
+		homesTabButton = (ButtonComponent) new ButtonComponent(false)
+			.setChildOf(tabButtonsContainer)
+			.setX(new SiblingConstraint())
+			.setWidth(new PixelConstraint((float) PANEL_WIDTH / Tab.values().length));
+
+		homesTabButton.setText(TranslationProvider.GUI_MTR_HOMES.getString());
+		homesTabButton.onClick(() -> stopEditingAndSelectTab(Tab.HOMES));
+
+		landmarksTabButton = (ButtonComponent) new ButtonComponent(false)
+			.setChildOf(tabButtonsContainer)
+			.setX(new SiblingConstraint())
+			.setWidth(new PixelConstraint((float) PANEL_WIDTH / Tab.values().length));
+
+		landmarksTabButton.setText(TranslationProvider.GUI_MTR_LANDMARKS.getString());
+		landmarksTabButton.onClick(() -> stopEditingAndSelectTab(Tab.LANDMARKS));
 
 		final UIContainer tabsContainer = (UIContainer) new UIContainer()
 			.setChildOf(leftContainer)
@@ -115,10 +146,14 @@ public final class DashboardScreen extends WindowBase {
 		final ButtonComponent addStationButton = new ButtonComponent(true);
 		final ButtonComponent addRouteButton = new ButtonComponent(true);
 		final ButtonComponent addDepotButton = new ButtonComponent(true);
+		final ButtonComponent addHomeButton = new ButtonComponent(true);
+		final ButtonComponent addLandmarkButton = new ButtonComponent(true);
 		final ButtonComponent doneEditingStationButton = new ButtonComponent(true);
 		final ButtonComponent doneEditingRouteButton = new ButtonComponent(true);
 		final ButtonComponent doneEditingRouteDestinationButton = new ButtonComponent(true);
 		final ButtonComponent doneEditingDepotButton = new ButtonComponent(true);
+		final ButtonComponent doneEditingHomeButton = new ButtonComponent(true);
+		final ButtonComponent doneEditingLandmarkButton = new ButtonComponent(true);
 
 		stationsTabContainer = createTab(tabsContainer, true, stationsListComponent, null, null, null, addStationButton);
 		stationPlatformsTabContainer = createTab(tabsContainer, false, stationPlatformsListComponent, TranslationProvider.GUI_MTR_EDIT_AREA.getString(), TranslationProvider.GUI_MTR_STATION_NAME.getString(), stationNameTextInput, doneEditingStationButton);
@@ -127,13 +162,21 @@ public final class DashboardScreen extends WindowBase {
 		routeDestinationTabContainer = createTab(tabsContainer, false, null, null, TranslationProvider.GUI_MTR_CUSTOM_DESTINATION_SUGGESTION.getString(), routeDestinationTextInput, doneEditingRouteDestinationButton);
 		depotsTabContainer = createTab(tabsContainer, true, depotsListComponent, null, null, null, addDepotButton);
 		depotSidingsTabContainer = createTab(tabsContainer, false, depotSidingsListComponent, TranslationProvider.GUI_MTR_EDIT_AREA.getString(), TranslationProvider.GUI_MTR_DEPOT_NAME.getString(), depotNameTextInput, doneEditingDepotButton);
+		homesTabContainer = createTab(tabsContainer, true, homesListComponent, null, null, null, addHomeButton);
+		homeTabContainer = createTab(tabsContainer, false, null, TranslationProvider.GUI_MTR_EDIT_AREA.getString(), TranslationProvider.GUI_MTR_HOME_NAME.getString(), homeNameTextInput, doneEditingHomeButton);
+		landmarksTabContainer = createTab(tabsContainer, true, landmarksListComponent, null, null, null, addLandmarkButton);
+		landmarkTabContainer = createTab(tabsContainer, false, null, TranslationProvider.GUI_MTR_EDIT_AREA.getString(), TranslationProvider.GUI_MTR_LANDMARK_NAME.getString(), landmarkNameTextInput, doneEditingLandmarkButton);
 
 		addStationButton.setText(TranslationProvider.GUI_MTR_ADD_STATION.getString());
-		addStationButton.onClick(() -> startEditingDataNew(new Station(MinecraftClientData.getDashboardInstance())));
+		addStationButton.onClick(() -> startEditingDataNew(new Station(MinecraftClientData.getDashboardInstance()), true));
 		addRouteButton.setText(TranslationProvider.GUI_MTR_ADD_ROUTE.getString());
-		addRouteButton.onClick(() -> startEditingDataNew(new Route(transportMode, MinecraftClientData.getDashboardInstance())));
+		addRouteButton.onClick(() -> startEditingDataNew(new Route(transportMode, MinecraftClientData.getDashboardInstance()), true));
 		addDepotButton.setText(TranslationProvider.GUI_MTR_ADD_DEPOT.getString());
-		addDepotButton.onClick(() -> startEditingDataNew(new Depot(transportMode, MinecraftClientData.getDashboardInstance())));
+		addDepotButton.onClick(() -> startEditingDataNew(new Depot(transportMode, MinecraftClientData.getDashboardInstance()), true));
+		addHomeButton.setText(TranslationProvider.GUI_MTR_ADD_HOME.getString());
+		addHomeButton.onClick(() -> startEditingDataNew(new Home(MinecraftClientData.getDashboardInstance()), false));
+		addLandmarkButton.setText(TranslationProvider.GUI_MTR_ADD_LANDMARK.getString());
+		addLandmarkButton.onClick(() -> startEditingDataNew(new Landmark(MinecraftClientData.getDashboardInstance()), false));
 
 		doneEditingStationButton.setText(Component.translatable("gui.done").getString());
 		doneEditingStationButton.onClick(() -> stopEditingAndSelectTab(currentTab));
@@ -143,6 +186,10 @@ public final class DashboardScreen extends WindowBase {
 		doneEditingDepotButton.onClick(() -> stopEditingAndSelectTab(currentTab));
 		doneEditingRouteDestinationButton.setText(Component.translatable("gui.done").getString());
 		doneEditingRouteDestinationButton.onClick(this::onDoneEditingRouteDestination);
+		doneEditingHomeButton.setText(Component.translatable("gui.done").getString());
+		doneEditingHomeButton.onClick(() -> stopEditingAndSelectTab(currentTab));
+		doneEditingLandmarkButton.setText(Component.translatable("gui.done").getString());
+		doneEditingLandmarkButton.onClick(() -> stopEditingAndSelectTab(currentTab));
 
 		stationNameTextInput.onChange(() -> {
 			if (editingArea != null) {
@@ -157,6 +204,16 @@ public final class DashboardScreen extends WindowBase {
 		depotNameTextInput.onChange(() -> {
 			if (editingArea != null) {
 				editingArea.setName(IGui.textOrUntitled(depotNameTextInput.getText()));
+			}
+		});
+		homeNameTextInput.onChange(() -> {
+			if (editingArea != null) {
+				editingArea.setName(IGui.textOrUntitled(homeNameTextInput.getText()));
+			}
+		});
+		landmarkNameTextInput.onChange(() -> {
+			if (editingArea != null) {
+				editingArea.setName(IGui.textOrUntitled(landmarkNameTextInput.getText()));
 			}
 		});
 
@@ -216,7 +273,7 @@ public final class DashboardScreen extends WindowBase {
 		zoomOutButton.setText("-");
 		zoomOutButton.onClick(() -> mapComponent.scale(-1));
 
-		stopEditingAndSelectTab(0);
+		stopEditingAndSelectTab(currentTab);
 	}
 
 	@Override
@@ -224,7 +281,7 @@ public final class DashboardScreen extends WindowBase {
 		super.onTick();
 
 		switch (currentTab) {
-			case 0 -> {
+			case STATIONS -> {
 				if (editingArea == null) {
 					final ObjectArrayList<ObjectObjectImmutablePair<ResourceLocation, ListItem.ActionConsumer<Station>>> actions = ObjectArrayList.of(new ObjectObjectImmutablePair<>(GuiHelper.FIND_TEXTURE_ID, (indexList, station) -> mapComponent.find(station)));
 					if (hasPermission) {
@@ -237,7 +294,7 @@ public final class DashboardScreen extends WindowBase {
 					ListComponent.setSavedRails(stationPlatformsListComponent, MinecraftClientData.getDashboardInstance().platforms.stream().filter(platform -> editingArea.inArea(platform.getMidPosition())).collect(Collectors.toCollection(ObjectArraySet::new)), new ObjectArrayList<>());
 				}
 			}
-			case 1 -> {
+			case ROUTES -> {
 				if (editingRoute == null) {
 					final ObjectArrayList<ObjectObjectImmutablePair<ResourceLocation, ListItem.ActionConsumer<Route>>> actions = ObjectArrayList.of(new ObjectObjectImmutablePair<>(GuiHelper.EDIT_TEXTURE_ID, (indexList, route) -> UMinecraft.setCurrentScreenObj(new RouteScreen(route, this))));
 					if (hasPermission) {
@@ -255,7 +312,7 @@ public final class DashboardScreen extends WindowBase {
 					ListComponent.setRoutePlatforms(routePlatformsListComponent, editingRoute.getRoutePlatforms(), actions);
 				}
 			}
-			case 2 -> {
+			case DEPOTS -> {
 				if (editingArea == null) {
 					final ObjectArrayList<ObjectObjectImmutablePair<ResourceLocation, ListItem.ActionConsumer<Depot>>> actions = ObjectArrayList.of(new ObjectObjectImmutablePair<>(GuiHelper.FIND_TEXTURE_ID, (indexList, depot) -> mapComponent.find(depot)));
 					if (hasPermission) {
@@ -268,6 +325,28 @@ public final class DashboardScreen extends WindowBase {
 					ListComponent.setSavedRails(depotSidingsListComponent, MinecraftClientData.getDashboardInstance().sidings.stream().filter(siding -> editingArea.inArea(siding.getMidPosition())).collect(Collectors.toCollection(ObjectArraySet::new)), new ObjectArrayList<>());
 				}
 			}
+			case HOMES -> {
+				if (editingArea == null) {
+					final ObjectArrayList<ObjectObjectImmutablePair<ResourceLocation, ListItem.ActionConsumer<Home>>> actions = ObjectArrayList.of(new ObjectObjectImmutablePair<>(GuiHelper.FIND_TEXTURE_ID, (indexList, home) -> mapComponent.find(home)));
+					if (hasPermission) {
+						actions.add(new ObjectObjectImmutablePair<>(GuiHelper.SELECT_TEXTURE_ID, (indexList, home) -> startEditingArea(home)));
+						actions.add(new ObjectObjectImmutablePair<>(GuiHelper.EDIT_TEXTURE_ID, (indexList, home) -> UMinecraft.setCurrentScreenObj(new HomeScreen(home, this))));
+						actions.add(new ObjectObjectImmutablePair<>(GuiHelper.DELETE_TEXTURE_ID, (indexList, home) -> onDeleteData(home, new DeleteDataRequest().addHomeId(home.getId()))));
+					}
+					ListComponent.setAreas(homesListComponent, MinecraftClientData.getDashboardInstance().homes, transportMode, actions);
+				}
+			}
+			case LANDMARKS -> {
+				if (editingArea == null) {
+					final ObjectArrayList<ObjectObjectImmutablePair<ResourceLocation, ListItem.ActionConsumer<Landmark>>> actions = ObjectArrayList.of(new ObjectObjectImmutablePair<>(GuiHelper.FIND_TEXTURE_ID, (indexList, landmark) -> mapComponent.find(landmark)));
+					if (hasPermission) {
+						actions.add(new ObjectObjectImmutablePair<>(GuiHelper.SELECT_TEXTURE_ID, (indexList, landmark) -> startEditingArea(landmark)));
+						actions.add(new ObjectObjectImmutablePair<>(GuiHelper.EDIT_TEXTURE_ID, (indexList, landmark) -> UMinecraft.setCurrentScreenObj(new LandmarkScreen(landmark, this))));
+						actions.add(new ObjectObjectImmutablePair<>(GuiHelper.DELETE_TEXTURE_ID, (indexList, landmark) -> onDeleteData(landmark, new DeleteDataRequest().addLandmarkId(landmark.getId()))));
+					}
+					ListComponent.setAreas(landmarksListComponent, MinecraftClientData.getDashboardInstance().landmarks, transportMode, actions);
+				}
+			}
 		}
 	}
 
@@ -275,47 +354,78 @@ public final class DashboardScreen extends WindowBase {
 		UMinecraft.setCurrentScreenObj(new DeleteConfirmationScreen(IGui.formatStationName(data.getName()), () -> RegistryClient.sendPacketToServer(new PacketDeleteData(deleteDataRequest)), this));
 	}
 
-	private void startEditingDataNew(NameColorDataBase data) {
+	private void startEditingDataNew(NameColorDataBase data, boolean fullHeight) {
 		data.setName(TranslationProvider.GUI_MTR_UNTITLED.getString());
 		data.setColor(new Random().nextInt());
+
+		if (data instanceof SimpleAreaBase area) {
+			final Minecraft minecraft = Minecraft.getInstance();
+			final LocalPlayer clientPlayer = minecraft.player;
+			if (clientPlayer != null) {
+				final BlockPos blockPos = clientPlayer.blockPosition();
+				final Position position1;
+				final Position position2;
+				if (fullHeight) {
+					position1 = new Position(blockPos.getX(), Long.MIN_VALUE, blockPos.getZ());
+					position2 = new Position(blockPos.getX(), Long.MAX_VALUE, blockPos.getZ());
+				} else {
+					position1 = MTR.blockPosToPosition(blockPos);
+					position2 = position1;
+				}
+				area.setCorners(position1, position2);
+			}
+		}
 
 		switch (data) {
 			case Station station -> startEditingArea(station);
 			case Route route -> startEditingRoute(route);
 			case Depot depot -> startEditingArea(depot);
+			case Home home -> startEditingArea(home);
+			case Landmark landmark -> startEditingArea(landmark);
 			default -> {
 			}
 		}
 	}
 
-	private void startEditingArea(AreaBase<?, ?> editingArea) {
-		final boolean isStation = editingArea instanceof Station;
-		stopEditingAndSelectTab(isStation ? 0 : 2);
-		setEditingData(editingArea, null);
-
-		stationNameTextInput.setText(editingArea.getName());
-		depotNameTextInput.setText(editingArea.getName());
-
-		mapComponent.setShowStations(isStation);
-		mapComponent.startEditingArea(editingArea);
-
-		stationsTabContainer.hide(true);
-		depotsTabContainer.hide(true);
-
-		if (isStation) {
-			stationPlatformsTabContainer.unhide(true);
-		} else {
-			depotSidingsTabContainer.unhide(true);
+	private void startEditingArea(SimpleAreaBase editingArea) {
+		switch (editingArea) {
+			case Station ignored -> {
+				stopEditingAndSelectTab(Tab.STATIONS);
+				stationsTabContainer.hide(true);
+				stationPlatformsTabContainer.unhide(true);
+				stationNameTextInput.setText(editingArea.getName());
+			}
+			case Depot ignored -> {
+				stopEditingAndSelectTab(Tab.DEPOTS);
+				depotsTabContainer.hide(true);
+				depotSidingsTabContainer.unhide(true);
+				depotNameTextInput.setText(editingArea.getName());
+			}
+			case Home ignored -> {
+				stopEditingAndSelectTab(Tab.HOMES);
+				homesTabContainer.hide(true);
+				homeTabContainer.unhide(true);
+				homeNameTextInput.setText(editingArea.getName());
+			}
+			case Landmark ignored -> {
+				stopEditingAndSelectTab(Tab.LANDMARKS);
+				landmarksTabContainer.hide(true);
+				landmarkTabContainer.unhide(true);
+				landmarkNameTextInput.setText(editingArea.getName());
+			}
+			default -> {
+			}
 		}
+
+		setEditingData(editingArea, null);
+		mapComponent.startEditingArea(editingArea);
 	}
 
 	private void startEditingRoute(Route editingRoute) {
-		stopEditingAndSelectTab(1);
+		stopEditingAndSelectTab(Tab.ROUTES);
 		setEditingData(null, editingRoute);
 
 		routeNameTextInput.setText(editingRoute.getName());
-
-		mapComponent.setShowStations(true);
 		mapComponent.startEditingRoute(editingRoute);
 
 		routesTabContainer.hide(true);
@@ -347,11 +457,13 @@ public final class DashboardScreen extends WindowBase {
 		}
 	}
 
-	private void setEditingData(@Nullable AreaBase<?, ?> editingArea, @Nullable Route editingRoute) {
+	private void setEditingData(@Nullable SimpleAreaBase editingArea, @Nullable Route editingRoute) {
 		if (this.editingArea != null) {
 			switch (this.editingArea) {
 				case Station station -> RegistryClient.sendPacketToServer(new PacketUpdateData(new UpdateDataRequest(MinecraftClientData.getDashboardInstance()).addStation(station)));
 				case Depot depot -> RegistryClient.sendPacketToServer(new PacketUpdateData(new UpdateDataRequest(MinecraftClientData.getDashboardInstance()).addDepot(depot)));
+				case Home home -> RegistryClient.sendPacketToServer(new PacketUpdateData(new UpdateDataRequest(MinecraftClientData.getDashboardInstance()).addHome(home)));
+				case Landmark landmark -> RegistryClient.sendPacketToServer(new PacketUpdateData(new UpdateDataRequest(MinecraftClientData.getDashboardInstance()).addLandmark(landmark)));
 				default -> {
 				}
 			}
@@ -370,16 +482,18 @@ public final class DashboardScreen extends WindowBase {
 		return editingRoute != null && editingRoutePlatformIndex >= 0 && editingRoutePlatformIndex < editingRoute.getRoutePlatforms().size();
 	}
 
-	private void stopEditingAndSelectTab(int currentTab) {
-		stationsTabButton.setDisabled(currentTab == 0);
-		routesTabButton.setDisabled(currentTab == 1);
-		depotsTabButton.setDisabled(currentTab == 2);
+	private void stopEditingAndSelectTab(Tab currentTab) {
+		stationsTabButton.setDisabled(currentTab == Tab.STATIONS);
+		routesTabButton.setDisabled(currentTab == Tab.ROUTES);
+		depotsTabButton.setDisabled(currentTab == Tab.DEPOTS);
+		homesTabButton.setDisabled(currentTab == Tab.HOMES);
+		landmarksTabButton.setDisabled(currentTab == Tab.LANDMARKS);
 		setEditingData(null, null);
 		mapComponent.stopEditing();
-		mapComponent.setShowStations(currentTab < 2);
+		mapComponent.setShowStations(currentTab != Tab.DEPOTS);
 
 		switch (currentTab) {
-			case 0 -> {
+			case STATIONS -> {
 				stationsTabContainer.unhide(true);
 				stationPlatformsTabContainer.hide(true);
 				routesTabContainer.hide(true);
@@ -387,8 +501,12 @@ public final class DashboardScreen extends WindowBase {
 				routeDestinationTabContainer.hide(true);
 				depotsTabContainer.hide(true);
 				depotSidingsTabContainer.hide(true);
+				homesTabContainer.hide(true);
+				homeTabContainer.hide(true);
+				landmarksTabContainer.hide(true);
+				landmarkTabContainer.hide(true);
 			}
-			case 1 -> {
+			case ROUTES -> {
 				stationsTabContainer.hide(true);
 				stationPlatformsTabContainer.hide(true);
 				routesTabContainer.unhide(true);
@@ -396,8 +514,12 @@ public final class DashboardScreen extends WindowBase {
 				routeDestinationTabContainer.hide(true);
 				depotsTabContainer.hide(true);
 				depotSidingsTabContainer.hide(true);
+				homesTabContainer.hide(true);
+				homeTabContainer.hide(true);
+				landmarksTabContainer.hide(true);
+				landmarkTabContainer.hide(true);
 			}
-			case 2 -> {
+			case DEPOTS -> {
 				stationsTabContainer.hide(true);
 				stationPlatformsTabContainer.hide(true);
 				routesTabContainer.hide(true);
@@ -405,6 +527,36 @@ public final class DashboardScreen extends WindowBase {
 				routeDestinationTabContainer.hide(true);
 				depotsTabContainer.unhide(true);
 				depotSidingsTabContainer.hide(true);
+				homesTabContainer.hide(true);
+				homeTabContainer.hide(true);
+				landmarksTabContainer.hide(true);
+				landmarkTabContainer.hide(true);
+			}
+			case HOMES -> {
+				stationsTabContainer.hide(true);
+				stationPlatformsTabContainer.hide(true);
+				routesTabContainer.hide(true);
+				routePlatformsTabContainer.hide(true);
+				routeDestinationTabContainer.hide(true);
+				depotsTabContainer.hide(true);
+				depotSidingsTabContainer.hide(true);
+				homesTabContainer.unhide(true);
+				homeTabContainer.hide(true);
+				landmarksTabContainer.hide(true);
+				landmarkTabContainer.hide(true);
+			}
+			case LANDMARKS -> {
+				stationsTabContainer.hide(true);
+				stationPlatformsTabContainer.hide(true);
+				routesTabContainer.hide(true);
+				routePlatformsTabContainer.hide(true);
+				routeDestinationTabContainer.hide(true);
+				depotsTabContainer.hide(true);
+				depotSidingsTabContainer.hide(true);
+				homesTabContainer.hide(true);
+				homeTabContainer.hide(true);
+				landmarksTabContainer.unhide(true);
+				landmarkTabContainer.hide(true);
 			}
 		}
 
@@ -480,4 +632,6 @@ public final class DashboardScreen extends WindowBase {
 
 		return tabContainer;
 	}
+
+	private enum Tab {STATIONS, ROUTES, DEPOTS, HOMES, LANDMARKS}
 }

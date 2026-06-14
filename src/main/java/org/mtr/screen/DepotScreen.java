@@ -6,6 +6,7 @@ import gg.essential.elementa.components.UIWrappedText;
 import gg.essential.elementa.constraints.*;
 import gg.essential.universal.UMinecraft;
 import gg.essential.universal.utils.ReleasedDynamicTexture;
+import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.MutableComponent;
 import org.jspecify.annotations.Nullable;
 import org.mtr.MTR;
@@ -48,7 +49,7 @@ public final class DepotScreen extends NameColorDataScreenBase<Depot> {
 	private final MultiLineTextWidget multiLineTextWidget;
 	private final ScrollComponent minecraftScheduleScrollComponent;
 	private final UIContainer realTimeScheduleContainer;
-	private final NumberInputComponent[] minecraftTimeNumberInputs = new NumberInputComponent[Utilities.HOURS_PER_DAY];
+	private final Grouped24HourSlidersComponent minecraftTimeSliders;
 	private final TextInputComponent realTimeDepartureTextInput;
 	private final ButtonComponent addRealTimeDepartureButton;
 	private final ListComponent<RealTimeDepartureForList> realTimeDeparturesListComponent;
@@ -155,14 +156,12 @@ public final class DepotScreen extends NameColorDataScreenBase<Depot> {
 			.setWidth(new RelativeConstraint())
 			.setHeight(new RelativeConstraint())).contentContainer;
 
-		for (int i = 0; i < Utilities.HOURS_PER_DAY; i++) {
-			minecraftTimeNumberInputs[i] = (NumberInputComponent) new NumberInputComponent(0, MAX_TRAINS_PER_HOUR * 2, 1, false, null)
-				.setChildOf(minecraftScheduleScrollComponent)
-				.setY(new SiblingConstraint())
-				.setWidth(new RelativeConstraint());
+		minecraftTimeSliders = (Grouped24HourSlidersComponent) new Grouped24HourSlidersComponent(MAX_TRAINS_PER_HOUR * 2, Minecraft.getInstance().font.width(getSliderString(1)), DepotScreen::getSliderString)
+			.setChildOf(minecraftScheduleScrollComponent)
+			.setWidth(new RelativeConstraint());
 
-			minecraftTimeNumberInputs[i].setPrefix(String.format("%1$02d:00–%1$02d:59   ", i));
-			minecraftTimeNumberInputs[i].setValue(depot.getFrequency(i));
+		for (int i = 0; i < Utilities.HOURS_PER_DAY; i++) {
+			minecraftTimeSliders.setValue(i, (int) depot.getFrequency(i));
 		}
 
 		realTimeScheduleContainer = (UIContainer) new UIContainer()
@@ -223,10 +222,6 @@ public final class DepotScreen extends NameColorDataScreenBase<Depot> {
 				oldSuccessfulSegmentsText = successfulSegmentsText;
 			}
 		}
-
-		for (int i = 0; i < Utilities.HOURS_PER_DAY; i++) {
-			minecraftTimeNumberInputs[i].setSuffix(getSliderString(minecraftTimeNumberInputs[i].getValue()));
-		}
 	}
 
 	@Override
@@ -236,7 +231,7 @@ public final class DepotScreen extends NameColorDataScreenBase<Depot> {
 
 		if (!useRealTimeCheckbox.isChecked()) {
 			for (int i = 0; i < Utilities.HOURS_PER_DAY; i++) {
-				data.setFrequency(i, (int) minecraftTimeNumberInputs[i].getValue());
+				data.setFrequency(i, minecraftTimeSliders.getValues(i));
 			}
 		}
 
@@ -430,14 +425,14 @@ public final class DepotScreen extends NameColorDataScreenBase<Depot> {
 		return stringBuilder.toString();
 	}
 
-	private static String getSliderString(double value) {
+	private static String getSliderString(int value) {
 		final String headwayText;
 		if (value == 0) {
 			headwayText = "";
 		} else {
-			headwayText = String.format(" (%s%s)", Utilities.round(FREQUENCY_MULTIPLIER * MTR.SECONDS_PER_MC_HOUR / value, 1), TranslationProvider.GUI_MTR_S.getString());
+			headwayText = String.format(" (%s%s)", Utilities.round((float) FREQUENCY_MULTIPLIER * MTR.SECONDS_PER_MC_HOUR / value, 1), TranslationProvider.GUI_MTR_S.getString());
 		}
-		return value / FREQUENCY_MULTIPLIER + TranslationProvider.GUI_MTR_TPH.getString() + headwayText;
+		return TranslationProvider.GUI_MTR_VEHICLES_PER_HOUR_VALUE.getString((float) value / FREQUENCY_MULTIPLIER) + headwayText;
 	}
 
 	private static String getTimeDifferenceString(long timeDifference) {

@@ -16,6 +16,7 @@ import net.minecraft.world.phys.Vec3;
 import org.jspecify.annotations.Nullable;
 import org.mtr.client.*;
 import org.mtr.config.Config;
+import org.mtr.core.data.Vehicle;
 import org.mtr.core.data.VehicleCar;
 import org.mtr.core.tool.Utilities;
 import org.mtr.core.tool.Vector;
@@ -68,7 +69,12 @@ public final class RenderVehicles {
 				.map(vehicleCarAndPosition -> {
 					final ObjectArrayList<PositionAndRotation> bogiePositions = vehicleCarAndPosition.right()
 						.stream()
-						.map(bogiePosition -> new PositionAndRotation(bogiePosition.positionAndTiltAngle1().position(), bogiePosition.positionAndTiltAngle2().position(), bogiePosition.positionAndTiltAngle1().tiltAngle(), bogiePosition.positionAndTiltAngle2().tiltAngle(), true))
+						.map(bogiePosition -> {
+							final int tiltMultiplier = vehicle.getReversed() ? -1 : 1;
+							final Vehicle.PositionAndTiltAngle positionAndTiltAngle1 = bogiePosition.positionAndTiltAngle1();
+							final Vehicle.PositionAndTiltAngle positionAndTiltAngle2 = bogiePosition.positionAndTiltAngle2();
+							return new PositionAndRotation(positionAndTiltAngle1.position(), positionAndTiltAngle2.position(), positionAndTiltAngle1.tiltAngle() * tiltMultiplier, positionAndTiltAngle2.tiltAngle() * tiltMultiplier, true);
+						})
 						.collect(Collectors.toCollection(ObjectArrayList::new));
 					return new ObjectObjectImmutablePair<>(vehicleCarAndPosition.left(), new ObjectObjectImmutablePair<>(bogiePositions, new PositionAndRotation(bogiePositions, vehicleCarAndPosition.left(), vehicle.getTransportMode().hasPitchAscending || vehicle.getTransportMode().hasPitchDescending)));
 				})

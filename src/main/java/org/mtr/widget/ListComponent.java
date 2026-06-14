@@ -197,7 +197,7 @@ public final class ListComponent<T> extends UIComponent {
 		listComponent.setData(dataList);
 	}
 
-	public static <T extends AreaBase<T, U>, U extends SavedRailBase<U, T>> void setAreas(ListComponent<T> listComponent, ObjectCollection<T> areas, @Nullable TransportMode transportMode, ObjectArrayList<ObjectObjectImmutablePair<ResourceLocation, ListItem.ActionConsumer<T>>> actions) {
+	public static <T extends SimpleAreaBase> void setAreas(ListComponent<T> listComponent, ObjectCollection<T> areas, @Nullable TransportMode transportMode, ObjectArrayList<ObjectObjectImmutablePair<ResourceLocation, ListItem.ActionConsumer<T>>> actions) {
 		final ObjectArrayList<T> sortedAreas = new ObjectArrayList<>();
 		areas.forEach(route -> {
 			if (transportMode == null || route.isTransportMode(transportMode)) {

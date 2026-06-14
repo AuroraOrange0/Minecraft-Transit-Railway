@@ -90,6 +90,7 @@ public final class VehicleResourceWrapper extends VehicleResourceWrapperSchema {
 			transportMode,
 			length,
 			width,
+			capacity,
 			bogie1Position,
 			bogie2Position,
 			couplingPadding1,
