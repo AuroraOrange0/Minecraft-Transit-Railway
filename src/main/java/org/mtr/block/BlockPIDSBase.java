@@ -7,11 +7,11 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.sounds.SoundEvents;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.*;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.EntityBlock;
@@ -26,7 +26,9 @@ import org.mtr.libraries.it.unimi.dsi.fastutil.longs.LongAVLTreeSet;
 import org.mtr.packet.PacketOpenBlockEntityScreen;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.BiFunction;
 import java.util.function.BiPredicate;
 
@@ -45,13 +47,37 @@ public abstract class BlockPIDSBase extends Block implements EntityBlock {
 
 	@Override
 	protected InteractionResult useWithoutItem(BlockState state, Level world, BlockPos pos, Player player, BlockHitResult hit) {
-		return IBlock.checkHoldingBrush(world, player, () -> {
-			final BlockPos newBlockPos = getBlockPosWithData.apply(world, pos);
-			final BlockEntity entity = world.getBlockEntity(newBlockPos);
-			if (entity instanceof BlockEntityBase) {
+		final BlockPos newBlockPos = getBlockPosWithData.apply(world, pos);
+		final BlockEntity entity = world.getBlockEntity(newBlockPos);
+		if (entity instanceof BlockEntityBase blockEntity) {
+			InteractionResult brushResult = IBlock.checkHoldingBrush(world, player, () -> {
 				PacketOpenBlockEntityScreen.sendDirectlyToServer((ServerLevel) world, (ServerPlayer) player, newBlockPos);
+			});
+
+			for(InteractionHand hand : InteractionHand.values()) {
+				ItemStack stack = player.getItemInHand(hand);
+				if(stack.getItem() instanceof DyeItem dyeItem) {
+					DyeColor dyeColor = dyeItem.getDyeColor();
+					blockEntity.customColor = PIDSColorHelper.convert(dyeColor);
+					blockEntity.setChanged();
+					player.playSound(SoundEvents.DYE_USE);
+					if(!player.isCreative()) {
+						stack.shrink(1);
+					}
+					return InteractionResult.SUCCESS;
+				} else if(stack.getItem() == Items.MILK_BUCKET) {
+					blockEntity.customColor = null;
+					blockEntity.setChanged();
+					player.playSound(SoundEvents.BUCKET_FILL_TADPOLE);
+					if(!player.isCreative()) {
+						player.setItemInHand(hand, new ItemStack(Items.BUCKET));
+					}
+					return InteractionResult.SUCCESS;
+				}
 			}
-		});
+			return brushResult;
+		}
+		return InteractionResult.PASS;
 	}
 
 	@Override
@@ -71,7 +97,10 @@ public abstract class BlockPIDSBase extends Block implements EntityBlock {
 		private final LongAVLTreeSet platformIds = new LongAVLTreeSet();
 		@Getter
 		private int displayPage;
+		@Getter
+		private @Nullable Integer customColor;
 		private static final String KEY_MESSAGE = "message";
+		private static final String KEY_CUSTOM_COLOR = "custom_color";
 		private static final String KEY_HIDE_ARRIVAL = "hide_arrival";
 		private static final String KEY_PLATFORM_IDS = "platform_ids";
 		private static final String KEY_DISPLAY_PAGE = "display_page";
@@ -86,6 +115,7 @@ public abstract class BlockPIDSBase extends Block implements EntityBlock {
 				messages[i] = "";
 			}
 			hideArrivalArray = new boolean[maxArrivals];
+			customColor = null;
 		}
 
 		@Override
@@ -102,6 +132,7 @@ public abstract class BlockPIDSBase extends Block implements EntityBlock {
 			}
 
 			displayPage = nbtCompound.getInt(KEY_DISPLAY_PAGE);
+			customColor = PIDSColorHelper.parse(nbtCompound.getString(KEY_CUSTOM_COLOR));
 		}
 
 		@Override
@@ -112,6 +143,7 @@ public abstract class BlockPIDSBase extends Block implements EntityBlock {
 			}
 			nbtCompound.putLongArray(KEY_PLATFORM_IDS, new ArrayList<>(platformIds));
 			nbtCompound.putInt(KEY_DISPLAY_PAGE, displayPage);
+			nbtCompound.putString(KEY_CUSTOM_COLOR, PIDSColorHelper.serialize(customColor));
 		}
 
 		public void setData(String[] messages, boolean[] hideArrivalArray, LongAVLTreeSet platformIds, int displayPage) {
@@ -143,6 +175,10 @@ public abstract class BlockPIDSBase extends Block implements EntityBlock {
 			}
 		}
 
+		public @Nullable Integer customizedColor() {
+			return customColor;
+		}
+
 		public abstract boolean showArrivalNumber();
 
 		public abstract boolean alternateLines();
@@ -150,5 +186,50 @@ public abstract class BlockPIDSBase extends Block implements EntityBlock {
 		public abstract int textColorArrived();
 
 		public abstract int textColor();
+	}
+
+	static class PIDSColorHelper {
+		private static final Map<DyeColor, Integer> DYE_TO_PIDS_COLOR = new HashMap<>();
+
+		static {
+			DYE_TO_PIDS_COLOR.put(DyeColor.WHITE, 0xF9FFFE);
+			DYE_TO_PIDS_COLOR.put(DyeColor.ORANGE, 0xFF9900);
+			DYE_TO_PIDS_COLOR.put(DyeColor.MAGENTA, 0xEB4CDF);
+			DYE_TO_PIDS_COLOR.put(DyeColor.LIGHT_BLUE, 0x4DB3F9);
+			DYE_TO_PIDS_COLOR.put(DyeColor.YELLOW, 0xFED83D);
+			DYE_TO_PIDS_COLOR.put(DyeColor.LIME, 0x98DB24);
+			DYE_TO_PIDS_COLOR.put(DyeColor.PINK, 0xF87CC4);
+			DYE_TO_PIDS_COLOR.put(DyeColor.GRAY, 0x6D7778);
+			DYE_TO_PIDS_COLOR.put(DyeColor.LIGHT_GRAY, 0xA9A9A2);
+			DYE_TO_PIDS_COLOR.put(DyeColor.CYAN, 0x09F6F6);
+			DYE_TO_PIDS_COLOR.put(DyeColor.PURPLE, 0xBE4EFB);
+			DYE_TO_PIDS_COLOR.put(DyeColor.BLUE, 0x6F79EC);
+			DYE_TO_PIDS_COLOR.put(DyeColor.BROWN, 0xB3652D);
+			DYE_TO_PIDS_COLOR.put(DyeColor.GREEN, 0x1FAD1F);
+			DYE_TO_PIDS_COLOR.put(DyeColor.RED, 0xFF5555);
+			DYE_TO_PIDS_COLOR.put(DyeColor.BLACK, 0x000000);
+		}
+
+		public static int convert(DyeColor color) {
+			return DYE_TO_PIDS_COLOR.get(color);
+		}
+
+		/**
+		 * Converts an int color to a hexadecimal string, empty string if null.
+		 */
+		public static String serialize(@Nullable Integer color) {
+			return color == null ? "" : String.format("%06X", color);
+		}
+
+		/**
+		 * Parse a hexadecimal string, returns null if parsing failed.
+		 */
+		public static @Nullable Integer parse(String str) {
+			try {
+				return Integer.parseInt(str, 16);
+			} catch (NumberFormatException e) {
+    			return null;
+			}
+		}
 	}
 }
