@@ -12,6 +12,10 @@ public final class DataHelper {
 
 	private static final GenericStringCache<String[]> STATION_EXIT_NAME_SPLIT_CACHE = new GenericStringCache<>(30000, false);
 
+	public static String formatNameOnly(String name) {
+		return name.replace("|", " ");
+	}
+
 	public static String getNameOrUntitled(NameColorDataBase nameColorDataBase) {
 		return getNameOrUntitled(nameColorDataBase.getName());
 	}

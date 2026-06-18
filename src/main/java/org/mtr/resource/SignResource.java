@@ -13,15 +13,18 @@ import org.mtr.client.CustomResourceLoader;
 import org.mtr.client.MinecraftClientData;
 import org.mtr.core.data.*;
 import org.mtr.core.serializer.ReaderBase;
+import org.mtr.data.IGui;
 import org.mtr.font.FontRenderHelper;
 import org.mtr.font.FontRenderOptions;
 import org.mtr.generated.resource.SignResourceSchema;
+import org.mtr.libraries.it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.mtr.libraries.it.unimi.dsi.fastutil.ints.IntArrayList;
 import org.mtr.libraries.it.unimi.dsi.fastutil.longs.LongAVLTreeSet;
 import org.mtr.libraries.it.unimi.dsi.fastutil.longs.LongArraySet;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectObjectImmutablePair;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import org.mtr.render.SpecialSignPlatformRenderer;
 import org.mtr.render.SpecialSignRouteRenderer;
 import org.mtr.render.SpecialSignStationExitRenderer;
@@ -188,7 +191,7 @@ public final class SignResource extends SignResourceSchema {
 							SPECIAL_SIGN_ROUTE_RENDERER.render(
 								textureDrawing, deferredRenders,
 								x + i * signSize, y, zOffset,
-								signSize, getRoutes(blockPos).stream().filter(route -> selectedIdsSet.contains(route.getColor())).collect(Collectors.toCollection(ObjectArrayList::new)),
+								signSize, getRoutesForRailwaySign(blockPos).stream().filter(route -> selectedIdsSet.contains(route.getColor())).collect(Collectors.toCollection(ObjectArrayList::new)),
 								signResource.flipTexture, signResource.flipCustomText, signResource.small, signResource.getCustomText(), font,
 								totalSpace, renderPlaceholder
 							);
@@ -223,24 +226,31 @@ public final class SignResource extends SignResourceSchema {
 		});
 	}
 
-	public static ObjectArrayList<Route> getRoutes(@Nullable BlockPos blockPos) {
+	public static ObjectArrayList<Route> getRoutesForRailwaySign(@Nullable BlockPos blockPos) {
 		return blockPos == null ? new ObjectArrayList<>() : SIGN_ROUTES_CACHE.get(blockPos.asLong(), () -> {
 			final Station station = getStation(blockPos);
 			if (station == null) {
 				return new ObjectArrayList<>();
 			}
 
-			final ObjectArrayList<Route> routes = new ObjectArrayList<>();
 			final MinecraftClientData minecraftClientData = MinecraftClientData.getInstance();
 			final LongArraySet platformIds = station.savedRails.stream().map(NameColorDataBase::getId).collect(Collectors.toCollection(LongArraySet::new));
+			final Int2ObjectOpenHashMap<ObjectOpenHashSet<String>> routeNamesForColor = new Int2ObjectOpenHashMap<>();
 
 			minecraftClientData.simplifiedRoutes.forEach(simplifiedRoute -> {
 				if (simplifiedRoute.getPlatforms().stream().anyMatch(simplifiedRoutePlatform -> platformIds.contains(simplifiedRoutePlatform.getPlatformId()))) {
-					final Route route = new Route(TransportMode.values()[0], minecraftClientData);
-					route.setName(simplifiedRoute.getName());
-					route.setColor(simplifiedRoute.getColor());
-					routes.add(route);
+					routeNamesForColor.computeIfAbsent(simplifiedRoute.getColor(), key -> new ObjectOpenHashSet<>()).add(simplifiedRoute.getName().split("\\|\\|")[0]);
 				}
+			});
+
+			final ObjectArrayList<Route> routes = new ObjectArrayList<>();
+			routeNamesForColor.forEach((color, names) -> {
+				final ObjectArrayList<String> sortedNames = new ObjectArrayList<>(names);
+				Collections.sort(sortedNames);
+				final Route route = new Route(TransportMode.values()[0], minecraftClientData);
+				route.setName(IGui.mergeStations(sortedNames));
+				route.setColor(color);
+				routes.add(route);
 			});
 
 			Collections.sort(routes);

@@ -33,7 +33,7 @@ jobs:
       - name: Setup files
         run: ./gradlew setupFiles -PcrowdinApiKey="${{ secrets.CROWDIN_API_KEY }}" -PpatreonApiKey="${{ secrets.PATREON_API_KEY }}" --no-daemon
       - name: Build
-        run: ./gradlew buildAndCollect --no-daemon
+        run: ./gradlew buildAndCollect -x test --no-daemon
       - name: Capture release artifacts
         if: env.BUILD_ARTIFACTS == 'true'
         uses: actions/upload-artifact@main

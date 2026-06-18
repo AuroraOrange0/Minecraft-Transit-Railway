@@ -20,6 +20,7 @@ import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArraySet;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectObjectImmutablePair;
 import org.mtr.packet.PacketUpdateTrainSensorConfig;
+import org.mtr.tool.DataHelper;
 import org.mtr.tool.GuiHelper;
 import org.mtr.widget.ButtonComponent;
 import org.mtr.widget.CheckboxComponent;
@@ -118,7 +119,7 @@ public abstract class TrainSensorScreenBase<T extends BlockTrainSensorBase.Block
 				final String routeNumber = Utilities.formatName(route.getRouteNumber());
 				lines.add(ObjectArrayList.of(
 					new ObjectObjectImmutablePair<>("- ", new Color(route.getColor())),
-					new ObjectObjectImmutablePair<>(IGui.formatStationName(route.getName()) + (routeNumber.isEmpty() ? "" : " " + routeNumber), null)
+					new ObjectObjectImmutablePair<>(DataHelper.getNameOrUntitled(DataHelper.formatNameOnly(route.getName()) + (routeNumber.isEmpty() ? "" : " " + routeNumber)), null)
 				));
 			});
 			multiLineTextWidget.write(lines);

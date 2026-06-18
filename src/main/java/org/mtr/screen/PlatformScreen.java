@@ -15,6 +15,7 @@ import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectImmutableList;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectObjectImmutablePair;
 import org.mtr.packet.PacketUpdateData;
 import org.mtr.registry.RegistryClient;
+import org.mtr.tool.DataHelper;
 import org.mtr.tool.GuiHelper;
 import org.mtr.tool.ReleasedDynamicTextureRegistry;
 import org.mtr.widget.MultiLineTextWidget;
@@ -79,7 +80,7 @@ public final class PlatformScreen extends NameColorDataScreenBase<Platform> {
 			final String routeNumber = Utilities.formatName(route.getRouteNumber());
 			lines.add(ObjectArrayList.of(
 				new ObjectObjectImmutablePair<>("- ", new Color(route.getColor())),
-				new ObjectObjectImmutablePair<>(Utilities.formatName(route.getName()) + (routeNumber.isEmpty() ? "" : " " + routeNumber), null)
+				new ObjectObjectImmutablePair<>(DataHelper.getNameOrUntitled(DataHelper.formatNameOnly(route.getName()) + (routeNumber.isEmpty() ? "" : " " + routeNumber)), null)
 			));
 		});
 		multiLineTextWidget.write(lines);

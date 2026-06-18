@@ -190,7 +190,7 @@ public final class ListComponent<T> extends UIComponent {
 			null,
 			GuiHelper.DEFAULT_PADDING + GuiHelper.MINECRAFT_FONT_SIZE,
 			genericData,
-			Utilities.formatName(getName.apply(genericData)),
+			DataHelper.getNameOrUntitled(DataHelper.formatNameOnly(getName.apply(genericData))),
 			actions
 		)));
 
