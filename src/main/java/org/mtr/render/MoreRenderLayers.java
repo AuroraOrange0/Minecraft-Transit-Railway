@@ -39,7 +39,7 @@ public class MoreRenderLayers {
 	}
 
 	public static RenderType getInteriorTranslucent(ResourceLocation texture) {
-		return checkCache(texture, () -> RenderType.entityTranslucent(texture), INTERIOR_TRANSLUCENT_CACHE);
+		return checkCache(texture, () -> RenderType.itemEntityTranslucentCull(texture), INTERIOR_TRANSLUCENT_CACHE);
 	}
 
 	public static RenderType getExterior(ResourceLocation texture) {
@@ -47,7 +47,7 @@ public class MoreRenderLayers {
 	}
 
 	public static RenderType getExteriorTranslucent(ResourceLocation texture) {
-		return checkCache(texture, () -> RenderType.entityTranslucent(texture), EXTERIOR_TRANSLUCENT_CACHE);
+		return checkCache(texture, () -> RenderType.itemEntityTranslucentCull(texture), EXTERIOR_TRANSLUCENT_CACHE);
 	}
 
 	private static RenderType checkCache(ResourceLocation identifier, Supplier<RenderType> supplier, Object2ObjectOpenHashMap<ResourceLocation, RenderType> cache) {

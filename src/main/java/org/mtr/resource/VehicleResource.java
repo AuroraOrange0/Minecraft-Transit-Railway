@@ -368,6 +368,9 @@ public final class VehicleResource extends VehicleResourceSchema {
 			}
 		}
 
+		// Build door models and map them to the closest doorway using combined doorways from all models
+		builtModels.forEach(builtVehicleModelHolder -> builtVehicleModelHolder.mapDoors(doorways));
+
 		// TODO don't rebuild shared models, e.g. bogies
 		final ObjectArrayList<BuiltVehicleModelHolder> builtBogie1Models = new ObjectArrayList<>();
 		for (final VehicleModel vehicleModel : bogie1Models) {

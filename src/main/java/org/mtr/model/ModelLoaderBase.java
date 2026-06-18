@@ -11,7 +11,6 @@ import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectObjectImmutablePair
 import org.mtr.render.StoredMatrixTransformations;
 import org.mtr.resource.*;
 
-import java.util.Comparator;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -123,7 +122,7 @@ public abstract class ModelLoaderBase {
 			final ObjectArrayList<AABB> floors = new ObjectArrayList<>();
 			final ObjectArrayList<AABB> doorways = new ObjectArrayList<>();
 			modelProperties.iterateParts(modelPropertiesPart -> modelPropertiesPart.writeCache(nameToNewOptimizedModelGroup, nameToRawModelDisplayParts, positionDefinitions, rawModels, rawDoorModelDetailsList, displays, floors, doorways, modelProperties.getModelYOffset()));
-			builtModel1 = new BuiltVehicleModelHolder(modelProperties, get(rawModels), mapDoors(rawDoorModelDetailsList, doorways), displays, floors, doorways);
+			builtModel1 = new BuiltVehicleModelHolder(modelProperties, get(rawModels), rawDoorModelDetailsList, drawMode, displays, floors, doorways);
 		}
 		return builtModel1;
 	}
@@ -176,42 +175,5 @@ public abstract class ModelLoaderBase {
 		final Object2ObjectOpenHashMap<PartCondition, Object2ObjectOpenHashMap<RenderStage, ObjectArrayList<NewOptimizedModel>>> models = new Object2ObjectOpenHashMap<>();
 		rawModels.forEach((partCondition, newOptimizedModelGroup) -> models.put(partCondition, newOptimizedModelGroup.build(drawMode)));
 		return models;
-	}
-
-	/**
-	 * If this part is a door, find the closest doorway.
-	 */
-	private ObjectArrayList<BuiltVehicleModelHolder.BuiltDoorModelDetails> mapDoors(
-		ObjectArrayList<ModelPropertiesPart.RawDoorModelDetails> rawDoorModelDetailsList,
-		ObjectArrayList<AABB> doorways
-	) {
-		final ObjectArrayList<BuiltVehicleModelHolder.BuiltDoorModelDetails> builtDoorModelDetailsList = new ObjectArrayList<>();
-		rawDoorModelDetailsList.forEach(rawDoorModelDetails -> {
-			final AABB closestDoorway = doorways.stream().min(Comparator.comparingDouble(checkDoorway -> rawDoorModelDetails.boxes().stream().map(box -> getClosestDistance(
-				box.minX,
-				box.maxX,
-				checkDoorway.minX,
-				checkDoorway.maxX
-			) + getClosestDistance(
-				box.minY,
-				box.maxY,
-				checkDoorway.minY,
-				checkDoorway.maxY
-			) + getClosestDistance(
-				box.minZ,
-				box.maxZ,
-				checkDoorway.minZ,
-				checkDoorway.maxZ
-			)).min(Double::compareTo).orElse(Double.MAX_VALUE))).orElse(null);
-
-			final Object2ObjectOpenHashMap<PartCondition, Object2ObjectOpenHashMap<RenderStage, ObjectArrayList<NewOptimizedModel>>> builtDoorModel = new Object2ObjectOpenHashMap<>();
-			rawDoorModelDetails.rawModels().forEach((partCondition, newOptimizedModelGroup) -> builtDoorModel.put(partCondition, newOptimizedModelGroup.build(drawMode)));
-			builtDoorModelDetailsList.add(new BuiltVehicleModelHolder.BuiltDoorModelDetails(builtDoorModel, rawDoorModelDetails.modelPropertiesPart(), closestDoorway, rawDoorModelDetails.flipped()));
-		});
-		return builtDoorModelDetailsList;
-	}
-
-	private static double getClosestDistance(double a1, double a2, double b1, double b2) {
-		return Math.min(Math.min(Math.abs(b1 - a1), Math.abs(b1 - a2)), Math.min(Math.abs(b2 - a1), Math.abs(b2 - a2)));
 	}
 }

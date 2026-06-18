@@ -1,5 +1,6 @@
 package org.mtr.model;
 
+import com.mojang.blaze3d.vertex.VertexFormat;
 import net.minecraft.world.phys.AABB;
 import org.jspecify.annotations.Nullable;
 import org.mtr.data.VehicleExtension;
@@ -9,11 +10,15 @@ import org.mtr.render.MainRenderer;
 import org.mtr.render.StoredMatrixTransformations;
 import org.mtr.resource.*;
 
+import java.util.Comparator;
+
 public final class BuiltVehicleModelHolder {
 
 	public final ModelProperties modelProperties;
 	private final Object2ObjectOpenHashMap<PartCondition, Object2ObjectOpenHashMap<RenderStage, ObjectArrayList<NewOptimizedModel>>> builtModels;
-	private final ObjectArrayList<BuiltDoorModelDetails> builtDoorModelDetailsList;
+	private final ObjectArrayList<ModelPropertiesPart.RawDoorModelDetails> rawDoorModelDetailsList;
+	private final VertexFormat.Mode drawMode;
+	private final ObjectArrayList<BuiltDoorModelDetails> builtDoorModelDetailsList = new ObjectArrayList<>();
 	private final Object2ObjectOpenHashMap<PartCondition, ObjectArrayList<ModelDisplayPart>> displays;
 	public final ObjectArrayList<AABB> floors;
 	public final ObjectArrayList<AABB> doorways;
@@ -21,14 +26,16 @@ public final class BuiltVehicleModelHolder {
 	public BuiltVehicleModelHolder(
 		ModelProperties modelProperties,
 		Object2ObjectOpenHashMap<PartCondition, Object2ObjectOpenHashMap<RenderStage, ObjectArrayList<NewOptimizedModel>>> builtModels,
-		ObjectArrayList<BuiltDoorModelDetails> builtDoorModelDetailsList,
+		ObjectArrayList<ModelPropertiesPart.RawDoorModelDetails> rawDoorModelDetailsList,
+		VertexFormat.Mode drawMode,
 		Object2ObjectOpenHashMap<PartCondition, ObjectArrayList<ModelDisplayPart>> displays,
 		ObjectArrayList<AABB> floors,
 		ObjectArrayList<AABB> doorways
 	) {
 		this.modelProperties = modelProperties;
 		this.builtModels = builtModels;
-		this.builtDoorModelDetailsList = builtDoorModelDetailsList;
+		this.rawDoorModelDetailsList = rawDoorModelDetailsList;
+		this.drawMode = drawMode;
 		this.displays = displays;
 		this.floors = floors;
 		this.doorways = doorways;
@@ -61,6 +68,28 @@ public final class BuiltVehicleModelHolder {
 		}
 	}
 
+	/**
+	 * Builds and maps door models using the combined doorways from all vehicle models.
+	 * Should be called once after all models have been loaded and their doorways aggregated.
+	 */
+	public void mapDoors(ObjectArrayList<AABB> allDoorways) {
+		rawDoorModelDetailsList.forEach(rawDoorModelDetails -> {
+			final AABB closestDoorway = allDoorways.isEmpty() ? null : allDoorways.stream().min(Comparator.comparingDouble(checkDoorway ->
+				rawDoorModelDetails.boxes().stream().map(box -> getClosestDistance(
+					box.minX, box.maxX, checkDoorway.minX, checkDoorway.maxX
+				) + getClosestDistance(
+					box.minY, box.maxY, checkDoorway.minY, checkDoorway.maxY
+				) + getClosestDistance(
+					box.minZ, box.maxZ, checkDoorway.minZ, checkDoorway.maxZ
+				)).min(Double::compareTo).orElse(Double.MAX_VALUE)
+			)).orElse(null);
+
+			final Object2ObjectOpenHashMap<PartCondition, Object2ObjectOpenHashMap<RenderStage, ObjectArrayList<NewOptimizedModel>>> builtDoorModel = new Object2ObjectOpenHashMap<>();
+			rawDoorModelDetails.rawModels().forEach((partCondition, newOptimizedModelGroup) -> builtDoorModel.put(partCondition, newOptimizedModelGroup.build(drawMode)));
+			builtDoorModelDetailsList.add(new BuiltDoorModelDetails(builtDoorModel, rawDoorModelDetails.modelPropertiesPart(), closestDoorway, rawDoorModelDetails.flipped()));
+		});
+	}
+
 	private static boolean matchesCondition(VehicleExtension vehicle, PartCondition partCondition, boolean noOpenDoorways) {
 		return switch (partCondition) {
 			case AT_DEPOT -> !vehicle.getIsOnRoute();
@@ -70,6 +99,10 @@ public final class BuiltVehicleModelHolder {
 			case DOORS_OPENED -> vehicle.persistentVehicleData.getDoorValue() > 0 || !noOpenDoorways;
 			default -> getChristmasLightState(partCondition);
 		};
+	}
+
+	private static double getClosestDistance(double a1, double a2, double b1, double b2) {
+		return Math.min(Math.min(Math.abs(b1 - a1), Math.abs(b1 - a2)), Math.min(Math.abs(b2 - a1), Math.abs(b2 - a2)));
 	}
 
 	private static boolean getChristmasLightState(PartCondition partCondition) {
