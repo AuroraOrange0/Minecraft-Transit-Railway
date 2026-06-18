@@ -8,10 +8,12 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.event.level.ChunkEvent;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 import org.mtr.MTR;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import org.mtr.packet.CustomPacketS2C;
 import org.mtr.packet.PacketBufferReceiver;
 import org.mtr.packet.PacketHandler;
 
@@ -26,7 +28,12 @@ public final class ModEventBus {
 	public static BiConsumer<ServerLevel, ChunkAccess> chunkUnloadConsumer = null;
 	public static final Object2ObjectOpenHashMap<String, Function<PacketBufferReceiver, ? extends PacketHandler>> PACKETS = new Object2ObjectOpenHashMap<>();
 	public static final ObjectArrayList<Consumer<PayloadRegistrar>> PAYLOAD_HANDLERS = new ObjectArrayList<>();
+	public static BiConsumer<CustomPacketS2C, IPayloadContext> s2cClientHandler = (packet, context) -> {};
 	private static final String PROTOCOL_VERSION = "1";
+
+	public static void handleS2CClient(CustomPacketS2C packet, IPayloadContext context) {
+		s2cClientHandler.accept(packet, context);
+	}
 
 	@SubscribeEvent
 	public static void chunkLoad(ChunkEvent.Load event) {

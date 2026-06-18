@@ -191,6 +191,8 @@ public final class RegistryServer {
 				}, ((ServerPlayer) player).server::execute);
 			}
 		})));
+		ModEventBus.PAYLOAD_HANDLERS.add(payloadRegistrar -> payloadRegistrar.playBidirectional(MTR.PACKET_IDENTIFIER_S2C, StreamCodec.composite(ByteBufCodecs.BYTE_ARRAY, CustomPacketS2C::buffer, CustomPacketS2C::new), new DirectionalPayloadHandler<>(ModEventBus::handleS2CClient, (customPacketS2C, context) -> {
+		})));
 *///? }
 	}
 
