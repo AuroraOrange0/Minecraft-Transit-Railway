@@ -110,8 +110,8 @@ public class RenderPIDS<T extends BlockPIDSBase.BlockEntityBase> extends BlockEn
 		final int arrivalsPerPage = isSingleArrival ? 1 : (entity.alternateLines() ? entity.maxArrivals / 2 : entity.maxArrivals);
 		int arrivalIndex = entity.getDisplayPage() * arrivalsPerPage;
 
-		final Integer customizedColor = entity.customizedColor();
-		final Color textColor = customizedColor == null ? new Color(entity.textColor()) : new Color(customizedColor);
+		final Integer customColor = entity.getCustomColor();
+		final Color textColor = customColor == null ? new Color(entity.textColor()) : new Color(customColor);
 		final Color textColorArrived = entity.textColorArrived() == entity.textColor() ? textColor : new Color(entity.textColorArrived());
 
 		for (int i = 0; i < entity.maxArrivals; i++) {

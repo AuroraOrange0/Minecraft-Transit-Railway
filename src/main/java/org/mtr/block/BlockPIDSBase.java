@@ -1,5 +1,7 @@
 package org.mtr.block;
 
+import it.unimi.dsi.fastutil.objects.Object2IntMaps;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import lombok.Getter;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
@@ -38,6 +40,27 @@ public abstract class BlockPIDSBase extends Block implements EntityBlock {
 	public final BiPredicate<Level, BlockPos> canStoreData;
 	public final BiFunction<Level, BlockPos, BlockPos> getBlockPosWithData;
 
+	private static final Object2IntOpenHashMap<DyeColor> DYE_TO_PIDS_COLOR = new Object2IntOpenHashMap<>();
+
+	static {
+		DYE_TO_PIDS_COLOR.put(DyeColor.WHITE, 0xF9FFFE);
+		DYE_TO_PIDS_COLOR.put(DyeColor.ORANGE, 0xFF9900);
+		DYE_TO_PIDS_COLOR.put(DyeColor.MAGENTA, 0xEB4CDF);
+		DYE_TO_PIDS_COLOR.put(DyeColor.LIGHT_BLUE, 0x4DB3F9);
+		DYE_TO_PIDS_COLOR.put(DyeColor.YELLOW, 0xFED83D);
+		DYE_TO_PIDS_COLOR.put(DyeColor.LIME, 0x98DB24);
+		DYE_TO_PIDS_COLOR.put(DyeColor.PINK, 0xF87CC4);
+		DYE_TO_PIDS_COLOR.put(DyeColor.GRAY, 0x6D7778);
+		DYE_TO_PIDS_COLOR.put(DyeColor.LIGHT_GRAY, 0xA9A9A2);
+		DYE_TO_PIDS_COLOR.put(DyeColor.CYAN, 0x09F6F6);
+		DYE_TO_PIDS_COLOR.put(DyeColor.PURPLE, 0xBE4EFB);
+		DYE_TO_PIDS_COLOR.put(DyeColor.BLUE, 0x6F79EC);
+		DYE_TO_PIDS_COLOR.put(DyeColor.BROWN, 0xB3652D);
+		DYE_TO_PIDS_COLOR.put(DyeColor.GREEN, 0x1FAD1F);
+		DYE_TO_PIDS_COLOR.put(DyeColor.RED, 0xFF5555);
+		DYE_TO_PIDS_COLOR.put(DyeColor.BLACK, 0x000000);
+	}
+
 	public BlockPIDSBase(BlockBehaviour.Properties settings, int maxArrivals, BiPredicate<Level, BlockPos> canStoreData, BiFunction<Level, BlockPos, BlockPos> getBlockPosWithData) {
 		super(settings.lightLevel(blockState -> 5).noOcclusion());
 		this.maxArrivals = maxArrivals;
@@ -49,34 +72,34 @@ public abstract class BlockPIDSBase extends Block implements EntityBlock {
 	protected InteractionResult useWithoutItem(BlockState state, Level world, BlockPos pos, Player player, BlockHitResult hit) {
 		final BlockPos newBlockPos = getBlockPosWithData.apply(world, pos);
 		final BlockEntity entity = world.getBlockEntity(newBlockPos);
-		if (entity instanceof BlockEntityBase blockEntity) {
-			InteractionResult brushResult = IBlock.checkHoldingBrush(world, player, () -> {
-				PacketOpenBlockEntityScreen.sendDirectlyToServer((ServerLevel) world, (ServerPlayer) player, newBlockPos);
-			});
 
-			for(InteractionHand hand : InteractionHand.values()) {
-				ItemStack stack = player.getItemInHand(hand);
-				if(stack.getItem() instanceof DyeItem dyeItem) {
-					DyeColor dyeColor = dyeItem.getDyeColor();
-					blockEntity.customColor = PIDSColorHelper.convert(dyeColor);
+		if (entity instanceof BlockEntityBase blockEntity) {
+			final InteractionResult brushResult = IBlock.checkHoldingBrush(world, player, () -> PacketOpenBlockEntityScreen.sendDirectlyToServer((ServerLevel) world, (ServerPlayer) player, newBlockPos));
+
+			for (final InteractionHand interactionHand : InteractionHand.values()) {
+				final ItemStack itemStack = player.getItemInHand(interactionHand);
+				if (itemStack.getItem() instanceof DyeItem dyeItem) {
+					blockEntity.customColor = convertPIDSColor(dyeItem.getDyeColor());
 					blockEntity.setChanged();
 					player.playSound(SoundEvents.DYE_USE);
-					if(!player.isCreative()) {
-						stack.shrink(1);
+					if (!player.isCreative()) {
+						itemStack.shrink(1);
 					}
 					return InteractionResult.SUCCESS;
-				} else if(stack.getItem() == Items.MILK_BUCKET) {
+				} else if (itemStack.getItem() == Items.MILK_BUCKET) {
 					blockEntity.customColor = null;
 					blockEntity.setChanged();
 					player.playSound(SoundEvents.BUCKET_FILL_TADPOLE);
-					if(!player.isCreative()) {
-						player.setItemInHand(hand, new ItemStack(Items.BUCKET));
+					if (!player.isCreative()) {
+						player.setItemInHand(interactionHand, new ItemStack(Items.BUCKET));
 					}
 					return InteractionResult.SUCCESS;
 				}
 			}
+
 			return brushResult;
 		}
+
 		return InteractionResult.PASS;
 	}
 
@@ -99,11 +122,12 @@ public abstract class BlockPIDSBase extends Block implements EntityBlock {
 		private int displayPage;
 		@Getter
 		private @Nullable Integer customColor;
+
 		private static final String KEY_MESSAGE = "message";
-		private static final String KEY_CUSTOM_COLOR = "custom_color";
 		private static final String KEY_HIDE_ARRIVAL = "hide_arrival";
 		private static final String KEY_PLATFORM_IDS = "platform_ids";
 		private static final String KEY_DISPLAY_PAGE = "display_page";
+		private static final String KEY_CUSTOM_COLOR = "custom_color";
 
 		public BlockEntityBase(int maxArrivals, BiPredicate<Level, BlockPos> canStoreData, BiFunction<Level, BlockPos, BlockPos> getBlockPosWithData, BlockEntityType<?> type, BlockPos pos, BlockState state) {
 			super(type, pos, state);
@@ -132,7 +156,8 @@ public abstract class BlockPIDSBase extends Block implements EntityBlock {
 			}
 
 			displayPage = nbtCompound.getInt(KEY_DISPLAY_PAGE);
-			customColor = PIDSColorHelper.parse(nbtCompound.getString(KEY_CUSTOM_COLOR));
+			final int tempCustomColor = nbtCompound.getInt(KEY_CUSTOM_COLOR);
+			customColor = tempCustomColor == 0 ? null : tempCustomColor;
 		}
 
 		@Override
@@ -143,7 +168,7 @@ public abstract class BlockPIDSBase extends Block implements EntityBlock {
 			}
 			nbtCompound.putLongArray(KEY_PLATFORM_IDS, new ArrayList<>(platformIds));
 			nbtCompound.putInt(KEY_DISPLAY_PAGE, displayPage);
-			nbtCompound.putString(KEY_CUSTOM_COLOR, PIDSColorHelper.serialize(customColor));
+			nbtCompound.putInt(KEY_CUSTOM_COLOR, customColor == null ? 0 : customColor);
 		}
 
 		public void setData(String[] messages, boolean[] hideArrivalArray, LongAVLTreeSet platformIds, int displayPage) {
@@ -175,10 +200,6 @@ public abstract class BlockPIDSBase extends Block implements EntityBlock {
 			}
 		}
 
-		public @Nullable Integer customizedColor() {
-			return customColor;
-		}
-
 		public abstract boolean showArrivalNumber();
 
 		public abstract boolean alternateLines();
@@ -188,48 +209,7 @@ public abstract class BlockPIDSBase extends Block implements EntityBlock {
 		public abstract int textColor();
 	}
 
-	static class PIDSColorHelper {
-		private static final Map<DyeColor, Integer> DYE_TO_PIDS_COLOR = new HashMap<>();
-
-		static {
-			DYE_TO_PIDS_COLOR.put(DyeColor.WHITE, 0xF9FFFE);
-			DYE_TO_PIDS_COLOR.put(DyeColor.ORANGE, 0xFF9900);
-			DYE_TO_PIDS_COLOR.put(DyeColor.MAGENTA, 0xEB4CDF);
-			DYE_TO_PIDS_COLOR.put(DyeColor.LIGHT_BLUE, 0x4DB3F9);
-			DYE_TO_PIDS_COLOR.put(DyeColor.YELLOW, 0xFED83D);
-			DYE_TO_PIDS_COLOR.put(DyeColor.LIME, 0x98DB24);
-			DYE_TO_PIDS_COLOR.put(DyeColor.PINK, 0xF87CC4);
-			DYE_TO_PIDS_COLOR.put(DyeColor.GRAY, 0x6D7778);
-			DYE_TO_PIDS_COLOR.put(DyeColor.LIGHT_GRAY, 0xA9A9A2);
-			DYE_TO_PIDS_COLOR.put(DyeColor.CYAN, 0x09F6F6);
-			DYE_TO_PIDS_COLOR.put(DyeColor.PURPLE, 0xBE4EFB);
-			DYE_TO_PIDS_COLOR.put(DyeColor.BLUE, 0x6F79EC);
-			DYE_TO_PIDS_COLOR.put(DyeColor.BROWN, 0xB3652D);
-			DYE_TO_PIDS_COLOR.put(DyeColor.GREEN, 0x1FAD1F);
-			DYE_TO_PIDS_COLOR.put(DyeColor.RED, 0xFF5555);
-			DYE_TO_PIDS_COLOR.put(DyeColor.BLACK, 0x000000);
-		}
-
-		public static int convert(DyeColor color) {
-			return DYE_TO_PIDS_COLOR.get(color);
-		}
-
-		/**
-		 * Converts an int color to a hexadecimal string, empty string if null.
-		 */
-		public static String serialize(@Nullable Integer color) {
-			return color == null ? "" : String.format("%06X", color);
-		}
-
-		/**
-		 * Parse a hexadecimal string, returns null if parsing failed.
-		 */
-		public static @Nullable Integer parse(String str) {
-			try {
-				return Integer.parseInt(str, 16);
-			} catch (NumberFormatException e) {
-    			return null;
-			}
-		}
+	public static int convertPIDSColor(DyeColor color) {
+		return DYE_TO_PIDS_COLOR.getInt(color);
 	}
 }
