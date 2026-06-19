@@ -3,17 +3,15 @@ package org.mtr.registry;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.color.block.BlockColor;
-import net.minecraft.client.renderer.ItemBlockRenderTypes;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
-import net.minecraft.client.renderer.blockentity.BlockEntityRenderers;
-import net.minecraft.network.codec.ByteBufCodecs;
-import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
-import org.mtr.MTR;
-import org.mtr.packet.*;
+import org.mtr.packet.CustomPacketC2S;
+import org.mtr.packet.PacketBufferReceiver;
+import org.mtr.packet.PacketBufferSender;
+import org.mtr.packet.PacketHandler;
 
 import java.util.Arrays;
 import java.util.function.Function;
@@ -23,12 +21,14 @@ import net.fabricmc.fabric.api.blockrenderlayer.v1.BlockRenderLayerMap;
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.client.rendering.v1.ColorProviderRegistry;
+import net.minecraft.client.renderer.blockentity.BlockEntityRenderers;
+import org.mtr.MTR;
 import org.mtr.fabric.MTRFabric;
 //? }
 
 //? if neoforge {
-/*import net.neoforged.neoforge.network.PacketDistributor;
-import net.neoforged.neoforge.network.handling.DirectionalPayloadHandler;
+/*import net.minecraft.client.renderer.ItemBlockRenderTypes;
+import net.neoforged.neoforge.network.PacketDistributor;
 import org.mtr.neoforge.ModEventBus;
 import org.mtr.neoforge.ModEventBusClient;
 *///? }
@@ -91,7 +91,7 @@ public final class RegistryClient {
 //? }
 
 //? if neoforge {
-		/*ModEventBus.s2cClientHandler = (customPacketS2C, context) -> PacketBufferReceiver.receive(customPacketS2C.buffer(), packetBufferReceiver -> {
+		/*RegistryServer.s2cClientHandler = (customPacketS2C, context) -> PacketBufferReceiver.receive(customPacketS2C.buffer(), packetBufferReceiver -> {
 			final Function<PacketBufferReceiver, ? extends PacketHandler> getInstance = ModEventBus.PACKETS.get(packetBufferReceiver.readString());
 			if (getInstance != null) {
 				getInstance.apply(packetBufferReceiver).runClient();

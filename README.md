@@ -57,7 +57,7 @@ For a full list, check out [this site](https://addons.minecrafttransitrailway.co
 
 ### Help Translate the Mod!
 
-The [Crowdin site for Minecraft Transit Railway](https://crwd.in/minecraft-transit-railway) is available.
+The [Crowdin site for Minecraft Transit Railway](https://crowdin.com/project/minecraft-transit-railway) is available.
 
 Crowdin is a cloud-based platform where translators can contribute to the project.
 With your help, we can translate the mod into many different languages.
@@ -78,7 +78,7 @@ You can create a free account to start translating.
 
 To build the mod, this project uses **Stonecutter** for managing multi-platform (Fabric + NeoForge) and multi-version builds.
 
-The build resolves `org.mtr:transport-simulation-core:+` from GitHub Packages. For local development, create a GitHub personal access token with at least the `read:packages` scope, then add your credentials to your Gradle user-home properties file:
+The build resolves `org.mtr:transport-simulation-core:+` from GitHub Packages. For local development, create a GitHub [personal access token (classic)](https://github.com/settings/tokens) with at least the `read:packages` scope, then add your credentials to your Gradle user-home properties file:
 
 `C:\Users\<you>\.gradle\gradle.properties`
 

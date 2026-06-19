@@ -5,7 +5,6 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Registry;
 import net.minecraft.core.component.DataComponentType;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.codec.ByteBufCodecs;
@@ -14,8 +13,6 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.ItemLike;
@@ -30,10 +27,7 @@ import org.mtr.libraries.it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.mtr.packet.*;
 
-import java.util.function.BiFunction;
-import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.function.Supplier;
+import java.util.function.*;
 
 //? if fabric {
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
@@ -41,18 +35,27 @@ import net.fabricmc.fabric.api.itemgroup.v1.FabricItemGroup;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.fabricmc.fabric.api.object.builder.v1.block.entity.FabricBlockEntityTypeBuilder;
+import net.minecraft.core.registries.BuiltInRegistries;
 import org.mtr.fabric.MTRFabric;
 //? }
 
 //? if neoforge {
-/*import net.neoforged.neoforge.network.PacketDistributor;
+/*import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.CreativeModeTab;
+import net.neoforged.neoforge.network.PacketDistributor;
 import net.neoforged.neoforge.network.handling.DirectionalPayloadHandler;
+import net.neoforged.neoforge.network.handling.IPayloadContext;
 import org.mtr.neoforge.MTRNeoForge;
 import org.mtr.neoforge.MainEventBus;
 import org.mtr.neoforge.ModEventBus;
 *///? }
 
 public final class RegistryServer {
+
+//? if neoforge {
+	/*public static BiConsumer<CustomPacketS2C, IPayloadContext> s2cClientHandler = (packet, context) -> {
+	};
+*///? }
 
 	private static final ObjectArrayList<Runnable> OBJECTS_TO_REGISTER = new ObjectArrayList<>();
 	private static final Object2ObjectOpenHashMap<String, ObjectArrayList<Supplier<ItemLike>>> ITEM_GROUP_ENTRIES = new Object2ObjectOpenHashMap<>();
@@ -191,7 +194,7 @@ public final class RegistryServer {
 				}, ((ServerPlayer) player).server::execute);
 			}
 		})));
-		ModEventBus.PAYLOAD_HANDLERS.add(payloadRegistrar -> payloadRegistrar.playBidirectional(MTR.PACKET_IDENTIFIER_S2C, StreamCodec.composite(ByteBufCodecs.BYTE_ARRAY, CustomPacketS2C::buffer, CustomPacketS2C::new), new DirectionalPayloadHandler<>(ModEventBus::handleS2CClient, (customPacketS2C, context) -> {
+		ModEventBus.PAYLOAD_HANDLERS.add(payloadRegistrar -> payloadRegistrar.playBidirectional(MTR.PACKET_IDENTIFIER_S2C, StreamCodec.composite(ByteBufCodecs.BYTE_ARRAY, CustomPacketS2C::buffer, CustomPacketS2C::new), new DirectionalPayloadHandler<>(s2cClientHandler::accept, (customPacketS2C, context) -> {
 		})));
 *///? }
 	}

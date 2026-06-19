@@ -14,7 +14,7 @@
 
 ### GitHub Packages access
 
-The build resolves `org.mtr:transport-simulation-core:+` from GitHub Packages. For local development, create a GitHub personal access token with at least the `read:packages` scope, then add your credentials to your Gradle user-home properties file:
+The build resolves `org.mtr:transport-simulation-core:+` from GitHub Packages. For local development, create a GitHub [personal access token (classic)](https://github.com/settings/tokens) with at least the `read:packages` scope, then add your credentials to your Gradle user-home properties file:
 
 `C:\Users\<you>\.gradle\gradle.properties`
 
@@ -39,24 +39,24 @@ From the repository root:
 What these tasks do:
 
 - `:common:setupFiles`
-  - Creates tokenised source/resource files from templates.
-  - Pulls translation and supporting build assets where configured.
-  - Generates Java schema classes and updates relocated imports.
-  - Runs webserver setup support used by the mod.
+	- Creates tokenised source/resource files from templates.
+	- Pulls translation and supporting build assets where configured.
+	- Generates Java schema classes and updates relocated imports.
+	- Runs webserver setup support used by the mod.
 - `:common:setupWebsiteFiles`
-  - Generates TypeScript entities into `website/src/app/entity/generated/`.
+	- Generates TypeScript entities into `website/src/app/entity/generated/`.
 
 ## Build outputs
 
 This project uses **Stonecutter** for multi-platform (Fabric + NeoForge) and multi-version builds.
 All supported version/loader combinations are listed in `settings.gradle.kts`:
 
-| Minecraft version | Loader   | Stonecutter project ID  |
-|-------------------|----------|-------------------------|
-| 1.21.1            | Fabric   | `1.21.1-fabric`         |
-| 1.21.1            | NeoForge | `1.21.1-neoforge`       |
-| 1.21.4            | Fabric   | `1.21.4-fabric`         |
-| 1.21.4            | NeoForge | `1.21.4-neoforge`       |
+| Minecraft version | Loader   | Stonecutter project ID |
+|-------------------|----------|------------------------|
+| 1.21.1            | Fabric   | `1.21.1-fabric`        |
+| 1.21.1            | NeoForge | `1.21.1-neoforge`      |
+| 1.21.4            | Fabric   | `1.21.4-fabric`        |
+| 1.21.4            | NeoForge | `1.21.4-neoforge`      |
 
 Active versions are configured in the `versions/` directory.
 
@@ -133,17 +133,17 @@ If you only changed docs or comments, a full build is optional, but a quick `:co
 ## Common failures
 
 - **`Dependency requires at least JVM runtime version 21`**
-  - Gradle is running on Java 17 (or older). Point `JAVA_HOME` to a JDK 21 installation.
+	- Gradle is running on Java 17 (or older). Point `JAVA_HOME` to a JDK 21 installation.
 - **Generated files missing after checkout**
-  - Re-run `:common:setupFiles` and `:common:setupWebsiteFiles`.
+	- Re-run `:common:setupFiles` and `:common:setupWebsiteFiles`.
 - **Website model type errors after schema edits**
-  - Re-run `:common:setupWebsiteFiles` and rebuild the website.
+	- Re-run `:common:setupWebsiteFiles` and rebuild the website.
 - **Build fails with platform/version mismatch**
-  - Ensure you've set the active project before running build tasks (e.g., `"Set active project to 1.21.4-fabric"`).
-  - Verify the version directory exists in `versions/` matching your target.
+	- Ensure you've set the active project before running build tasks (e.g., `"Set active project to 1.21.4-fabric"`).
+	- Verify the version directory exists in `versions/` matching your target.
 - **IDE shows compilation errors after checkout**
-  - Stonecutter directives (e.g., `//? if fabric {`) may not be recognized by your IDE's language server.
-  - Run Gradle tasks to generate the correct variant, or configure IDE to understand Stonecutter syntax.
+	- Stonecutter directives (e.g., `//? if fabric {`) may not be recognized by your IDE's language server.
+	- Run Gradle tasks to generate the correct variant, or configure IDE to understand Stonecutter syntax.
 
 ## Related docs
 
