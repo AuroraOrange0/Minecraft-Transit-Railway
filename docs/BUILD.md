@@ -12,6 +12,19 @@
 | Gradle      | Use the wrapper scripts in this repo (`gradlew` / `gradlew.bat`).                                                                   |
 | Stonecutter | Integrated into Gradle build; no separate installation required. Manages multi-platform (Fabric/NeoForge) and multi-version builds. |
 
+### GitHub Packages access
+
+The build resolves `org.mtr:transport-simulation-core:+` from GitHub Packages. For local development, create a GitHub personal access token with at least the `read:packages` scope, then add your credentials to your Gradle user-home properties file:
+
+`C:\Users\<you>\.gradle\gradle.properties`
+
+```properties
+gpr.user=<your-github-username>
+gpr.key=<your-personal-access-token>
+```
+
+As an alternative, Gradle will also use the `GITHUB_TOKEN` environment variable when it is set.
+
 ## First-time setup
 
 This project uses **Stonecutter** to manage multi-platform (Fabric/NeoForge) and multi-version (1.21.1, 1.21.4) builds from a single codebase. Platform-specific code is guarded with Stonecutter directives (e.g., `//? if fabric {` and `//? if neoforge {`). The active version is set in `stonecutter.gradle.kts` (default: `1.21.4-fabric`); the VCS base version is `1.21.1-fabric`.

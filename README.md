@@ -78,6 +78,17 @@ You can create a free account to start translating.
 
 To build the mod, this project uses **Stonecutter** for managing multi-platform (Fabric + NeoForge) and multi-version builds.
 
+The build resolves `org.mtr:transport-simulation-core:+` from GitHub Packages. For local development, create a GitHub personal access token with at least the `read:packages` scope, then add your credentials to your Gradle user-home properties file:
+
+`C:\Users\<you>\.gradle\gradle.properties`
+
+```properties
+gpr.user=<your-github-username>
+gpr.key=<your-personal-access-token>
+```
+
+As an alternative, Gradle will also use the `GITHUB_TOKEN` environment variable when it is set.
+
 From the repository root:
 
 ```powershell
