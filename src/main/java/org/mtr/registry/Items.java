@@ -93,6 +93,24 @@ public final class Items {
 		SIGNAL_CONNECTOR_RED = RegistryServer.registerItem("signal_connector_red", itemSettings -> new ItemSignalModifier(true, ItemSignalModifier.COLORS[14], itemSettings), ItemGroups.CORE);
 		SIGNAL_CONNECTOR_BLACK = RegistryServer.registerItem("signal_connector_black", itemSettings -> new ItemSignalModifier(true, ItemSignalModifier.COLORS[15], itemSettings), ItemGroups.CORE);
 
+		// Advanced signal connectors
+		ADVANCED_SIGNAL_CONNECTOR_WHITE = RegistryServer.registerItem("advanced_signal_connector_white", itemSettings -> new ItemSignalModifier(true, ItemSignalModifier.COLORS[0] | 0xFF000000, itemSettings), ItemGroups.CORE);
+		ADVANCED_SIGNAL_CONNECTOR_ORANGE = RegistryServer.registerItem("advanced_signal_connector_orange", itemSettings -> new ItemSignalModifier(true, ItemSignalModifier.COLORS[1] | 0xFF000000, itemSettings), ItemGroups.CORE);
+		ADVANCED_SIGNAL_CONNECTOR_MAGENTA = RegistryServer.registerItem("advanced_signal_connector_magenta", itemSettings -> new ItemSignalModifier(true, ItemSignalModifier.COLORS[2] | 0xFF000000, itemSettings), ItemGroups.CORE);
+		ADVANCED_SIGNAL_CONNECTOR_LIGHT_BLUE = RegistryServer.registerItem("advanced_signal_connector_light_blue", itemSettings -> new ItemSignalModifier(true, ItemSignalModifier.COLORS[3] | 0xFF000000, itemSettings), ItemGroups.CORE);
+		ADVANCED_SIGNAL_CONNECTOR_YELLOW = RegistryServer.registerItem("advanced_signal_connector_yellow", itemSettings -> new ItemSignalModifier(true, ItemSignalModifier.COLORS[4] | 0xFF000000, itemSettings), ItemGroups.CORE);
+		ADVANCED_SIGNAL_CONNECTOR_LIME = RegistryServer.registerItem("advanced_signal_connector_lime", itemSettings -> new ItemSignalModifier(true, ItemSignalModifier.COLORS[5] | 0xFF000000, itemSettings), ItemGroups.CORE);
+		ADVANCED_SIGNAL_CONNECTOR_PINK = RegistryServer.registerItem("advanced_signal_connector_pink", itemSettings -> new ItemSignalModifier(true, ItemSignalModifier.COLORS[6] | 0xFF000000, itemSettings), ItemGroups.CORE);
+		ADVANCED_SIGNAL_CONNECTOR_GRAY = RegistryServer.registerItem("advanced_signal_connector_gray", itemSettings -> new ItemSignalModifier(true, ItemSignalModifier.COLORS[7] | 0xFF000000, itemSettings), ItemGroups.CORE);
+		ADVANCED_SIGNAL_CONNECTOR_LIGHT_GRAY = RegistryServer.registerItem("advanced_signal_connector_light_gray", itemSettings -> new ItemSignalModifier(true, ItemSignalModifier.COLORS[8] | 0xFF000000, itemSettings), ItemGroups.CORE);
+		ADVANCED_SIGNAL_CONNECTOR_CYAN = RegistryServer.registerItem("advanced_signal_connector_cyan", itemSettings -> new ItemSignalModifier(true, ItemSignalModifier.COLORS[9] | 0xFF000000, itemSettings), ItemGroups.CORE);
+		ADVANCED_SIGNAL_CONNECTOR_PURPLE = RegistryServer.registerItem("advanced_signal_connector_purple", itemSettings -> new ItemSignalModifier(true, ItemSignalModifier.COLORS[10] | 0xFF000000, itemSettings), ItemGroups.CORE);
+		ADVANCED_SIGNAL_CONNECTOR_BLUE = RegistryServer.registerItem("advanced_signal_connector_blue", itemSettings -> new ItemSignalModifier(true, ItemSignalModifier.COLORS[11] | 0xFF000000, itemSettings), ItemGroups.CORE);
+		ADVANCED_SIGNAL_CONNECTOR_BROWN = RegistryServer.registerItem("advanced_signal_connector_brown", itemSettings -> new ItemSignalModifier(true, ItemSignalModifier.COLORS[12] | 0xFF000000, itemSettings), ItemGroups.CORE);
+		ADVANCED_SIGNAL_CONNECTOR_GREEN = RegistryServer.registerItem("advanced_signal_connector_green", itemSettings -> new ItemSignalModifier(true, ItemSignalModifier.COLORS[13] | 0xFF000000, itemSettings), ItemGroups.CORE);
+		ADVANCED_SIGNAL_CONNECTOR_RED = RegistryServer.registerItem("advanced_signal_connector_red", itemSettings -> new ItemSignalModifier(true, ItemSignalModifier.COLORS[14] | 0xFF000000, itemSettings), ItemGroups.CORE);
+		ADVANCED_SIGNAL_CONNECTOR_BLACK = RegistryServer.registerItem("advanced_signal_connector_black", itemSettings -> new ItemSignalModifier(true, ItemSignalModifier.COLORS[15] | 0xFF000000, itemSettings), ItemGroups.CORE);
+
 		// Signal removers
 		SIGNAL_REMOVER_WHITE = RegistryServer.registerItem("signal_remover_white", itemSettings -> new ItemSignalModifier(false, ItemSignalModifier.COLORS[0], itemSettings), ItemGroups.CORE);
 		SIGNAL_REMOVER_ORANGE = RegistryServer.registerItem("signal_remover_orange", itemSettings -> new ItemSignalModifier(false, ItemSignalModifier.COLORS[1], itemSettings), ItemGroups.CORE);
@@ -110,6 +128,24 @@ public final class Items {
 		SIGNAL_REMOVER_GREEN = RegistryServer.registerItem("signal_remover_green", itemSettings -> new ItemSignalModifier(false, ItemSignalModifier.COLORS[13], itemSettings), ItemGroups.CORE);
 		SIGNAL_REMOVER_RED = RegistryServer.registerItem("signal_remover_red", itemSettings -> new ItemSignalModifier(false, ItemSignalModifier.COLORS[14], itemSettings), ItemGroups.CORE);
 		SIGNAL_REMOVER_BLACK = RegistryServer.registerItem("signal_remover_black", itemSettings -> new ItemSignalModifier(false, ItemSignalModifier.COLORS[15], itemSettings), ItemGroups.CORE);
+
+		// Advanced signal removers
+		ADVANCED_SIGNAL_REMOVER_WHITE = RegistryServer.registerItem("advanced_signal_remover_white", itemSettings -> new ItemSignalModifier(false, ItemSignalModifier.COLORS[0] | 0xFF000000, itemSettings), ItemGroups.CORE);
+		ADVANCED_SIGNAL_REMOVER_ORANGE = RegistryServer.registerItem("advanced_signal_remover_orange", itemSettings -> new ItemSignalModifier(false, ItemSignalModifier.COLORS[1] | 0xFF000000, itemSettings), ItemGroups.CORE);
+		ADVANCED_SIGNAL_REMOVER_MAGENTA = RegistryServer.registerItem("advanced_signal_remover_magenta", itemSettings -> new ItemSignalModifier(false, ItemSignalModifier.COLORS[2] | 0xFF000000, itemSettings), ItemGroups.CORE);
+		ADVANCED_SIGNAL_REMOVER_LIGHT_BLUE = RegistryServer.registerItem("advanced_signal_remover_light_blue", itemSettings -> new ItemSignalModifier(false, ItemSignalModifier.COLORS[3] | 0xFF000000, itemSettings), ItemGroups.CORE);
+		ADVANCED_SIGNAL_REMOVER_YELLOW = RegistryServer.registerItem("advanced_signal_remover_yellow", itemSettings -> new ItemSignalModifier(false, ItemSignalModifier.COLORS[4] | 0xFF000000, itemSettings), ItemGroups.CORE);
+		ADVANCED_SIGNAL_REMOVER_LIME = RegistryServer.registerItem("advanced_signal_remover_lime", itemSettings -> new ItemSignalModifier(false, ItemSignalModifier.COLORS[5] | 0xFF000000, itemSettings), ItemGroups.CORE);
+		ADVANCED_SIGNAL_REMOVER_PINK = RegistryServer.registerItem("advanced_signal_remover_pink", itemSettings -> new ItemSignalModifier(false, ItemSignalModifier.COLORS[6] | 0xFF000000, itemSettings), ItemGroups.CORE);
+		ADVANCED_SIGNAL_REMOVER_GRAY = RegistryServer.registerItem("advanced_signal_remover_gray", itemSettings -> new ItemSignalModifier(false, ItemSignalModifier.COLORS[7] | 0xFF000000, itemSettings), ItemGroups.CORE);
+		ADVANCED_SIGNAL_REMOVER_LIGHT_GRAY = RegistryServer.registerItem("advanced_signal_remover_light_gray", itemSettings -> new ItemSignalModifier(false, ItemSignalModifier.COLORS[8] | 0xFF000000, itemSettings), ItemGroups.CORE);
+		ADVANCED_SIGNAL_REMOVER_CYAN = RegistryServer.registerItem("advanced_signal_remover_cyan", itemSettings -> new ItemSignalModifier(false, ItemSignalModifier.COLORS[9] | 0xFF000000, itemSettings), ItemGroups.CORE);
+		ADVANCED_SIGNAL_REMOVER_PURPLE = RegistryServer.registerItem("advanced_signal_remover_purple", itemSettings -> new ItemSignalModifier(false, ItemSignalModifier.COLORS[10] | 0xFF000000, itemSettings), ItemGroups.CORE);
+		ADVANCED_SIGNAL_REMOVER_BLUE = RegistryServer.registerItem("advanced_signal_remover_blue", itemSettings -> new ItemSignalModifier(false, ItemSignalModifier.COLORS[11] | 0xFF000000, itemSettings), ItemGroups.CORE);
+		ADVANCED_SIGNAL_REMOVER_BROWN = RegistryServer.registerItem("advanced_signal_remover_brown", itemSettings -> new ItemSignalModifier(false, ItemSignalModifier.COLORS[12] | 0xFF000000, itemSettings), ItemGroups.CORE);
+		ADVANCED_SIGNAL_REMOVER_GREEN = RegistryServer.registerItem("advanced_signal_remover_green", itemSettings -> new ItemSignalModifier(false, ItemSignalModifier.COLORS[13] | 0xFF000000, itemSettings), ItemGroups.CORE);
+		ADVANCED_SIGNAL_REMOVER_RED = RegistryServer.registerItem("advanced_signal_remover_red", itemSettings -> new ItemSignalModifier(false, ItemSignalModifier.COLORS[14] | 0xFF000000, itemSettings), ItemGroups.CORE);
+		ADVANCED_SIGNAL_REMOVER_BLACK = RegistryServer.registerItem("advanced_signal_remover_black", itemSettings -> new ItemSignalModifier(false, ItemSignalModifier.COLORS[15] | 0xFF000000, itemSettings), ItemGroups.CORE);
 
 		// Building tools
 		BRIDGE_CREATOR_1 = RegistryServer.registerItem("bridge_creator_1", itemSettings -> new ItemBridgeCreator(1, itemSettings), ItemGroups.CORE);
@@ -144,6 +180,38 @@ public final class Items {
 	}
 
 	public static final ObjectHolder<Item> BRUSH;
+	public static final ObjectHolder<Item> ADVANCED_SIGNAL_CONNECTOR_BLACK;
+	public static final ObjectHolder<Item> ADVANCED_SIGNAL_CONNECTOR_BLUE;
+	public static final ObjectHolder<Item> ADVANCED_SIGNAL_CONNECTOR_BROWN;
+	public static final ObjectHolder<Item> ADVANCED_SIGNAL_CONNECTOR_CYAN;
+	public static final ObjectHolder<Item> ADVANCED_SIGNAL_CONNECTOR_GRAY;
+	public static final ObjectHolder<Item> ADVANCED_SIGNAL_CONNECTOR_GREEN;
+	public static final ObjectHolder<Item> ADVANCED_SIGNAL_CONNECTOR_LIGHT_BLUE;
+	public static final ObjectHolder<Item> ADVANCED_SIGNAL_CONNECTOR_LIGHT_GRAY;
+	public static final ObjectHolder<Item> ADVANCED_SIGNAL_CONNECTOR_LIME;
+	public static final ObjectHolder<Item> ADVANCED_SIGNAL_CONNECTOR_MAGENTA;
+	public static final ObjectHolder<Item> ADVANCED_SIGNAL_CONNECTOR_ORANGE;
+	public static final ObjectHolder<Item> ADVANCED_SIGNAL_CONNECTOR_PINK;
+	public static final ObjectHolder<Item> ADVANCED_SIGNAL_CONNECTOR_PURPLE;
+	public static final ObjectHolder<Item> ADVANCED_SIGNAL_CONNECTOR_RED;
+	public static final ObjectHolder<Item> ADVANCED_SIGNAL_CONNECTOR_WHITE;
+	public static final ObjectHolder<Item> ADVANCED_SIGNAL_CONNECTOR_YELLOW;
+	public static final ObjectHolder<Item> ADVANCED_SIGNAL_REMOVER_BLACK;
+	public static final ObjectHolder<Item> ADVANCED_SIGNAL_REMOVER_BLUE;
+	public static final ObjectHolder<Item> ADVANCED_SIGNAL_REMOVER_BROWN;
+	public static final ObjectHolder<Item> ADVANCED_SIGNAL_REMOVER_CYAN;
+	public static final ObjectHolder<Item> ADVANCED_SIGNAL_REMOVER_GRAY;
+	public static final ObjectHolder<Item> ADVANCED_SIGNAL_REMOVER_GREEN;
+	public static final ObjectHolder<Item> ADVANCED_SIGNAL_REMOVER_LIGHT_BLUE;
+	public static final ObjectHolder<Item> ADVANCED_SIGNAL_REMOVER_LIGHT_GRAY;
+	public static final ObjectHolder<Item> ADVANCED_SIGNAL_REMOVER_LIME;
+	public static final ObjectHolder<Item> ADVANCED_SIGNAL_REMOVER_MAGENTA;
+	public static final ObjectHolder<Item> ADVANCED_SIGNAL_REMOVER_ORANGE;
+	public static final ObjectHolder<Item> ADVANCED_SIGNAL_REMOVER_PINK;
+	public static final ObjectHolder<Item> ADVANCED_SIGNAL_REMOVER_PURPLE;
+	public static final ObjectHolder<Item> ADVANCED_SIGNAL_REMOVER_RED;
+	public static final ObjectHolder<Item> ADVANCED_SIGNAL_REMOVER_WHITE;
+	public static final ObjectHolder<Item> ADVANCED_SIGNAL_REMOVER_YELLOW;
 	public static final ObjectHolder<Item> AIRPLANE_DASHBOARD;
 	public static final ObjectHolder<Item> APG_DOOR;
 	public static final ObjectHolder<Item> APG_GLASS;

@@ -1,6 +1,5 @@
 package org.mtr.block;
 
-import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import lombok.Getter;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
@@ -24,6 +23,7 @@ import net.minecraft.world.phys.BlockHitResult;
 import org.jspecify.annotations.Nullable;
 import org.mtr.generated.lang.TranslationProvider;
 import org.mtr.libraries.it.unimi.dsi.fastutil.longs.LongAVLTreeSet;
+import org.mtr.libraries.it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.mtr.packet.PacketOpenBlockEntityScreen;
 
 import java.util.ArrayList;

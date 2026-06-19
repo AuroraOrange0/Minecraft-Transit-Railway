@@ -65,6 +65,8 @@ public final class RenderRails implements IGui {
 	private static final ResourceLocation ONE_WAY_RAIL_ARROW_TEXTURE = ResourceLocation.fromNamespaceAndPath(MTR.MOD_ID, "textures/block/one_way_rail_arrow.png");
 	private static final int INVALID_NODE_CHECK_RADIUS = 16;
 	private static final double LIGHT_REFERENCE_OFFSET = 0.1;
+	private static final int SIGNAL_DOTTED_LINE_SCALE = 4;
+	private static final float SIGNAL_LINE_WIDTH = 1F / 16;
 
 	public static void render(PoseStack matrixStack, MultiBufferSource vertexConsumerProvider, Vec3 offset) {
 		final Minecraft minecraftClient = Minecraft.getInstance();
@@ -302,7 +304,6 @@ public final class RenderRails implements IGui {
 	private static void renderSignalsStandard(ClientLevel clientWorld, Rail rail) {
 		final IntArrayList colors = new IntArrayList(rail.getSignalColors());
 		Collections.sort(colors);
-		final float width = 1F / 16;
 		final LongArrayList preBlockedSignalColors = MinecraftClientData.getInstance().railIdToPreBlockedSignalColors.getOrDefault(rail.getHexId(), new LongArrayList());
 		final LongArrayList currentlyBlockedSignalColors = MinecraftClientData.getInstance().railIdToCurrentlyBlockedSignalColors.getOrDefault(rail.getHexId(), new LongArrayList());
 
@@ -312,16 +313,21 @@ public final class RenderRails implements IGui {
 			final boolean currentlyBlocked = currentlyBlockedSignalColors.contains(rawColor);
 			final boolean shouldFlash = preBlocked || currentlyBlocked;
 			final int color = shouldFlash ? MainRenderer.getFlashingColor(rawColor, currentlyBlocked ? 1 : 4) : ARGB_BLACK | rawColor;
-			final float u1 = width * i + 1 - width * colors.size() / 2;
-			final float u2 = u1 + width;
+			final float u1 = SIGNAL_LINE_WIDTH * i + 1 - SIGNAL_LINE_WIDTH * colors.size() / 2;
+			final float u2 = u1 + SIGNAL_LINE_WIDTH;
+			final int[] index = {0};
 
 			renderWithinRenderDistance(rail, (blockPos, x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4, tiltAngle) -> {
+				final boolean alternate = (rawColor & ARGB_BLACK) != 0 && (index[0] % 2) == 0;
+				final float v1 = (float) Math.floorMod(index[0], SIGNAL_DOTTED_LINE_SCALE) / SIGNAL_DOTTED_LINE_SCALE;
+				final float v2 = (float) Math.floorMod(index[0] + 1, SIGNAL_DOTTED_LINE_SCALE) / SIGNAL_DOTTED_LINE_SCALE;
 				final int light = shouldFlash ? DEFAULT_LIGHT : LightTexture.pack(clientWorld.getBrightness(LightLayer.BLOCK, blockPos), clientWorld.getBrightness(LightLayer.SKY, blockPos));
 				MainRenderer.scheduleRender(WOOL_TEXTURE, false, shouldFlash ? QueuedRenderLayer.EXTERIOR : QueuedRenderLayer.LIGHT, (matrixStack, vertexConsumer, offset) -> {
-					IDrawing.drawTexture(matrixStack, vertexConsumer, x4, y4 + 0.125 + SMALL_OFFSET, z4, x1, y1 + 0.125, z1, x2, y2 + 0.125 + SMALL_OFFSET, z2, x3, y3 + 0.125, z3, offset, u1, 0, u2, 1, Direction.UP, color, light);
-					IDrawing.drawTexture(matrixStack, vertexConsumer, x1, y1 + 0.125, z1, x4, y4 + 0.125 + SMALL_OFFSET, z4, x3, y3 + 0.125, z3, x2, y2 + 0.125 + SMALL_OFFSET, z2, offset, u1, 0, u2, 1, Direction.UP, color, light);
+					IDrawing.drawTexture(matrixStack, vertexConsumer, x4, y4 + 0.125 + SMALL_OFFSET, z4, x1, y1 + 0.125, z1, x2, y2 + 0.125 + SMALL_OFFSET, z2, x3, y3 + 0.125, z3, offset, u1, v1, u2, v2, Direction.UP, alternate ? 0 : color, light);
+					IDrawing.drawTexture(matrixStack, vertexConsumer, x1, y1 + 0.125, z1, x4, y4 + 0.125 + SMALL_OFFSET, z4, x3, y3 + 0.125, z3, x2, y2 + 0.125 + SMALL_OFFSET, z2, offset, u1, v1, u2, v2, Direction.UP, alternate ? 0 : color, light);
 				});
-			}, 1, u1 - 1, u2 - 1);
+				index[0]++;
+			}, 1F / SIGNAL_DOTTED_LINE_SCALE, u1 - 1, u2 - 1);
 		}
 	}
 
