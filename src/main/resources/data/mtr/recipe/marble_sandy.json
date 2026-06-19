@@ -1,12 +1,24 @@
 {
 	"type": "minecraft:crafting_shapeless",
 	"ingredients": [
-		"minecraft:smooth_sandstone",
-		"minecraft:smooth_sandstone",
-		"minecraft:smooth_sandstone",
-		"minecraft:polished_diorite",
-		"minecraft:polished_diorite",
-		"minecraft:polished_diorite"
+		{
+			"item": "minecraft:smooth_sandstone"
+		},
+		{
+			"item": "minecraft:smooth_sandstone"
+		},
+		{
+			"item": "minecraft:smooth_sandstone"
+		},
+		{
+			"item": "minecraft:polished_diorite"
+		},
+		{
+			"item": "minecraft:polished_diorite"
+		},
+		{
+			"item": "minecraft:polished_diorite"
+		}
 	],
 	"result": {
 		"id": "mtr:marble_sandy",

@@ -1,9 +1,12 @@
 {
 	"type": "minecraft:crafting_shapeless",
 	"ingredients": [
-		"#minecraft:rails",
-		"#c:orange_dyes",
-		"minecraft:lava_bucket"
+		{
+			"item": "mtr:signal_connector_orange"
+		},
+		{
+			"item": "minecraft:lava_bucket"
+		}
 	],
 	"result": {
 		"id": "mtr:advanced_signal_remover_orange"

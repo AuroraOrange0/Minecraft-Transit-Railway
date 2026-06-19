@@ -6,8 +6,12 @@
 		"BBB"
 	],
 	"key": {
-		"B": "#minecraft:birch_logs",
-		"D": "#c:dyes"
+		"B": {
+			"tag": "minecraft:birch_logs"
+		},
+		"D": {
+			"tag": "c:dyes"
+		}
 	},
 	"result": {
 		"id": "mtr:station_color_birch_wood",

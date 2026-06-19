@@ -4,7 +4,9 @@
 		"BBB"
 	],
 	"key": {
-		"B": "mtr:station_color_polished_diorite"
+		"B": {
+			"item": "mtr:station_color_polished_diorite"
+		}
 	},
 	"result": {
 		"id": "mtr:station_color_polished_diorite_slab",

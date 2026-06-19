@@ -6,8 +6,12 @@
 		"W W"
 	],
 	"key": {
-		"I": "#c:iron_ingots",
-		"W": "#minecraft:logs"
+		"I": {
+			"tag": "c:iron_ingots"
+		},
+		"W": {
+			"tag": "minecraft:logs"
+		}
 	},
 	"result": {
 		"id": "mtr:tunnel_creator_4_3"

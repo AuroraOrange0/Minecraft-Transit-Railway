@@ -6,8 +6,12 @@
 		" S "
 	],
 	"key": {
-		"W": "minecraft:white_wool",
-		"S": "#c:wood_sticks"
+		"W": {
+			"item": "minecraft:white_wool"
+		},
+		"S": {
+			"tag": "c:wood_sticks"
+		}
 	},
 	"result": {
 		"id": "mtr:brush"

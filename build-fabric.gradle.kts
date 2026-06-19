@@ -73,7 +73,7 @@ dependencies {
 	implementationAndShadow("org.mtr:transport-simulation-core:+")
 	implementationAndShadow("com.logisticscraft:occlusionculling:+")
 	implementationAndInclude("gg.essential:elementa:${property("dependency.elementa")}")
-	implementationAndInclude("net.fabricmc:fabric-language-kotlin:+")
+	implementationAndInclude("org.jetbrains.kotlin:kotlin-stdlib:+")
 	implementation("org.jspecify:jspecify:+")
 
 	testImplementation("org.junit.jupiter:junit-jupiter-api:5.+")

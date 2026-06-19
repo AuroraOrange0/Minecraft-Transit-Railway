@@ -1,9 +1,15 @@
 {
 	"type": "minecraft:crafting_shapeless",
 	"ingredients": [
-		"#minecraft:rails",
-		"#c:light_gray_dyes",
-		"#c:redstone_dusts"
+		{
+			"tag": "minecraft:rails"
+		},
+		{
+			"tag": "c:light_gray_dyes"
+		},
+		{
+			"tag": "c:redstone_dusts"
+		}
 	],
 	"result": {
 		"id": "mtr:signal_connector_light_gray"

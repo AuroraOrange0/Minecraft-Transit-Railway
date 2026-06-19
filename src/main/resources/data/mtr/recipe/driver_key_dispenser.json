@@ -1,10 +1,18 @@
 {
 	"type": "minecraft:crafting_shapeless",
 	"ingredients": [
-		"#c:iron_ingots",
-		"#c:iron_nuggets",
-		"minecraft:chain",
-		"minecraft:dispenser"
+		{
+			"tag": "c:iron_ingots"
+		},
+		{
+			"tag": "c:iron_nuggets"
+		},
+		{
+			"item": "minecraft:chain"
+		},
+		{
+			"item": "minecraft:dispenser"
+		}
 	],
 	"result": {
 		"id": "mtr:driver_key_dispenser"

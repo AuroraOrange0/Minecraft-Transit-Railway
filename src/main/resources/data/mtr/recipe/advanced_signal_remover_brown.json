@@ -1,9 +1,12 @@
 {
 	"type": "minecraft:crafting_shapeless",
 	"ingredients": [
-		"#minecraft:rails",
-		"#c:brown_dyes",
-		"minecraft:lava_bucket"
+		{
+			"item": "mtr:signal_connector_brown"
+		},
+		{
+			"item": "minecraft:lava_bucket"
+		}
 	],
 	"result": {
 		"id": "mtr:advanced_signal_remover_brown"

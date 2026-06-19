@@ -1,7 +1,9 @@
 {
 	"type": "minecraft:crafting_shapeless",
 	"ingredients": [
-		"mtr:route_sign_standing_light"
+		{
+			"item": "mtr:route_sign_standing_light"
+		}
 	],
 	"result": {
 		"id": "mtr:route_sign_standing_metal"

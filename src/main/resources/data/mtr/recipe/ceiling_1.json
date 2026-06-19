@@ -6,8 +6,12 @@
 		"III"
 	],
 	"key": {
-		"I": "#c:iron_ingots",
-		"G": "#c:glowstone_dusts"
+		"I": {
+			"tag": "c:iron_ingots"
+		},
+		"G": {
+			"tag": "c:glowstone_dusts"
+		}
 	},
 	"result": {
 		"id": "mtr:ceiling",

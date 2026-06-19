@@ -6,9 +6,15 @@
 		"LLL"
 	],
 	"key": {
-		"I": "#c:iron_ingots",
-		"B": "#c:iron_blocks",
-		"L": "#minecraft:logs"
+		"I": {
+			"tag": "c:iron_ingots"
+		},
+		"B": {
+			"tag": "c:iron_blocks"
+		},
+		"L": {
+			"tag": "minecraft:logs"
+		}
 	},
 	"result": {
 		"id": "mtr:airplane_node",

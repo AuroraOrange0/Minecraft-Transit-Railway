@@ -1,10 +1,18 @@
 {
 	"type": "minecraft:crafting_shapeless",
 	"ingredients": [
-		"#c:redstone_dusts",
-		"#c:iron_blocks",
-		"minecraft:stone_brick_stairs",
-		"minecraft:glass_pane"
+		{
+			"tag": "c:redstone_dusts"
+		},
+		{
+			"tag": "c:iron_blocks"
+		},
+		{
+			"item": "minecraft:stone_brick_stairs"
+		},
+		{
+			"item": "minecraft:glass_pane"
+		}
 	],
 	"result": {
 		"id": "mtr:escalator",

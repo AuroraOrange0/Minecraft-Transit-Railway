@@ -4,7 +4,9 @@
 		"BBB"
 	],
 	"key": {
-		"B": "mtr:station_color_chiseled_quartz_block"
+		"B": {
+			"item": "mtr:station_color_chiseled_quartz_block"
+		}
 	},
 	"result": {
 		"id": "mtr:station_color_chiseled_quartz_block_slab",

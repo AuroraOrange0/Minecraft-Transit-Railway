@@ -56,7 +56,7 @@ dependencies {
 	implementationAndShadow("com.logisticscraft:occlusionculling:+")
 	implementationAndShadow("gg.essential:elementa:${property("dependency.elementa")}")
 	implementationAndShadow("gg.essential:universalcraft-${property("dependency.universal_craft_minecraft")}-neoforge:${property("dependency.universal_craft")}")
-	implementation("net.fabricmc:fabric-language-kotlin:+")
+	implementationAndShadow("org.jetbrains.kotlin:kotlin-stdlib:+")
 	implementation("org.jspecify:jspecify:+")
 
 	testImplementation("org.junit.jupiter:junit-jupiter-api:5.+")
@@ -114,6 +114,8 @@ tasks {
 		relocate("com.logisticscraft", "org.mtr.libraries.com.logisticscraft")
 		relocate("de.javagl", "org.mtr.libraries.de.javagl")
 		relocate("gg.essential", "org.mtr.libraries.gg.essential")
+		relocate("kotlin.", "org.mtr.libraries.kotlin")
+		relocate("org.jetbrains", "org.mtr.libraries.org.jetbrains")
 	}
 
 	withType<JavaCompile>().configureEach {

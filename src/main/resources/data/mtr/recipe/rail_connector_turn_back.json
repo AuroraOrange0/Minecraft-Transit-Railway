@@ -6,9 +6,15 @@
 		"BRB"
 	],
 	"key": {
-		"R": "#minecraft:rails",
-		"I": "#c:iron_ingots",
-		"B": "#c:lapis_blocks"
+		"R": {
+			"tag": "minecraft:rails"
+		},
+		"I": {
+			"tag": "c:iron_ingots"
+		},
+		"B": {
+			"tag": "c:lapis_blocks"
+		}
 	},
 	"result": {
 		"id": "mtr:rail_connector_turn_back"

@@ -6,8 +6,12 @@
 		"BBB"
 	],
 	"key": {
-		"B": "minecraft:cobblestone",
-		"D": "#c:dyes"
+		"B": {
+			"item": "minecraft:cobblestone"
+		},
+		"D": {
+			"tag": "c:dyes"
+		}
 	},
 	"result": {
 		"id": "mtr:station_color_cobblestone",

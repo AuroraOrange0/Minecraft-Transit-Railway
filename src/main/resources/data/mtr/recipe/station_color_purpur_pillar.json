@@ -6,8 +6,12 @@
 		"BBB"
 	],
 	"key": {
-		"B": "minecraft:purpur_pillar",
-		"D": "#c:dyes"
+		"B": {
+			"item": "minecraft:purpur_pillar"
+		},
+		"D": {
+			"tag": "c:dyes"
+		}
 	},
 	"result": {
 		"id": "mtr:station_color_purpur_pillar",

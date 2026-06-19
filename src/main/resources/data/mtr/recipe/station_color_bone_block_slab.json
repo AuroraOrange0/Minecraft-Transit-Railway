@@ -4,7 +4,9 @@
 		"BBB"
 	],
 	"key": {
-		"B": "mtr:station_color_bone_block"
+		"B": {
+			"item": "mtr:station_color_bone_block"
+		}
 	},
 	"result": {
 		"id": "mtr:station_color_bone_block_slab",

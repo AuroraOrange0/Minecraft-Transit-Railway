@@ -1,13 +1,27 @@
 {
 	"type": "minecraft:crafting_shapeless",
 	"ingredients": [
-		"#c:redstone_dusts",
-		"#c:redstone_dusts",
-		"minecraft:clock",
-		"minecraft:smooth_stone",
-		"minecraft:smooth_stone",
-		"minecraft:smooth_stone",
-		"#c:nodes"
+		{
+			"tag": "c:redstone_dusts"
+		},
+		{
+			"tag": "c:redstone_dusts"
+		},
+		{
+			"item": "minecraft:clock"
+		},
+		{
+			"item": "minecraft:smooth_stone"
+		},
+		{
+			"item": "minecraft:smooth_stone"
+		},
+		{
+			"item": "minecraft:smooth_stone"
+		},
+		{
+			"tag": "c:nodes"
+		}
 	],
 	"result": {
 		"id": "mtr:train_schedule_sensor",

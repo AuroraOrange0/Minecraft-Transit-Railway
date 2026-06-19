@@ -1,10 +1,18 @@
 {
 	"type": "minecraft:crafting_shapeless",
 	"ingredients": [
-		"#c:redstone_blocks",
-		"minecraft:iron_door",
-		"#c:glowstone_dusts",
-		"minecraft:glass_pane"
+		{
+			"tag": "c:redstone_blocks"
+		},
+		{
+			"item": "minecraft:iron_door"
+		},
+		{
+			"tag": "c:glowstone_dusts"
+		},
+		{
+			"item": "minecraft:glass_pane"
+		}
 	],
 	"result": {
 		"id": "mtr:apg_door",

@@ -6,8 +6,12 @@
 		"BBB"
 	],
 	"key": {
-		"B": "minecraft:cobblestone",
-		"D": "#minecraft:beds"
+		"B": {
+			"item": "minecraft:cobblestone"
+		},
+		"D": {
+			"tag": "minecraft:beds"
+		}
 	},
 	"result": {
 		"id": "mtr:station_color_bedrock",

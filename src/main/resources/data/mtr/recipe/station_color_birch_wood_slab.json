@@ -4,7 +4,9 @@
 		"BBB"
 	],
 	"key": {
-		"B": "mtr:station_color_birch_wood"
+		"B": {
+			"item": "mtr:station_color_birch_wood"
+		}
 	},
 	"result": {
 		"id": "mtr:station_color_birch_wood_slab",

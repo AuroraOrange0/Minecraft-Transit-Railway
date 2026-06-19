@@ -6,10 +6,18 @@
 		"III"
 	],
 	"key": {
-		"I": "#minecraft:planks",
-		"R": "#c:redstone_dusts",
-		"G": "minecraft:glass_pane",
-		"L": "#c:glowstone_dusts"
+		"I": {
+			"tag": "minecraft:planks"
+		},
+		"R": {
+			"tag": "c:redstone_dusts"
+		},
+		"G": {
+			"item": "minecraft:glass_pane"
+		},
+		"L": {
+			"tag": "c:glowstone_dusts"
+		}
 	},
 	"result": {
 		"id": "mtr:dashboard_2"

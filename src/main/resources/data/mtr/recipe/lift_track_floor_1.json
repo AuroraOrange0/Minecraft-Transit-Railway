@@ -5,9 +5,15 @@
 		"ISI"
 	],
 	"key": {
-		"I": "#c:iron_ingots",
-		"L": "minecraft:ladder",
-		"S": "minecraft:smooth_stone_slab"
+		"I": {
+			"tag": "c:iron_ingots"
+		},
+		"L": {
+			"item": "minecraft:ladder"
+		},
+		"S": {
+			"item": "minecraft:smooth_stone_slab"
+		}
 	},
 	"result": {
 		"id": "mtr:lift_track_floor_1",

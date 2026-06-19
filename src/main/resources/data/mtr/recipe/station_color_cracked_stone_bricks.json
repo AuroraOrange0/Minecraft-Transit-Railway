@@ -6,8 +6,12 @@
 		"BBB"
 	],
 	"key": {
-		"B": "minecraft:cracked_stone_bricks",
-		"D": "#c:dyes"
+		"B": {
+			"item": "minecraft:cracked_stone_bricks"
+		},
+		"D": {
+			"tag": "c:dyes"
+		}
 	},
 	"result": {
 		"id": "mtr:station_color_cracked_stone_bricks",

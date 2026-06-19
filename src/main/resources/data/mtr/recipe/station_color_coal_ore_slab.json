@@ -4,7 +4,9 @@
 		"BBB"
 	],
 	"key": {
-		"B": "mtr:station_color_coal_ore"
+		"B": {
+			"item": "mtr:station_color_coal_ore"
+		}
 	},
 	"result": {
 		"id": "mtr:station_color_coal_ore_slab",

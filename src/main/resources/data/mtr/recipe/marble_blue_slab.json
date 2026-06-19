@@ -4,7 +4,9 @@
 		"BBB"
 	],
 	"key": {
-		"B": "mtr:marble_blue"
+		"B": {
+			"item": "mtr:marble_blue"
+		}
 	},
 	"result": {
 		"id": "mtr:marble_blue_slab",

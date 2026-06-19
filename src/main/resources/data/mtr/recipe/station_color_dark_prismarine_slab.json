@@ -4,7 +4,9 @@
 		"BBB"
 	],
 	"key": {
-		"B": "mtr:station_color_dark_prismarine"
+		"B": {
+			"item": "mtr:station_color_dark_prismarine"
+		}
 	},
 	"result": {
 		"id": "mtr:station_color_dark_prismarine_slab",

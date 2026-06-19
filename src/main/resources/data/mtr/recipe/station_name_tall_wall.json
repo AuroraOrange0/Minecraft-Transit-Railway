@@ -1,8 +1,12 @@
 {
 	"type": "minecraft:crafting_shapeless",
 	"ingredients": [
-		"mtr:station_name_wall",
-		"minecraft:stone"
+		{
+			"item": "mtr:station_name_wall"
+		},
+		{
+			"item": "minecraft:stone"
+		}
 	],
 	"result": {
 		"id": "mtr:station_name_tall_wall"

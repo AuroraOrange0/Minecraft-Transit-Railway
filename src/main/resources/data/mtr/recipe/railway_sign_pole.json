@@ -6,8 +6,12 @@
 		"I I"
 	],
 	"key": {
-		"B": "minecraft:iron_bars",
-		"I": "#c:iron_ingots"
+		"B": {
+			"item": "minecraft:iron_bars"
+		},
+		"I": {
+			"tag": "c:iron_ingots"
+		}
 	},
 	"result": {
 		"id": "mtr:railway_sign_pole",

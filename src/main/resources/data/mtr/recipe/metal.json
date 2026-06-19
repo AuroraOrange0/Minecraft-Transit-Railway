@@ -1,8 +1,12 @@
 {
 	"type": "minecraft:crafting_shapeless",
 	"ingredients": [
-		"#c:iron_blocks",
-		"#c:iron_blocks"
+		{
+			"tag": "c:iron_blocks"
+		},
+		{
+			"tag": "c:iron_blocks"
+		}
 	],
 	"result": {
 		"id": "mtr:metal",
