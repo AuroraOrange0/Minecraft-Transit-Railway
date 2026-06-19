@@ -91,13 +91,12 @@ public final class RegistryClient {
 //? }
 
 //? if neoforge {
-		/*ModEventBus.PAYLOAD_HANDLERS.add(payloadRegistrar -> payloadRegistrar.playBidirectional(MTR.PACKET_IDENTIFIER_S2C, StreamCodec.composite(ByteBufCodecs.BYTE_ARRAY, CustomPacketS2C::buffer, CustomPacketS2C::new), new DirectionalPayloadHandler<>((customPacketS2C, context) -> PacketBufferReceiver.receive(customPacketS2C.buffer(), packetBufferReceiver -> {
+		/*ModEventBus.s2cClientHandler = (customPacketS2C, context) -> PacketBufferReceiver.receive(customPacketS2C.buffer(), packetBufferReceiver -> {
 			final Function<PacketBufferReceiver, ? extends PacketHandler> getInstance = ModEventBus.PACKETS.get(packetBufferReceiver.readString());
 			if (getInstance != null) {
 				getInstance.apply(packetBufferReceiver).runClient();
 			}
-		}, Minecraft.getInstance()::execute), (customPacketS2C, context) -> {
-		})));
+		}, Minecraft.getInstance()::execute);
 *///? }
 	}
 
