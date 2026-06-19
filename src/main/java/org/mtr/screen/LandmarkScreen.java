@@ -4,11 +4,9 @@ import gg.essential.elementa.components.ScrollComponent;
 import gg.essential.elementa.components.UIContainer;
 import gg.essential.elementa.constraints.PixelConstraint;
 import gg.essential.elementa.constraints.RelativeConstraint;
-import gg.essential.elementa.constraints.ScaleConstraint;
 import gg.essential.elementa.constraints.SiblingConstraint;
 import net.minecraft.client.Minecraft;
 import org.jspecify.annotations.Nullable;
-import org.mtr.MTR;
 import org.mtr.client.MinecraftClientData;
 import org.mtr.core.data.Landmark;
 import org.mtr.core.data.Position;
@@ -21,7 +19,10 @@ import org.mtr.packet.PacketUpdateData;
 import org.mtr.registry.RegistryClient;
 import org.mtr.tool.GuiHelper;
 import org.mtr.tool.ReleasedDynamicTextureRegistry;
-import org.mtr.widget.*;
+import org.mtr.widget.CheckboxComponent;
+import org.mtr.widget.Grouped24HourSlidersComponent;
+import org.mtr.widget.ScrollPanelComponent;
+import org.mtr.widget.TextInputComponent;
 
 public final class LandmarkScreen extends NameColorDataScreenBase<Landmark> {
 

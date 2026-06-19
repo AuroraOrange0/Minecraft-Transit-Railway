@@ -2,6 +2,7 @@ package org.mtr.data;
 
 import lombok.Getter;
 import net.minecraft.core.BlockPos;
+import org.jspecify.annotations.Nullable;
 import org.mtr.client.Oscillation;
 import org.mtr.client.ScrollingText;
 import org.mtr.core.data.TransportMode;
@@ -48,18 +49,25 @@ public final class PersistentVehicleData {
 	 */
 	public void update(double newRailProgress, double totalVehicleLength) {
 		railProgressSmoothingAdjustment = newRailProgress - smoothedRailProgress;
-		if (Math.abs(railProgressSmoothingAdjustment) > totalVehicleLength - 1) {
+		if (Math.abs(railProgressSmoothingAdjustment) > Math.max(totalVehicleLength - 1, 10)) {
 			railProgressSmoothingAdjustment = 0;
 		}
 	}
 
-	public double getSmoothedRailProgress(double railProgress, double adjustmentAmount) {
+	public double getSmoothedRailProgress(double railProgress, double adjustmentAmount, @Nullable Double maxClamp) {
 		if (railProgressSmoothingAdjustment > 0) {
 			railProgressSmoothingAdjustment = Math.max(railProgressSmoothingAdjustment - adjustmentAmount, 0);
 		} else if (railProgressSmoothingAdjustment < 0) {
 			railProgressSmoothingAdjustment = Math.min(railProgressSmoothingAdjustment + adjustmentAmount, 0);
 		}
+
 		smoothedRailProgress = railProgress - railProgressSmoothingAdjustment;
+
+		if (maxClamp != null && smoothedRailProgress > maxClamp) {
+			smoothedRailProgress = maxClamp;
+			railProgressSmoothingAdjustment = 0;
+		}
+
 		return smoothedRailProgress;
 	}
 

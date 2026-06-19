@@ -1,6 +1,5 @@
 package org.mtr.block;
 
-import it.unimi.dsi.fastutil.objects.Object2IntMaps;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import lombok.Getter;
 import net.minecraft.ChatFormatting;
@@ -28,9 +27,7 @@ import org.mtr.libraries.it.unimi.dsi.fastutil.longs.LongAVLTreeSet;
 import org.mtr.packet.PacketOpenBlockEntityScreen;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.function.BiFunction;
 import java.util.function.BiPredicate;
 

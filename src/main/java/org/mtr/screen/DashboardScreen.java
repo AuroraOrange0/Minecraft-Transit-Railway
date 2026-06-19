@@ -1,6 +1,5 @@
 package org.mtr.screen;
 
-import com.mojang.authlib.minecraft.client.MinecraftClient;
 import gg.essential.elementa.components.UIBlock;
 import gg.essential.elementa.components.UIContainer;
 import gg.essential.elementa.components.UIWrappedText;

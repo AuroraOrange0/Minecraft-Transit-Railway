@@ -13,7 +13,6 @@ import org.mtr.block.BlockTrainSensorBase;
 import org.mtr.client.MinecraftClientData;
 import org.mtr.core.data.Route;
 import org.mtr.core.tool.Utilities;
-import org.mtr.data.IGui;
 import org.mtr.generated.lang.TranslationProvider;
 import org.mtr.libraries.it.unimi.dsi.fastutil.longs.LongAVLTreeSet;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList;
