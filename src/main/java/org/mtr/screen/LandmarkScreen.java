@@ -2,6 +2,7 @@ package org.mtr.screen;
 
 import gg.essential.elementa.components.ScrollComponent;
 import gg.essential.elementa.components.UIContainer;
+import gg.essential.elementa.constraints.FillConstraint;
 import gg.essential.elementa.constraints.PixelConstraint;
 import gg.essential.elementa.constraints.RelativeConstraint;
 import gg.essential.elementa.constraints.SiblingConstraint;
@@ -70,10 +71,13 @@ public final class LandmarkScreen extends NameColorDataScreenBase<Landmark> {
 		useRealTimeCheckbox.setChecked(landmark.getUseRealTime());
 		useRealTimeCheckbox.onClick(this::toggleUseRealTime);
 
+		GuiHelper.createSpacing(backgroundComponent.containers[2]);
+
 		final ScrollComponent densitiesScrollComponent = ((ScrollPanelComponent) new ScrollPanelComponent(true)
 			.setChildOf(backgroundComponent.containers[2])
+			.setY(new SiblingConstraint())
 			.setWidth(new RelativeConstraint())
-			.setHeight(new RelativeConstraint())).contentContainer;
+			.setHeight(new FillConstraint())).contentContainer;
 
 		minecraftTimeSliders = (Grouped24HourSlidersComponent) new Grouped24HourSlidersComponent(MAX_DENSITY, Minecraft.getInstance().font.width(getSliderString(MAX_DENSITY)), LandmarkScreen::getSliderString)
 			.setChildOf(densitiesScrollComponent)

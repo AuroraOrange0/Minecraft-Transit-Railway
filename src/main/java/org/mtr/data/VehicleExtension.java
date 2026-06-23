@@ -292,6 +292,11 @@ public class VehicleExtension extends Vehicle implements Utilities {
 			persistentVehicleData.getDoorValue() > 0 ? 0 : millisElapsed * Math.max(Siding.ACCELERATION_DEFAULT, speed / 10),
 			!closeToDepot() && railProgress > vehicleExtraData.getStoppingPoint() ? vehicleExtraData.getStoppingPoint() : null
 		);
+
+		if (!vehicleExtraData.immutablePath.isEmpty()) {
+			railProgress = Utilities.clampSafe(railProgress, vehicleExtraData.immutablePath.getFirst().getStartDistance() + vehicleExtraData.getTotalVehicleLength(), vehicleExtraData.immutablePath.getLast().getEndDistance());
+		}
+
 		final ObjectArrayList<ObjectObjectImmutablePair<VehicleCar, ObjectArrayList<BogiePosition>>> vehicleCarsAndPositions = getVehicleCarsAndPositions();
 		railProgress = oldRailProgress;
 		return vehicleCarsAndPositions;

@@ -164,6 +164,7 @@ public class MainRenderer {
 		RenderVehicles.render(millisElapsed, cameraShakeOffset);
 		RenderLifts.render(millisElapsed, cameraShakeOffset);
 		RenderRails.render(matrixStack, vertexConsumerProvider, offset);
+		RenderPassengers.render();
 
 		renderModel(matrixStack, MODEL_RENDERS, offset);
 		renderModel(matrixStack, MODEL_RENDERS_TRANSLUCENT, offset);

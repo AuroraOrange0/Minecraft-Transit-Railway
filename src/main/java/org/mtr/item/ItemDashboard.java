@@ -5,7 +5,6 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import org.jspecify.annotations.Nullable;
 import org.mtr.Keys;
@@ -26,7 +25,8 @@ import java.util.Comparator;
 import net.minecraft.world.InteractionResult;
 //? } else {
 /*import net.minecraft.world.InteractionResultHolder;
- *///? }
+import net.minecraft.world.item.ItemStack;
+*///? }
 
 public class ItemDashboard extends Item {
 
@@ -61,14 +61,14 @@ public class ItemDashboard extends Item {
 						final Depot depot = findNearbyArea(playerPosition, tempClientData.depots);
 
 						if (station != null) {
-							final Platform platform = findNearbySavedRail(playerPosition, station.savedRails, tempClientData);
+							final Platform platform = findNearbySavedRail(playerPosition, station.savedRails);
 							if (platform == null) {
 								PacketOpenDashboardScreen.sendDirectlyToServer((ServerLevel) world, (ServerPlayer) user, transportMode, PacketOpenDashboardScreen.ScreenType.STATION, station.getId());
 							} else {
 								PacketOpenDashboardScreen.sendDirectlyToServer((ServerLevel) world, (ServerPlayer) user, transportMode, PacketOpenDashboardScreen.ScreenType.PLATFORM, platform.getId());
 							}
 						} else if (depot != null) {
-							final Siding siding = findNearbySavedRail(playerPosition, depot.savedRails, tempClientData);
+							final Siding siding = findNearbySavedRail(playerPosition, depot.savedRails);
 							if (siding == null) {
 								PacketOpenDashboardScreen.sendDirectlyToServer((ServerLevel) world, (ServerPlayer) user, transportMode, PacketOpenDashboardScreen.ScreenType.DEPOT, depot.getId());
 							} else {
@@ -93,7 +93,7 @@ public class ItemDashboard extends Item {
 	}
 
 	@Nullable
-	private static <T extends SavedRailBase<T, U>, U extends AreaBase<U, T>> T findNearbySavedRail(Position position, ObjectArraySet<T> rails, Data data) {
-		return rails.stream().filter(rail -> rail.closeTo(position, SEARCH_RADIUS)).min(Comparator.comparingDouble(rail -> rail.getApproximateClosestDistance(position, data))).orElse(null);
+	private static <T extends SavedRailBase<T, U>, U extends AreaBase<U, T>> T findNearbySavedRail(Position position, ObjectArraySet<T> rails) {
+		return rails.stream().filter(rail -> rail.closeTo(position, SEARCH_RADIUS)).min(Comparator.comparingDouble(rail -> rail.getApproximateClosestDistance(position))).orElse(null);
 	}
 }

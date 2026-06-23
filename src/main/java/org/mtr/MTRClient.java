@@ -422,7 +422,7 @@ public final class MTRClient {
 
 	public static void findClosePlatform(BlockPos blockPos, int radius, Consumer<Platform> consumer) {
 		final Position position = MTR.blockPosToPosition(blockPos);
-		MinecraftClientData.getInstance().platforms.stream().filter(platform -> platform.closeTo(MTR.blockPosToPosition(blockPos), radius)).min(Comparator.comparingDouble(platform -> platform.getApproximateClosestDistance(position, MinecraftClientData.getInstance()))).ifPresent(consumer);
+		MinecraftClientData.getInstance().platforms.stream().filter(platform -> platform.closeTo(MTR.blockPosToPosition(blockPos), radius)).min(Comparator.comparingDouble(platform -> platform.getApproximateClosestDistance(position))).ifPresent(consumer);
 	}
 
 	@Nullable

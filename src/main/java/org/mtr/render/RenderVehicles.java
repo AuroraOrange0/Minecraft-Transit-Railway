@@ -1,10 +1,12 @@
 package org.mtr.render;
 
+import com.mojang.authlib.GameProfile;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.client.player.RemotePlayer;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -16,6 +18,7 @@ import net.minecraft.world.phys.Vec3;
 import org.jspecify.annotations.Nullable;
 import org.mtr.client.*;
 import org.mtr.config.Config;
+import org.mtr.core.data.Passenger;
 import org.mtr.core.data.Vehicle;
 import org.mtr.core.data.VehicleCar;
 import org.mtr.core.tool.Utilities;
@@ -34,6 +37,7 @@ import org.mtr.tool.Drawing;
 import org.mtr.tool.GuiHelper;
 import org.mtr.tool.Interpolation;
 
+import java.util.Random;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -140,12 +144,12 @@ public final class RenderVehicles {
 					// Find open doorways (close to platform blocks, unlocked platform screen doors, or unlocked automatic platform gates)
 					final ObjectArrayList<AABB> openDoorways;
 					if (vehicleResourceCache != null && fromResourcePackCreator) {
-						openDoorways = vehicle.persistentVehicleData.checkCanOpenDoors() ? new ObjectArrayList<>(vehicleResourceCache.doorways()) : new ObjectArrayList<>();
+						openDoorways = vehicle.persistentVehicleData.checkCanOpenDoors() ? new ObjectArrayList<>(vehicleResourceCache.doorways) : new ObjectArrayList<>();
 						vehicle.persistentVehicleData.overrideDoorMultiplier(ResourcePackCreatorOperationServlet.getDoorMultiplier());
 					} else if (vehicleResourceCache == null || !vehicle.getTransportMode().continuousMovement && vehicle.isMoving() || !vehicle.persistentVehicleData.checkCanOpenDoors()) {
 						openDoorways = new ObjectArrayList<>();
 					} else {
-						openDoorways = vehicleResourceCache.doorways().stream().filter(doorway -> RenderVehicleHelper.canOpenDoors(doorway, absoluteVehicleCarPositionAndRotation, vehicle.persistentVehicleData.getDoorValue())).collect(Collectors.toCollection(ObjectArrayList::new));
+						openDoorways = vehicleResourceCache.doorways.stream().filter(doorway -> RenderVehicleHelper.canOpenDoors(doorway, absoluteVehicleCarPositionAndRotation, vehicle.persistentVehicleData.getDoorValue())).collect(Collectors.toCollection(ObjectArrayList::new));
 					}
 					final double oscillationAmount = vehicle.persistentVehicleData.getOscillation(carNumber).getAmount() * Config.getClient().getVehicleOscillationMultiplier();
 
@@ -153,7 +157,7 @@ public final class RenderVehicles {
 						final ObjectArrayList<AABB> openFloorsAndDoorways = new ObjectArrayList<>();
 
 						if (vehicleResourceCache != null) {
-							vehicleResourceCache.floors().forEach(floor -> {
+							vehicleResourceCache.floors.forEach(floor -> {
 								floorsAndDoorways.add(new ObjectBooleanImmutablePair<>(floor, true));
 								if (!VehicleRidingMovement.isRiding(vehicle.getId())) {
 									final ItemDriverKey driverKey = VehicleRidingMovement.getValidHoldingKey(vehicle.vehicleExtraData.getDepotId());
@@ -266,7 +270,7 @@ public final class RenderVehicles {
 					if (isWithinHalfRenderDistance) {
 						// Render the current riding player
 						if (ridingCarNumber == carNumber && offsetVector != null && minecraftClient.gameRenderer.getMainCamera().isDetached()) {
-							renderPlayer(clientPlayerEntity, -1, 0, 0, offsetVector, offsetVector, offsetRotation, absoluteVehicleCarPositionAndRotation, absoluteVehicleCarPositionAndRotation, cameraShakeOffset);
+							renderPlayer(clientPlayerEntity, -1, 0, 0, offsetVector, 0, oscillationAmount, offsetVector, offsetRotation, absoluteVehicleCarPositionAndRotation, absoluteVehicleCarPositionAndRotation, cameraShakeOffset);
 						}
 
 						// Render other players on this vehicle
@@ -297,10 +301,26 @@ public final class RenderVehicles {
 										playerRidingZ = vehicleRidingEntity.getZ();
 									}
 
-									renderPlayer(ridingPlayer, carNumber, gangwayConnectionFloor1.minZ, gangwayConnectionFloor2.maxZ, new Vec3(playerRidingX, playerRidingY, playerRidingZ), offsetVector, offsetRotation, absoluteVehicleCarPositionAndRotation, ridingCarPositionAndRotation, cameraShakeOffset);
+									renderPlayer(ridingPlayer, carNumber, gangwayConnectionFloor1.minZ, gangwayConnectionFloor2.maxZ, new Vec3(playerRidingX, playerRidingY, playerRidingZ), 0, oscillationAmount, offsetVector, offsetRotation, absoluteVehicleCarPositionAndRotation, ridingCarPositionAndRotation, cameraShakeOffset);
 								}
 							}
 						});
+
+						// Render other passengers on this vehicle
+						final ObjectArrayList<Passenger> passengers = MinecraftClientData.getInstance().vehicleIdToPassengers.get(vehicle.getId());
+						if (passengers != null && vehicleResourceCache != null && !vehicleResourceCache.floorsWithNormalizedArea.isEmpty()) {
+							passengers.forEach(passenger -> {
+								if (carNumber == passenger.getVehicleCarNumber()) {
+									final Random random = new Random(passenger.getId());
+									final AABB floor = vehicleResourceCache.floorsWithNormalizedArea.get(Utilities.getIndexFromConditionalList(vehicleResourceCache.floorsWithNormalizedArea, random.nextDouble())).floor;
+									final double x = floor.minX + (floor.getXsize() == 0 ? 0 : random.nextDouble(floor.getXsize()));
+									final double y = floor.minY + (floor.getYsize() == 0 ? 0 : random.nextDouble(floor.getYsize()));
+									final double z = floor.minZ + (floor.getZsize() == 0 ? 0 : random.nextDouble(floor.getZsize()));
+									final RemotePlayer remotePlayer = new RemotePlayer(clientWorld, new GameProfile(new UUID(passenger.getId(), 0), passenger.getName()));
+									renderPlayer(remotePlayer, -1, gangwayConnectionFloor1.minZ, gangwayConnectionFloor2.maxZ, new Vec3(x, y, z), random.nextDouble(Math.PI * 2) + absoluteVehicleCarPositionAndRotation.yaw, oscillationAmount, offsetVector, offsetRotation, absoluteVehicleCarPositionAndRotation, ridingCarPositionAndRotation, cameraShakeOffset);
+								}
+							});
+						}
 					}
 
 					if (canRide) {
@@ -392,13 +412,15 @@ public final class RenderVehicles {
 	 * @param minZ                         the min Z value of the car, used for when the entity just came from a gangway
 	 * @param maxZ                         the max Z value of the car, used for when the entity just came from a gangway
 	 * @param playerOffsetVector           the player offset from the centre of the player's riding car
+	 * @param additionalRotation           extra rotation to apply to the player model
+	 * @param oscillationAmount            any oscillation to be applied
 	 * @param offsetVector                 if riding, the riding position relative to the centre of the riding car
 	 * @param offsetRotation               if riding, the riding rotation relative to the angle of the riding car
 	 * @param playerCarPositionAndRotation the {@link PositionAndRotation} of the car being ridden by the entity being rendered
 	 * @param ridingCarPositionAndRotation the {@link PositionAndRotation} of the car being ridden in
 	 * @param cameraShakeOffset            additional camera shake
 	 */
-	public static void renderPlayer(Player playerEntity, int ridingCar, double minZ, double maxZ, Vec3 playerOffsetVector, @Nullable Vec3 offsetVector, @Nullable Double offsetRotation, PositionAndRotation playerCarPositionAndRotation, @Nullable PositionAndRotation ridingCarPositionAndRotation, Vec3 cameraShakeOffset) {
+	public static void renderPlayer(Player playerEntity, int ridingCar, double minZ, double maxZ, Vec3 playerOffsetVector, double additionalRotation, double oscillationAmount, @Nullable Vec3 offsetVector, @Nullable Double offsetRotation, PositionAndRotation playerCarPositionAndRotation, @Nullable PositionAndRotation ridingCarPositionAndRotation, Vec3 cameraShakeOffset) {
 		Vector interpolatedPosition = null;
 
 		for (final RidingPlayerInterpolation ridingPlayerInterpolation : RIDING_PLAYER_INTERPOLATIONS) {
@@ -449,22 +471,25 @@ public final class RenderVehicles {
 			new PositionAndRotation(playerCarPositionAndRotation.position.add(interpolatedPosition.rotateZ(playerCarPositionAndRotation.roll).rotateX(playerCarPositionAndRotation.pitch).rotateY(playerCarPositionAndRotation.yaw)), 0, 0, 0),
 			cameraShakeOffset
 		);
-		final StoredMatrixTransformations storedMatrixTransformations = getStoredMatrixTransformations(offsetVector == null, playerRenderingPositionAndRotation, 0);
 
-		// Render player
-		MainRenderer.scheduleRender(QueuedRenderLayer.INTERIOR, (matrixStack, vertexConsumer, offset) -> {
-			storedMatrixTransformations.transform(matrixStack, offset);
-			Drawing.rotateXDegrees(matrixStack, 180);
-			Drawing.rotateYDegrees(matrixStack, 180);
-			final Minecraft minecraftClient = Minecraft.getInstance();
+		final Minecraft minecraftClient = Minecraft.getInstance();
+		if (offsetVector != null || CullingHelper.getDistanceFromCamera(playerRenderingPositionAndRotation.position.x(), playerRenderingPositionAndRotation.position.y(), playerRenderingPositionAndRotation.position.z()) <= minecraftClient.levelRenderer.getLastViewDistance() * 8) {
+			final StoredMatrixTransformations storedMatrixTransformations = getStoredMatrixTransformations(offsetVector == null, playerRenderingPositionAndRotation, -oscillationAmount / 2);
+
+			// Render player
+			MainRenderer.scheduleRender(QueuedRenderLayer.INTERIOR, (matrixStack, vertexConsumer, offset) -> {
+				storedMatrixTransformations.transform(matrixStack, offset);
+				Drawing.rotateXDegrees(matrixStack, 180);
+				Drawing.rotateYRadians(matrixStack, (float) (Math.PI + additionalRotation));
 //? if >= 1.21.4 {
-			minecraftClient.getEntityRenderDispatcher().render(playerEntity, 0, 0, 0, 0, matrixStack, minecraftClient.renderBuffers().bufferSource(), IGui.DEFAULT_LIGHT);
+				minecraftClient.getEntityRenderDispatcher().render(playerEntity, 0, 0, 0, 0, matrixStack, minecraftClient.renderBuffers().bufferSource(), IGui.DEFAULT_LIGHT);
 //? } else {
-			/*minecraftClient.getEntityRenderDispatcher().render(playerEntity, 0, 0, 0, 0, 0, matrixStack, minecraftClient.renderBuffers().bufferSource(), IGui.DEFAULT_LIGHT);
+				/*minecraftClient.getEntityRenderDispatcher().render(playerEntity, 0, 0, 0, 0, 0, matrixStack, minecraftClient.renderBuffers().bufferSource(), IGui.DEFAULT_LIGHT);
 //
 *///? }
-			matrixStack.popPose();
-		});
+				matrixStack.popPose();
+			});
+		}
 	}
 
 	private static void renderConnection(

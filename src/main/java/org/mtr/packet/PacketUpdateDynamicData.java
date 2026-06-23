@@ -1,5 +1,6 @@
 package org.mtr.packet;
 
+import org.jspecify.annotations.Nullable;
 import org.mtr.MTRClient;
 import org.mtr.client.MinecraftClientData;
 import org.mtr.core.data.NameColorDataBase;
@@ -41,16 +42,16 @@ public final class PacketUpdateDynamicData extends PacketRequestResponseBase {
 	protected void runClientInbound(JsonReader jsonReader) {
 		final MinecraftClientData minecraftClientData = MinecraftClientData.getInstance();
 		final DynamicDataResponse dynamicDataResponse = new DynamicDataResponse(jsonReader, minecraftClientData);
-		final boolean hasUpdate1 = updateVehiclesOrLifts(minecraftClientData.vehicles, dynamicDataResponse::iterateVehiclesToKeep, dynamicDataResponse::iterateVehiclesToUpdate, VehicleExtension::dispose, vehicleUpdate -> vehicleUpdate.getVehicle().getId(), vehicleUpdate -> new VehicleExtension(vehicleUpdate, minecraftClientData));
-		final boolean hasUpdate2 = updateVehiclesOrLifts(minecraftClientData.lifts, dynamicDataResponse::iterateLiftsToKeep, dynamicDataResponse::iterateLiftsToUpdate, (removedLift) -> {
-		}, NameColorDataBase::getId, lift -> lift);
+		final boolean hasUpdate1 = updateVehiclesLiftsOrPassengers(minecraftClientData.vehicles, dynamicDataResponse::iterateVehiclesToKeep, dynamicDataResponse::iterateVehiclesToUpdate, VehicleExtension::dispose, vehicleUpdate -> vehicleUpdate.getVehicle().getId(), vehicleUpdate -> new VehicleExtension(vehicleUpdate, minecraftClientData));
+		final boolean hasUpdate2 = updateVehiclesLiftsOrPassengers(minecraftClientData.lifts, dynamicDataResponse::iterateLiftsToKeep, dynamicDataResponse::iterateLiftsToUpdate, null, NameColorDataBase::getId, lift -> lift);
+		final boolean hasUpdate3 = updateVehiclesLiftsOrPassengers(minecraftClientData.passengers, dynamicDataResponse::iteratePassengersToKeep, dynamicDataResponse::iteratePassengersToUpdate, null, NameColorDataBase::getId, passenger -> passenger);
 
 		dynamicDataResponse.iterateSignalBlockUpdates(signalBlockUpdate -> {
 			minecraftClientData.railIdToPreBlockedSignalColors.put(signalBlockUpdate.getRailId(), signalBlockUpdate.getPreBlockedSignalColors());
 			minecraftClientData.railIdToCurrentlyBlockedSignalColors.put(signalBlockUpdate.getRailId(), signalBlockUpdate.getCurrentlyBlockedSignalColors());
 		});
 
-		if (hasUpdate1 || hasUpdate2) {
+		if (hasUpdate1 || hasUpdate2 || hasUpdate3) {
 			if (hasUpdate1) {
 				MTRClient.HIDDEN_PLAYERS.clear();
 				minecraftClientData.vehicles.forEach(vehicle -> {
@@ -91,7 +92,7 @@ public final class PacketUpdateDynamicData extends PacketRequestResponseBase {
 		return ResponseType.NONE;
 	}
 
-	private static <T extends NameColorDataBase, U> boolean updateVehiclesOrLifts(ObjectArraySet<T> dataSet, Consumer<LongConsumer> iterateKeep, Consumer<Consumer<U>> iterateUpdate, Consumer<T> onRemove, ToLongFunction<U> getId, Function<U, T> createInstance) {
+	private static <T extends NameColorDataBase, U> boolean updateVehiclesLiftsOrPassengers(ObjectArraySet<T> dataSet, Consumer<LongConsumer> iterateKeep, Consumer<Consumer<U>> iterateUpdate, @Nullable Consumer<T> onRemove, ToLongFunction<U> getId, Function<U, T> createInstance) {
 		final LongAVLTreeSet keepIds = new LongAVLTreeSet();
 		iterateKeep.accept(keepIds::add);
 
@@ -112,7 +113,10 @@ public final class PacketUpdateDynamicData extends PacketRequestResponseBase {
 		});
 		dataSetToUpdate.forEach(dataToUpdate -> dataSet.add(createInstance.apply(dataToUpdate)));
 		dataSet.forEach(e -> removedItems.remove(e.getId()));
-		removedItems.values().forEach(onRemove);
+
+		if (onRemove != null) {
+			removedItems.values().forEach(onRemove);
+		}
 
 		return !dataSetToUpdate.isEmpty() || itemRemoved;
 	}

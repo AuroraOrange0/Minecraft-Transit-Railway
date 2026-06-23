@@ -35,13 +35,20 @@ import java.util.stream.Collectors;
 public final class MinecraftClientData extends ClientData {
 
 	public final Long2ObjectOpenHashMap<SimplifiedRoute> simplifiedRouteIdMap = new Long2ObjectOpenHashMap<>();
+
 	public final ObjectArraySet<VehicleExtension> vehicles = new ObjectArraySet<>();
 	public final Long2ObjectAVLTreeMap<PersistentVehicleData> vehicleIdToPersistentVehicleData = new Long2ObjectAVLTreeMap<>();
+	public final Long2ObjectAVLTreeMap<ObjectArrayList<Passenger>> vehicleIdToPassengers = new Long2ObjectAVLTreeMap<>();
+
 	public final Long2ObjectAVLTreeMap<LiftWrapper> liftWrapperList = new Long2ObjectAVLTreeMap<>();
 	public final Object2ObjectArrayMap<String, RailWrapper> railWrapperList = new Object2ObjectArrayMap<>();
+
 	public final Object2ObjectAVLTreeMap<String, LongArrayList> railIdToPreBlockedSignalColors = new Object2ObjectAVLTreeMap<>();
 	public final Object2ObjectAVLTreeMap<String, LongArrayList> railIdToCurrentlyBlockedSignalColors = new Object2ObjectAVLTreeMap<>();
 	public final ObjectArraySet<String> blockedRailIds = new ObjectArraySet<>();
+
+	public final ObjectArraySet<Passenger> passengers = new ObjectArraySet<>();
+
 	public final ObjectArrayList<DashboardListItem> railActions = new ObjectArrayList<>();
 
 	private final LongAVLTreeSet routeIdsWithDisabledAnnouncements = new LongAVLTreeSet();
@@ -50,13 +57,6 @@ public final class MinecraftClientData extends ClientData {
 	private static MinecraftClientData instance = new MinecraftClientData();
 	@Getter
 	private static MinecraftClientData dashboardInstance = new MinecraftClientData();
-
-	public static String DASHBOARD_SEARCH = "";
-	public static String ROUTES_PLATFORMS_SEARCH = "";
-	public static String ROUTES_PLATFORMS_SELECTED_SEARCH = "";
-	public static String TRAINS_SEARCH = "";
-	public static String EXIT_PARENTS_SEARCH = "";
-	public static String EXIT_DESTINATIONS_SEARCH = "";
 
 	@Override
 	public void sync() {
@@ -85,6 +85,9 @@ public final class MinecraftClientData extends ClientData {
 		}));
 
 		simplifiedRoutes.forEach(simplifiedRoute -> simplifiedRouteIdMap.put(simplifiedRoute.getId(), simplifiedRoute));
+
+		vehicleIdToPassengers.clear();
+		passengers.forEach(passenger -> vehicleIdToPassengers.computeIfAbsent(passenger.getVehicleId(), key -> new ObjectArrayList<>()).add(passenger));
 	}
 
 	@Nullable
