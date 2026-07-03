@@ -62,7 +62,7 @@ public class BuildTools {
 		path = project.getProjectDir().toPath();
 		version = project.getVersion().toString();
 		majorVersion = Integer.parseInt(minecraftVersion.split("\\.")[1]);
-		javaLanguageVersion = majorVersion <= 16 ? 8 : majorVersion == 17 ? 16 : 17;
+		javaLanguageVersion = majorVersion <= 16 ? 8 : majorVersion == 17 ? 16 : majorVersion >= 21 ? 21 : 17;
 
 		final Path accessWidenerPath = path.resolve("src/main/resources").resolve(loader.equals("fabric") ? "" : "META-INF");
 		Files.createDirectories(accessWidenerPath);
@@ -96,6 +96,9 @@ public class BuildTools {
 	}
 
 	public String getJadeVersion() {
+		if (loader.equals("fabric") && minecraftVersion.equals("1.21.11")) {
+			return "21.1.6+fabric";
+		}
 		if (minecraftVersion.equals("1.19.4")) {
 			return loader.equals("fabric") ? "10.4.0" : "10.1.1"; // 1.19.4 version not working
 		}

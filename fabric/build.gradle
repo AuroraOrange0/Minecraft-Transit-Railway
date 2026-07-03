@@ -4,10 +4,11 @@ import org.mtr.core.WebserverSetup
 import org.mtr.mod.BuildTools
 
 plugins {
-	id "fabric-loom" version "1.10-SNAPSHOT"
+	id "fabric-loom" version "1.17.13"
 }
 
 final BuildTools buildTools = new BuildTools(minecraftVersion, "fabric", project)
+final String mtrMappingMinecraftVersion = findProperty("mtrMappingMinecraftVersion") ?: minecraftVersion
 
 loom {
 	accessWidenerPath = file("src/main/resources/mtr.accesswidener")
@@ -21,7 +22,7 @@ dependencies {
 	modImplementation "net.fabricmc:fabric-loader:${buildTools.getFabricVersion()}"
 	modImplementation "net.fabricmc.fabric-api:fabric-api:${buildTools.getFabricApiVersion()}"
 	modApi("com.terraformersmc:modmenu:${buildTools.getModMenuVersion()}") { exclude group: "net.fabricmc", module: "fabric-loader" }
-	shadowImplementation files("../libs/Minecraft-Mappings-fabric-${minecraftVersion}-0.0.1-dev.jar")
+	shadowImplementation files("../libs/Minecraft-Mappings-fabric-${mtrMappingMinecraftVersion}-0.0.1-dev.jar")
 	testImplementation "org.junit.jupiter:junit-jupiter-api:5.+"
 	testImplementation "org.junit.platform:junit-platform-launcher:1.+"
 	testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:5.+"
@@ -131,7 +132,7 @@ shadowJar {
 remapJar {
 	dependsOn(shadowJar)
 	mustRunAfter(shadowJar)
-	inputFile = file(shadowJar.archivePath)
+	inputFile = shadowJar.archiveFile.get().asFile
 }
 
 test {
