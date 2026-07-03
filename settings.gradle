@@ -1,5 +1,7 @@
 pluginManagement {
 	repositories {
+		maven { url = "https://maven.aliyun.com/repository/public" }
+		maven { url = "https://maven.aliyun.com/repository/gradle-plugin" }
 		maven { url = "https://maven.fabricmc.net/" }
 		maven { url = "https://maven.minecraftforge.net/" }
 		mavenCentral()
@@ -8,7 +10,7 @@ pluginManagement {
 }
 
 plugins {
-	id "org.gradle.toolchains.foojay-resolver-convention" version "+"
+	id "org.gradle.toolchains.foojay-resolver-convention" version "0.10.0"
 }
 
 include("fabric")

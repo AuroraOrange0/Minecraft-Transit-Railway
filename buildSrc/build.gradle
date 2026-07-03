@@ -1,21 +1,23 @@
 repositories {
+	maven { url = "https://maven.aliyun.com/repository/public" }
 	mavenCentral()
 }
 
 dependencies {
-	implementation "com.google.code.gson:gson:+"
+	implementation "com.google.code.gson:gson:2.10.1"
 	implementation "com.github.crowdin:crowdin-api-client-java:1.26.1"
-	implementation "it.unimi.dsi:fastutil:+"
-	implementation "commons-io:commons-io:+"
-	implementation "org.apache.httpcomponents:httpmime:+"
-	implementation "org.mtr:Minecraft-Mod-API-Tools:0.0.1"
-	implementation "org.mtr:Minecraft-Mappings-common:0.0.1"
-	implementation "org.mtr:Transport-Simulation-Core:Build-Tools"
+	implementation "it.unimi.dsi:fastutil:8.5.15"
+	implementation "commons-io:commons-io:2.16.1"
+	implementation "org.apache.httpcomponents:httpmime:4.5.14"
+	implementation files("../libs/Minecraft-Mod-API-Tools-0.0.1.jar")
+	implementation files("../libs/Minecraft-Mappings-common-0.0.1.jar")
+	implementation files("../libs/Transport-Simulation-Core-Build-Tools.jar")
 }
 
 repositories {
-	flatDir { dirs "../libs" }
+	maven { url = "https://maven.aliyun.com/repository/public" }
 	maven { url "https://jitpack.io" }
+	mavenCentral()
 }
 
 java {

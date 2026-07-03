@@ -2,8 +2,8 @@ import org.apache.tools.ant.filters.ReplaceTokens
 import org.mtr.mod.BuildTools
 
 plugins {
-	id "net.minecraftforge.gradle" version "6.+"
-	id "org.spongepowered.mixin" version "+"
+	id "net.minecraftforge.gradle" version "6.0.54"
+	id "org.spongepowered.mixin" version "0.7.38"
 }
 
 final BuildTools buildTools = new BuildTools(minecraftVersion, "forge", project)
@@ -25,8 +25,8 @@ sourceSets.main.resources { srcDir "src/generated/resources" }
 
 dependencies {
 	minecraft "net.minecraftforge:forge:${minecraftVersion}-${buildTools.getForgeVersion()}"
-	annotationProcessor "org.spongepowered:mixin:+:processor"
-	shadowImplementation "org.mtr:Minecraft-Mappings-forge-${minecraftVersion}:0.0.1-dev"
+	annotationProcessor "org.spongepowered:mixin:0.8.5:processor"
+	shadowImplementation files("../libs/Minecraft-Mappings-forge-${minecraftVersion}-0.0.1-dev.jar")
 
 	if (buildTools.hasJadeSupport()) {
 		compileOnly fg.deobf("maven.modrinth:jade:${buildTools.getJadeVersion()}")
