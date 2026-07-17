@@ -9,6 +9,7 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.component.TooltipDisplay;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
@@ -22,6 +23,8 @@ import org.mtr.generated.lang.TranslationProvider;
 import org.mtr.registry.Blocks;
 
 import java.util.List;
+import java.util.ArrayList;
+import java.util.function.Consumer;
 
 public class ItemPSDAPGBase extends Item implements IBlock {
 
@@ -71,6 +74,12 @@ public class ItemPSDAPGBase extends Item implements IBlock {
 	}
 
 	@Override
+	public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay display, Consumer<Component> tooltip, TooltipFlag type) {
+		final ArrayList<Component> components = new ArrayList<>();
+		appendHoverText(stack, context, components, type);
+		components.forEach(tooltip);
+	}
+
 	public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltip, TooltipFlag type) {
 		tooltip.add((this.type.isLift ? this.type.isOdd ? TranslationProvider.TOOLTIP_MTR_RAILWAY_SIGN_ODD : TranslationProvider.TOOLTIP_MTR_RAILWAY_SIGN_EVEN : item.translationKey).getMutableText().withStyle(ChatFormatting.GRAY));
 	}

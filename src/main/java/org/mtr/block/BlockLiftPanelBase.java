@@ -4,7 +4,8 @@ import lombok.Getter;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.InteractionResult;
@@ -40,7 +41,7 @@ import net.minecraft.world.level.ScheduledTickAccess;
 /*import net.minecraft.world.level.LevelAccessor;
  *///? }
 
-public abstract class BlockLiftPanelBase extends Block implements IBlock, TripleHorizontalBlock, EntityBlock {
+public abstract class BlockLiftPanelBase extends Block implements IBlock, TripleHorizontalBlock, EntityBlock, BlockTooltipProvider {
 
 	private final boolean isOdd;
 	private final boolean isFlat;
@@ -101,7 +102,7 @@ public abstract class BlockLiftPanelBase extends Block implements IBlock, Triple
 				world.setBlock(pos.relative(direction.getClockWise()), defaultBlockState().setValue(BlockStateProperties.HORIZONTAL_FACING, direction).setValue(SIDE, EnumSide.RIGHT), 3);
 			}
 
-			world.blockUpdated(pos, Blocks.AIR);
+			world.updateNeighborsAt(pos, Blocks.AIR, null);
 			state.updateNeighbourShapes(world, pos, 3);
 		}
 	}
@@ -144,13 +145,13 @@ public abstract class BlockLiftPanelBase extends Block implements IBlock, Triple
 		}
 
 		@Override
-		protected void readNbt(CompoundTag nbtCompound) {
-			final long data = nbtCompound.getLong(KEY_TRACK_FLOOR_POS);
+		protected void readNbt(ValueInput nbtCompound) {
+			final long data = nbtCompound.getLongOr(KEY_TRACK_FLOOR_POS, 0);
 			trackPosition = data == 0 ? null : BlockPos.of(data);
 		}
 
 		@Override
-		protected void writeNbt(CompoundTag nbtCompound) {
+		protected void writeNbt(ValueOutput nbtCompound) {
 			nbtCompound.putLong(KEY_TRACK_FLOOR_POS, trackPosition == null ? 0 : trackPosition.asLong());
 		}
 

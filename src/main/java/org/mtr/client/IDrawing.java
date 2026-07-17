@@ -1,6 +1,5 @@
 package org.mtr.client;
 
-import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.text2speech.Narrator;
@@ -13,9 +12,10 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.FontDescription;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Style;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
@@ -44,7 +44,7 @@ public interface IDrawing {
 	}
 
 	static void drawStringWithFont(PoseStack matrixStack, MultiBufferSource vertexConsumers, String text, IGui.HorizontalAlignment horizontalAlignment, IGui.VerticalAlignment verticalAlignment, IGui.HorizontalAlignment xAlignment, float x, float y, float maxWidth, float maxHeight, float scale, int textColorCjk, int textColor, float fontSizeRatio, boolean shadow, int light, @Nullable DrawingCallback drawingCallback) {
-		final Style style = Config.getClient().getUseMTRFont() ? Style.EMPTY.withFont(ResourceLocation.fromNamespaceAndPath(MTR.MOD_ID, "mtr")) : Style.EMPTY;
+		final Style style = Config.getClient().getUseMTRFont() ? Style.EMPTY.withFont(new FontDescription.Resource(Identifier.fromNamespaceAndPath(MTR.MOD_ID, "mtr"))) : Style.EMPTY;
 
 		while (text.contains("||")) {
 			text = text.replace("||", "|");
@@ -203,7 +203,7 @@ public interface IDrawing {
 
 	static void narrateOrAnnounce(String narrateMessage, ObjectArrayList<MutableComponent> chatMessages) {
 		if (Config.getClient().getTextToSpeechAnnouncements() && !narrateMessage.isEmpty()) {
-			Narrator.getNarrator().say(narrateMessage, true);
+			Narrator.getNarrator().say(narrateMessage, true, 1);
 		}
 		if (Config.getClient().getChatAnnouncements() && !chatMessages.isEmpty()) {
 			final LocalPlayer player = Minecraft.getInstance().player;
@@ -218,18 +218,7 @@ public interface IDrawing {
 	}
 
 	static MutableComponent withMTRFont(MutableComponent text) {
-		return Config.getClient().getUseMTRFont() ? text.setStyle(Style.EMPTY.withFont(ResourceLocation.fromNamespaceAndPath(MTR.MOD_ID, "mtr"))) : text;
-	}
-
-	static void changeShaderColor(Color color, Runnable callback) {
-		final float[] oldColor = RenderSystem.getShaderColor();
-		final float r = oldColor[0];
-		final float g = oldColor[1];
-		final float b = oldColor[2];
-		final float a = oldColor[3];
-		RenderSystem.setShaderColor((float) color.getRed() / 0xFF, (float) color.getGreen() / 0xFF, (float) color.getBlue() / 0xFF, (float) color.getAlpha() / 0xFF);
-		callback.run();
-		RenderSystem.setShaderColor(r, g, b, a);
+		return Config.getClient().getUseMTRFont() ? text.setStyle(Style.EMPTY.withFont(new FontDescription.Resource(Identifier.fromNamespaceAndPath(MTR.MOD_ID, "mtr")))) : text;
 	}
 
 	@FunctionalInterface

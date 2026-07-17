@@ -16,7 +16,7 @@ import org.mtr.generated.lang.TranslationProvider;
 
 import java.util.List;
 
-public class BlockStationColorPole extends Block {
+public class BlockStationColorPole extends Block implements BlockTooltipProvider {
 
 	private final boolean showTooltip;
 

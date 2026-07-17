@@ -3,7 +3,8 @@ package org.mtr.block;
 import lombok.Getter;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -31,7 +32,7 @@ import java.util.List;
 import java.util.function.BiFunction;
 import java.util.function.BiPredicate;
 
-public abstract class BlockPIDSBase extends Block implements EntityBlock {
+public abstract class BlockPIDSBase extends Block implements EntityBlock, BlockTooltipProvider {
 
 	public final int maxArrivals;
 	public final BiPredicate<Level, BlockPos> canStoreData;
@@ -140,30 +141,30 @@ public abstract class BlockPIDSBase extends Block implements EntityBlock {
 		}
 
 		@Override
-		protected void readNbt(CompoundTag nbtCompound) {
+		protected void readNbt(ValueInput nbtCompound) {
 			for (int i = 0; i < maxArrivals; i++) {
-				messages[i] = nbtCompound.getString(KEY_MESSAGE + i);
-				hideArrivalArray[i] = nbtCompound.getBoolean(KEY_HIDE_ARRIVAL + i);
+				messages[i] = nbtCompound.getStringOr(KEY_MESSAGE + i, "");
+				hideArrivalArray[i] = nbtCompound.getBooleanOr(KEY_HIDE_ARRIVAL + i, false);
 			}
 
 			platformIds.clear();
-			final long[] platformIdsArray = nbtCompound.getLongArray(KEY_PLATFORM_IDS);
+			final long[] platformIdsArray = getLongArray(nbtCompound, KEY_PLATFORM_IDS);
 			for (final long platformId : platformIdsArray) {
 				platformIds.add(platformId);
 			}
 
-			displayPage = nbtCompound.getInt(KEY_DISPLAY_PAGE);
-			final int tempCustomColor = nbtCompound.getInt(KEY_CUSTOM_COLOR);
+			displayPage = nbtCompound.getIntOr(KEY_DISPLAY_PAGE, 0);
+			final int tempCustomColor = nbtCompound.getIntOr(KEY_CUSTOM_COLOR, 0);
 			customColor = tempCustomColor == 0 ? null : tempCustomColor;
 		}
 
 		@Override
-		protected void writeNbt(CompoundTag nbtCompound) {
+		protected void writeNbt(ValueOutput nbtCompound) {
 			for (int i = 0; i < maxArrivals; i++) {
 				nbtCompound.putString(KEY_MESSAGE + i, messages[i] == null ? "" : messages[i]);
 				nbtCompound.putBoolean(KEY_HIDE_ARRIVAL + i, hideArrivalArray[i]);
 			}
-			nbtCompound.putLongArray(KEY_PLATFORM_IDS, new ArrayList<>(platformIds));
+			putLongArray(nbtCompound, KEY_PLATFORM_IDS, platformIds.toLongArray());
 			nbtCompound.putInt(KEY_DISPLAY_PAGE, displayPage);
 			nbtCompound.putInt(KEY_CUSTOM_COLOR, customColor == null ? 0 : customColor);
 		}

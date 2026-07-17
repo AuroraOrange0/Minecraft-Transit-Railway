@@ -5,6 +5,8 @@ import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.client.input.MouseButtonInfo;
 import org.mtr.core.tool.Utilities;
 import org.mtr.tool.GuiHelper;
 
@@ -20,9 +22,9 @@ public abstract class ScrollablePanelWidget extends AbstractWidget {
 	}
 
 	@Override
-	public final void onClick(double mouseX, double mouseY) {
-		if (!clickedScrollbar(mouseX, mouseY)) {
-			onClickNew(mouseX, mouseY);
+	public final void onClick(MouseButtonEvent event, boolean doubleClick) {
+		if (!clickedScrollbar(event.x(), event.y())) {
+			onClickNew(event, doubleClick);
 		}
 	}
 
@@ -37,20 +39,20 @@ public abstract class ScrollablePanelWidget extends AbstractWidget {
 	}
 
 	@Override
-	protected final boolean isValidClickButton(int button) {
+	protected final boolean isValidClickButton(MouseButtonInfo button) {
 		return active && visible && super.isValidClickButton(button);
 	}
 
 	@Override
-	public boolean mouseClicked(double mouseX, double mouseY, int button) {
-		if (isValidClickButton(button)) {
-			if (clickedScrollbar(mouseX, mouseY)) {
+	public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+		if (isValidClickButton(event.buttonInfo())) {
+			if (clickedScrollbar(event.x(), event.y())) {
 				scrolling = true;
 				return true;
 			}
-			if (isMouseOver(mouseX, mouseY)) {
+			if (isMouseOver(event.x(), event.y())) {
 				playDownSound(Minecraft.getInstance().getSoundManager());
-				onClick(mouseX, mouseY);
+				onClick(event, doubleClick);
 				return true;
 			}
 		}
@@ -58,15 +60,15 @@ public abstract class ScrollablePanelWidget extends AbstractWidget {
 	}
 
 	@Override
-	public boolean mouseDragged(double mouseX, double mouseY, int button, double deltaX, double deltaY) {
-		if (scrolling && button == 0) {
+	public boolean mouseDragged(MouseButtonEvent event, double deltaX, double deltaY) {
+		if (scrolling && event.button() == 0) {
 			final int h = height - scrollerHeight();
 			if (h > 0) {
-				scrollAmount = Math.clamp((mouseY - getY() - scrollerHeight() / 2.0) / h * maxScroll(), 0, maxScroll());
+				scrollAmount = Math.clamp((event.y() - getY() - scrollerHeight() / 2.0) / h * maxScroll(), 0, maxScroll());
 			}
 			return true;
 		}
-		return super.mouseDragged(mouseX, mouseY, button, deltaX, deltaY);
+		return super.mouseDragged(event, deltaX, deltaY);
 	}
 
 	@Override
@@ -82,8 +84,8 @@ public abstract class ScrollablePanelWidget extends AbstractWidget {
 	protected void updateWidgetNarration(NarrationElementOutput builder) {
 	}
 
-	protected void onClickNew(double mouseX, double mouseY) {
-		super.onClick(mouseX, mouseY);
+	protected void onClickNew(MouseButtonEvent event, boolean doubleClick) {
+		super.onClick(event, doubleClick);
 	}
 
 	protected final int getScrollbarWidth() {

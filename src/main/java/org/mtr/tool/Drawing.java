@@ -4,9 +4,12 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.rendertype.RenderType;
 import net.minecraft.client.renderer.texture.OverlayTexture;
+import org.joml.Matrix3x2fc;
+import org.joml.Matrix3x2f;
 import org.joml.Matrix4f;
+import org.joml.Vector2f;
 import org.joml.Vector3f;
 import org.jspecify.annotations.Nullable;
 import org.mtr.core.tool.Utilities;
@@ -46,29 +49,45 @@ public final class Drawing {
 	@Nullable
 	private final Matrix4f matrix4f;
 	@Nullable
+	private final Matrix3x2fc matrix3x2f;
+	@Nullable
 	private final PoseStack matrixStack;
 	private final VertexConsumer vertexConsumer;
 
 	public Drawing(VertexConsumer vertexConsumer) {
 		matrix4f = null;
+		matrix3x2f = null;
 		matrixStack = null;
 		this.vertexConsumer = vertexConsumer;
 	}
 
 	public Drawing(Matrix4f matrix4f, VertexConsumer vertexConsumer) {
 		this.matrix4f = matrix4f;
+		matrix3x2f = null;
 		matrixStack = null;
 		this.vertexConsumer = vertexConsumer;
 	}
 
 	public Drawing(PoseStack matrixStack, VertexConsumer vertexConsumer) {
 		matrix4f = null;
+		matrix3x2f = null;
 		this.matrixStack = matrixStack;
 		this.vertexConsumer = vertexConsumer;
 	}
 
 	public Drawing(PoseStack matrixStack, RenderType renderLayer) {
 		this(matrixStack, Minecraft.getInstance().renderBuffers().bufferSource().getBuffer(renderLayer));
+	}
+
+	public Drawing(Matrix3x2fc matrix3x2f, VertexConsumer vertexConsumer) {
+		matrix4f = null;
+		this.matrix3x2f = matrix3x2f;
+		matrixStack = null;
+		this.vertexConsumer = vertexConsumer;
+	}
+
+	public Drawing(Matrix3x2fc matrix3x2f, RenderType renderLayer) {
+		this(matrix3x2f, Minecraft.getInstance().renderBuffers().bufferSource().getBuffer(renderLayer));
 	}
 
 	// Vertices
@@ -198,7 +217,7 @@ public final class Drawing {
 		final float newX3, newY3, newZ3;
 		final float newX4, newY4, newZ4;
 
-		if (matrix4f == null && matrixStack == null) {
+		if (matrix4f == null && matrix3x2f == null && matrixStack == null) {
 			newX1 = (float) x1;
 			newY1 = (float) y1;
 			newZ1 = (float) z1;
@@ -211,7 +230,7 @@ public final class Drawing {
 			newX4 = (float) x4;
 			newY4 = (float) y4;
 			newZ4 = (float) z4;
-		} else {
+		} else if (matrix3x2f == null) {
 			final Matrix4f newMatrix4f = matrix4f == null ? matrixStack.last().pose() : matrix4f;
 			final Vector3f vector3f1 = transform(newMatrix4f, x1, y1, z1);
 			final Vector3f vector3f2 = transform(newMatrix4f, x2, y2, z2);
@@ -229,6 +248,23 @@ public final class Drawing {
 			newX4 = vector3f4.x;
 			newY4 = vector3f4.y;
 			newZ4 = vector3f4.z;
+		} else {
+			final Vector2f vector2f1 = matrix3x2f.transformPosition((float) x1, (float) y1, new Vector2f());
+			final Vector2f vector2f2 = matrix3x2f.transformPosition((float) x2, (float) y2, new Vector2f());
+			final Vector2f vector2f3 = matrix3x2f.transformPosition((float) x3, (float) y3, new Vector2f());
+			final Vector2f vector2f4 = matrix3x2f.transformPosition((float) x4, (float) y4, new Vector2f());
+			newX1 = vector2f1.x;
+			newY1 = vector2f1.y;
+			newZ1 = (float) z1;
+			newX2 = vector2f2.x;
+			newY2 = vector2f2.y;
+			newZ2 = (float) z2;
+			newX3 = vector2f3.x;
+			newY3 = vector2f3.y;
+			newZ3 = (float) z3;
+			newX4 = vector2f4.x;
+			newY4 = vector2f4.y;
+			newZ4 = (float) z4;
 		}
 
 		// If vertices are outside GuI bounds, don't render
@@ -270,6 +306,19 @@ public final class Drawing {
 
 	public static void rotateZDegrees(PoseStack matrixStack, float angle) {
 		matrixStack.mulPose(Axis.ZP.rotationDegrees(angle));
+	}
+
+	public static void rotateZDegrees(Matrix3x2f matrixStack, float angle) {
+		matrixStack.rotate((float) Math.toRadians(angle));
+	}
+
+	public static PoseStack toPoseStack(Matrix3x2fc matrix3x2f) {
+		final PoseStack matrixStack = new PoseStack();
+		matrixStack.last().pose()
+			.m00(matrix3x2f.m00()).m01(matrix3x2f.m01())
+			.m10(matrix3x2f.m10()).m11(matrix3x2f.m11())
+			.m30(matrix3x2f.m20()).m31(matrix3x2f.m21());
+		return matrixStack;
 	}
 
 	private static void vertex(VertexConsumer vertexConsumer, float x, float y, float z, int color, int light, float u, float v, boolean hasLightAndNormal, boolean hasUvAndOverlay) {

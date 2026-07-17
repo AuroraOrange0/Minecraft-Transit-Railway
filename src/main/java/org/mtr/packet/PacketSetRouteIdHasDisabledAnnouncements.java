@@ -30,7 +30,7 @@ public final class PacketSetRouteIdHasDisabledAnnouncements extends PacketHandle
 
 	@Override
 	public void runServer(MinecraftServer minecraftServer, ServerPlayer serverPlayerEntity) {
-		final PersistentStateData persistentStateData = serverPlayerEntity.serverLevel().getDataStorage().computeIfAbsent(new SavedData.Factory<>(PersistentStateData::new, (nbt, wrapperLookup) -> new PersistentStateData(nbt), DataFixTypes.LEVEL), MTR.MOD_ID);
+		final PersistentStateData persistentStateData = serverPlayerEntity.level().getDataStorage().computeIfAbsent(PersistentStateData.TYPE);
 		persistentStateData.setRouteIdHasDisabledAnnouncements(routeId, isDisabled);
 	}
 }

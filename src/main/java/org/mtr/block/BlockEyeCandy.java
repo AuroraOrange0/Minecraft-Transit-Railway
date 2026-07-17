@@ -2,7 +2,8 @@ package org.mtr.block;
 
 import lombok.Getter;
 import net.minecraft.core.BlockPos;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionResult;
@@ -106,19 +107,19 @@ public class BlockEyeCandy extends BlockWaterloggable implements EntityBlock {
 		}
 
 		@Override
-		protected void readNbt(CompoundTag nbtCompound) {
-			modelId = nbtCompound.getString(KEY_MODEL_ID);
-			translateX = nbtCompound.getFloat(KEY_TRANSLATE_X);
-			translateY = nbtCompound.getFloat(KEY_TRANSLATE_Y);
-			translateZ = nbtCompound.getFloat(KEY_TRANSLATE_Z);
-			rotateX = nbtCompound.getFloat(KEY_ROTATE_X);
-			rotateY = nbtCompound.getFloat(KEY_ROTATE_Y);
-			rotateZ = nbtCompound.getFloat(KEY_ROTATE_Z);
-			fullBrightness = nbtCompound.getBoolean(KEY_FULL_BRIGHTNESS);
+		protected void readNbt(ValueInput nbtCompound) {
+			modelId = nbtCompound.getStringOr(KEY_MODEL_ID, "");
+			translateX = nbtCompound.getFloatOr(KEY_TRANSLATE_X, 0);
+			translateY = nbtCompound.getFloatOr(KEY_TRANSLATE_Y, 0);
+			translateZ = nbtCompound.getFloatOr(KEY_TRANSLATE_Z, 0);
+			rotateX = nbtCompound.getFloatOr(KEY_ROTATE_X, 0);
+			rotateY = nbtCompound.getFloatOr(KEY_ROTATE_Y, 0);
+			rotateZ = nbtCompound.getFloatOr(KEY_ROTATE_Z, 0);
+			fullBrightness = nbtCompound.getBooleanOr(KEY_FULL_BRIGHTNESS, false);
 		}
 
 		@Override
-		protected void writeNbt(CompoundTag nbtCompound) {
+		protected void writeNbt(ValueOutput nbtCompound) {
 			nbtCompound.putString(KEY_MODEL_ID, modelId);
 			nbtCompound.putFloat(KEY_TRANSLATE_X, translateX);
 			nbtCompound.putFloat(KEY_TRANSLATE_Y, translateY);

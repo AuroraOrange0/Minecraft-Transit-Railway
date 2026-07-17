@@ -20,7 +20,7 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 
 import java.util.List;
 
-public class BlockGlassFence extends BlockDirectionalDoubleBlockBase {
+public class BlockGlassFence extends BlockDirectionalDoubleBlockBase implements BlockTooltipProvider {
 
 	public static final IntegerProperty NUMBER = IntegerProperty.create("number", 1, 7);
 

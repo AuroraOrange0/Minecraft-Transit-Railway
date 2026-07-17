@@ -2,10 +2,13 @@ package org.mtr.widget;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.renderer.RenderType;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.rendertype.RenderType;
+import net.minecraft.client.renderer.rendertype.RenderTypes;
+import net.minecraft.resources.Identifier;
 import org.jspecify.annotations.Nullable;
+import org.joml.Matrix3x2fStack;
+import net.minecraft.client.input.MouseButtonEvent;
 import org.mtr.client.CustomResourceLoader;
 import org.mtr.core.data.*;
 import org.mtr.core.tool.Utilities;
@@ -44,8 +47,9 @@ public final class ScrollableListWidget<T> extends ScrollablePanelWidget {
 		clickAction = null;
 		hoverItem = null;
 		final FontRenderOptions.FontRenderOptionsBuilder fontRenderOptionsBuilder = initDimensions();
-		final PoseStack matrixStack = context.pose();
-		final Drawing drawing = new Drawing(matrixStack, RenderType.gui());
+		final Matrix3x2fStack guiMatrixStack = context.pose();
+		final PoseStack matrixStack = Drawing.toPoseStack(guiMatrixStack);
+		final Drawing drawing = new Drawing(guiMatrixStack, RenderTypes.debugQuads());
 		final ObjectArrayList<Runnable> deferredRenders = new ObjectArrayList<>();
 
 		ListItem.iterateData(dataList, filter, (index, indexList, listItem) -> {
@@ -67,7 +71,7 @@ public final class ScrollableListWidget<T> extends ScrollablePanelWidget {
 						clickAction = listItem::toggle;
 
 						// Draw the action button
-						deferredRenders.add(() -> new Drawing(matrixStack, GuiHelper.getGuiTexturedRenderType(listItem.isExpanded() ? GuiHelper.CHEVRON_UP_TEXTURE_ID : GuiHelper.CHEVRON_DOWN_TEXTURE_ID))
+						deferredRenders.add(() -> new Drawing(guiMatrixStack, GuiHelper.getGuiTexturedRenderType(listItem.isExpanded() ? GuiHelper.CHEVRON_UP_TEXTURE_ID : GuiHelper.CHEVRON_DOWN_TEXTURE_ID))
 							.setVerticesWH(leftBound + GuiHelper.DEFAULT_PADDING / 2F, startY + GuiHelper.DEFAULT_PADDING / 2F, GuiHelper.DEFAULT_ICON_SIZE, GuiHelper.DEFAULT_ICON_SIZE)
 							.setUv()
 							.draw()
@@ -87,7 +91,7 @@ public final class ScrollableListWidget<T> extends ScrollablePanelWidget {
 							}
 
 							// Draw the action button
-							deferredRenders.add(() -> new Drawing(matrixStack, GuiHelper.getGuiTexturedRenderType(identifier))
+							deferredRenders.add(() -> new Drawing(guiMatrixStack, GuiHelper.getGuiTexturedRenderType(identifier))
 								.setVerticesWH(leftBound + GuiHelper.DEFAULT_PADDING / 2F, startY + GuiHelper.DEFAULT_PADDING / 2F, GuiHelper.DEFAULT_ICON_SIZE, GuiHelper.DEFAULT_ICON_SIZE)
 								.setUv()
 								.draw()
@@ -123,7 +127,7 @@ public final class ScrollableListWidget<T> extends ScrollablePanelWidget {
 	}
 
 	@Override
-	protected void onClickNew(double mouseX, double mouseY) {
+	protected void onClickNew(MouseButtonEvent event, boolean doubleClick) {
 		if (clickAction != null) {
 			clickAction.run();
 		}
@@ -203,7 +207,7 @@ public final class ScrollableListWidget<T> extends ScrollablePanelWidget {
 		return fontRenderOptionsBuilder;
 	}
 
-	public static <T extends AreaBase<T, U>, U extends SavedRailBase<U, T>> void setAreas(ScrollableListWidget<T> scrollableListWidget, ObjectArraySet<T> areas, @Nullable TransportMode transportMode, ObjectArrayList<ObjectObjectImmutablePair<ResourceLocation, ListItem.ActionConsumer<T>>> actions) {
+	public static <T extends AreaBase<T, U>, U extends SavedRailBase<U, T>> void setAreas(ScrollableListWidget<T> scrollableListWidget, ObjectArraySet<T> areas, @Nullable TransportMode transportMode, ObjectArrayList<ObjectObjectImmutablePair<Identifier, ListItem.ActionConsumer<T>>> actions) {
 		final ObjectArrayList<T> sortedAreas = new ObjectArrayList<>();
 		areas.forEach(route -> {
 			if (transportMode == null || route.isTransportMode(transportMode)) {
@@ -225,7 +229,7 @@ public final class ScrollableListWidget<T> extends ScrollablePanelWidget {
 		scrollableListWidget.setData(dataList);
 	}
 
-	public static <T extends AreaBase<T, U>, U extends SavedRailBase<U, T>> void setSavedRails(ScrollableListWidget<U> scrollableListWidget, ObjectArraySet<U> savedRails, ObjectArrayList<ObjectObjectImmutablePair<ResourceLocation, ListItem.ActionConsumer<U>>> actions) {
+	public static <T extends AreaBase<T, U>, U extends SavedRailBase<U, T>> void setSavedRails(ScrollableListWidget<U> scrollableListWidget, ObjectArraySet<U> savedRails, ObjectArrayList<ObjectObjectImmutablePair<Identifier, ListItem.ActionConsumer<U>>> actions) {
 		final ObjectArrayList<U> sortedSavedRails = new ObjectArrayList<>(savedRails);
 		Collections.sort(sortedSavedRails);
 		final ObjectArrayList<ListItem<U>> dataList = new ObjectArrayList<>();
@@ -270,7 +274,7 @@ public final class ScrollableListWidget<T> extends ScrollablePanelWidget {
 		scrollableListWidget.setData(dataList);
 	}
 
-	public static void setRoutes(ScrollableListWidget<Route> scrollableListWidget, ObjectArraySet<Route> routes, @Nullable TransportMode transportMode, ObjectArrayList<ObjectObjectImmutablePair<ResourceLocation, ListItem.ActionConsumer<Route>>> actions) {
+	public static void setRoutes(ScrollableListWidget<Route> scrollableListWidget, ObjectArraySet<Route> routes, @Nullable TransportMode transportMode, ObjectArrayList<ObjectObjectImmutablePair<Identifier, ListItem.ActionConsumer<Route>>> actions) {
 		final ObjectArrayList<Route> sortedRoutes = new ObjectArrayList<>();
 		routes.forEach(route -> {
 			if (transportMode == null || route.isTransportMode(transportMode)) {
@@ -308,7 +312,7 @@ public final class ScrollableListWidget<T> extends ScrollablePanelWidget {
 		scrollableListWidget.setData(groupedRoutes);
 	}
 
-	public static void setRoutePlatforms(ScrollableListWidget<RoutePlatformData> scrollableListWidget, ObjectArrayList<RoutePlatformData> routePlatforms, ObjectArrayList<ObjectObjectImmutablePair<ResourceLocation, ListItem.ActionConsumer<RoutePlatformData>>> actions) {
+	public static void setRoutePlatforms(ScrollableListWidget<RoutePlatformData> scrollableListWidget, ObjectArrayList<RoutePlatformData> routePlatforms, ObjectArrayList<ObjectObjectImmutablePair<Identifier, ListItem.ActionConsumer<RoutePlatformData>>> actions) {
 		final ObjectArrayList<ListItem<RoutePlatformData>> dataList = new ObjectArrayList<>();
 
 		routePlatforms.forEach(routePlatformData -> {
@@ -330,11 +334,11 @@ public final class ScrollableListWidget<T> extends ScrollablePanelWidget {
 		scrollableListWidget.setData(dataList);
 	}
 
-	public static <T, U> ObjectObjectImmutablePair<ResourceLocation, ListItem.ActionConsumer<T>> createUpButton(ObjectArrayList<U> dataList, @Nullable Runnable onSort) {
+	public static <T, U> ObjectObjectImmutablePair<Identifier, ListItem.ActionConsumer<T>> createUpButton(ObjectArrayList<U> dataList, @Nullable Runnable onSort) {
 		return new ObjectObjectImmutablePair<>(GuiHelper.UP_TEXTURE_ID, (indexList, data) -> moveListItem(dataList, indexList, -1, onSort));
 	}
 
-	public static <T, U> ObjectObjectImmutablePair<ResourceLocation, ListItem.ActionConsumer<T>> createDownButton(ObjectArrayList<U> dataList, @Nullable Runnable onSort) {
+	public static <T, U> ObjectObjectImmutablePair<Identifier, ListItem.ActionConsumer<T>> createDownButton(ObjectArrayList<U> dataList, @Nullable Runnable onSort) {
 		return new ObjectObjectImmutablePair<>(GuiHelper.DOWN_TEXTURE_ID, (indexList, data) -> moveListItem(dataList, indexList, 1, onSort));
 	}
 
@@ -342,7 +346,7 @@ public final class ScrollableListWidget<T> extends ScrollablePanelWidget {
 		final int index = indexList.getFirst();
 		if (direction > 0 && index < dataList.size() - 1 || direction < 0 && index > 0) {
 			final T data = dataList.remove(index);
-			if (Screen.hasShiftDown()) {
+			if (Minecraft.getInstance().hasShiftDown()) {
 				if (direction > 0) {
 					dataList.add(data);
 				} else {

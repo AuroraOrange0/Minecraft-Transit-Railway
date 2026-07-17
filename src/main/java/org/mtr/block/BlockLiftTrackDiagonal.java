@@ -25,7 +25,7 @@ import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
 import java.util.List;
 
-public class BlockLiftTrackDiagonal extends BlockLiftTrackBase implements IBlock {
+public class BlockLiftTrackDiagonal extends BlockLiftTrackBase implements IBlock, BlockTooltipProvider {
 
 	public BlockLiftTrackDiagonal(BlockBehaviour.Properties settings) {
 		super(settings);

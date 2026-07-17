@@ -3,7 +3,6 @@ package org.mtr.widget;
 import com.mojang.blaze3d.platform.Window;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexBuffer;
 import gg.essential.elementa.UIComponent;
 import gg.essential.elementa.components.UIBlock;
 import gg.essential.elementa.constraints.CoerceAtMostConstraint;
@@ -14,11 +13,11 @@ import gg.essential.universal.UMatrixStack;
 import gg.essential.universal.UMinecraft;
 import kotlin.Pair;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.rendertype.RenderType;
+import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.core.BlockPos;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import org.joml.Matrix4f;
 import org.jspecify.annotations.Nullable;
 import org.mtr.MTR;
@@ -38,6 +37,7 @@ import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArraySet;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectObjectImmutablePair;
 import org.mtr.map.MapTileProvider;
+import org.mtr.model.MTRMesh;
 import org.mtr.registry.UConverters;
 import org.mtr.screen.*;
 import org.mtr.tool.Drawing;
@@ -223,7 +223,7 @@ public final class MapComponent extends UIComponent {
 							new ObjectObjectImmutablePair<>(GuiHelper.SELECT_TEXTURE_ID, (indexList, platform) -> {
 								if (editingRoute != null) {
 									final RoutePlatformData routePlatformData = new RoutePlatformData(platform.getId());
-									if (Screen.hasShiftDown()) {
+									if (Minecraft.getInstance().hasShiftDown()) {
 										editingRoute.getRoutePlatforms().addFirst(routePlatformData);
 									} else {
 										editingRoute.getRoutePlatforms().add(routePlatformData);
@@ -282,7 +282,7 @@ public final class MapComponent extends UIComponent {
 		final float delta = MTRClient.getGameTimeDeltaTicks();
 
 		// Background
-		new Drawing(matrixStack, RenderType.gui()).setVerticesWH(left, top, width, height).setColor(Color.BLACK).draw();
+		new Drawing(matrixStack, RenderTypes.debugQuads()).setVerticesWH(left, top, width, height).setColor(Color.BLACK).draw();
 
 		guiAnimationX.tick();
 		guiAnimationY.tick();
@@ -296,16 +296,14 @@ public final class MapComponent extends UIComponent {
 			final DoubleDoubleImmutablePair topLeftWorldCoords = coordsToWorldPos(0D, 0D);
 			final float offsetX = clampTileSize(topLeftWorldCoords.leftDouble()) - (float) topLeftWorldCoords.leftDouble();
 			final float offsetY = clampTileSize(topLeftWorldCoords.rightDouble()) - (float) topLeftWorldCoords.rightDouble();
-			RenderType.gui().setupRenderState();
-
 			for (double x = 0; x < width + tileSize; x += tileSize) {
 				for (double y = 0; y < height + tileSize; y += tileSize) {
 					final DoubleDoubleImmutablePair worldCoords = coordsToWorldPos(x, y);
 					final BlockPos tilePos = new BlockPos(clampTileSize(worldCoords.leftDouble()), player == null ? 0 : player.blockPosition().getY(), clampTileSize(worldCoords.rightDouble()));
 					final long key = tilePos.asLong();
-					final VertexBuffer vertexBuffer = mapTileProvider.getTile(tilePos);
+					final MTRMesh mesh = mapTileProvider.getTile(tilePos);
 
-					if (vertexBuffer == null) {
+					if (mesh == null) {
 						tileOpacityValues.remove(key);
 					} else {
 						final float opacity = tileOpacityValues.get(key);
@@ -317,19 +315,16 @@ public final class MapComponent extends UIComponent {
 
 						final float newX = (float) x + left;
 						final float newY = (float) y + top;
-						IDrawing.changeShaderColor(new Color(newOpacity * DARKEN_MAP, newOpacity * DARKEN_MAP, newOpacity * DARKEN_MAP, 1), () -> {
-							vertexBuffer.bind();
-							vertexBuffer.drawWithShader(
-								new Matrix4f(RenderSystem.getModelViewMatrix()).translate(newX, newY, 0).scale((float) guiAnimationScale.getCurrentValue(), (float) guiAnimationScale.getCurrentValue(), 1).translate(offsetX, offsetY, 1),
-								RenderSystem.getProjectionMatrix(),
-								RenderSystem.getShader()
-							);
-						});
+						final float colorMultiplier = newOpacity * DARKEN_MAP;
+						mesh.draw(
+							RenderTypes.debugQuads(),
+							new Matrix4f(RenderSystem.getModelViewMatrix()).translate(newX, newY, 0).scale((float) guiAnimationScale.getCurrentValue(), (float) guiAnimationScale.getCurrentValue(), 1).translate(offsetX, offsetY, 1),
+							colorMultiplier, colorMultiplier, colorMultiplier, newOpacity
+						);
 					}
 				}
 			}
 
-			RenderType.gui().clearRenderState();
 		}
 
 		final ObjectArrayList<Consumer<PoseStack>> deferredRenders = new ObjectArrayList<>();
@@ -340,7 +335,7 @@ public final class MapComponent extends UIComponent {
 				matrixStack.pushPose();
 				matrixStack.translate(left + x, top + y, 5);
 				Drawing.rotateZDegrees(matrixStack, player.getYRot() + 180);
-				new Drawing(matrixStack, GuiHelper.getGuiTexturedRenderType(ResourceLocation.fromNamespaceAndPath(MTR.MOD_ID, "textures/gui/dashboard_player_arrow.png")))
+				new Drawing(matrixStack, GuiHelper.getGuiTexturedRenderType(Identifier.fromNamespaceAndPath(MTR.MOD_ID, "textures/gui/dashboard_player_arrow.png")))
 					.setVerticesWH(-PLAYER_ARROW_SIZE / 2F, -PLAYER_ARROW_SIZE / 2F, PLAYER_ARROW_SIZE, PLAYER_ARROW_SIZE)
 					.setUv()
 					.draw();
@@ -348,7 +343,7 @@ public final class MapComponent extends UIComponent {
 			});
 		}
 
-		final Drawing drawing = new Drawing(matrixStack, RenderType.gui()).setGuiBoundsWH(left, top, width, height);
+		final Drawing drawing = new Drawing(matrixStack, RenderTypes.debugQuads()).setGuiBoundsWH(left, top, width, height);
 		hoverStationsHomesLandmarks.clear();
 		hoverPlatforms.clear();
 		hoverDepots.clear();
@@ -400,7 +395,7 @@ public final class MapComponent extends UIComponent {
 		}
 
 		deferredRenders.forEach(deferredRender -> deferredRender.accept(matrixStack));
-		RenderSystem.disableScissor();
+		RenderSystem.disableScissorForRenderTypeDraws();
 		lastMouseX = mouseX;
 		lastMouseY = mouseY;
 
@@ -597,7 +592,7 @@ public final class MapComponent extends UIComponent {
 		final double bottomScaled = window.getHeight() - getBottom() * guiScale;
 		final double widthScaled = getWidth() * guiScale;
 		final double heightScaled = getHeight() * guiScale;
-		RenderSystem.enableScissor((int) leftScaled, (int) bottomScaled, (int) widthScaled, (int) heightScaled);
+		RenderSystem.enableScissorForRenderTypeDraws((int) leftScaled, (int) bottomScaled, (int) widthScaled, (int) heightScaled);
 	}
 
 	private static <T extends NameColorDataBase> ListComponent<T> createPopupListComponent(UIBlock block) {

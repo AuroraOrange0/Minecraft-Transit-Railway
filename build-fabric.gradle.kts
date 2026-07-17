@@ -6,7 +6,7 @@ import org.mtr.core.WebserverSetup
 plugins {
 	id("net.fabricmc.fabric-loom-remap")
 	id("dev.kikugie.fletching-table.fabric") version "+"
-	id("io.freefair.lombok") version "+"
+	id("io.freefair.lombok") version "9.5.0"
 	id("com.gradleup.shadow") version "+"
 }
 
@@ -46,6 +46,15 @@ java {
 	sourceCompatibility = requiredJava
 }
 
+stonecutter {
+	replacements.string(current.parsed >= "1.21.11") {
+		replace("ResourceLocation", "Identifier")
+		replace("net.minecraft.Util", "net.minecraft.util.Util")
+		replace("net.minecraft.world.level.GameRules", "net.minecraft.world.level.gamerules.GameRules")
+		replace("net.minecraft.client.renderer.RenderType", "net.minecraft.client.renderer.rendertype.RenderType")
+	}
+}
+
 fun DependencyHandlerScope.modImplementationAndInclude(notation: Any) {
 	modImplementation(notation)
 	include(notation)
@@ -61,6 +70,10 @@ fun DependencyHandlerScope.implementationAndShadow(notation: Any) {
 	add("shadowBundle", notation)
 }
 
+// Last official core commit before MTR adcfcb34 (2026-06-23), avoiding the unreproducible `+` dependency.
+val pinnedTransportSimulationCore = rootProject.file("local-libs/transport-simulation-core-a10f31dc.jar")
+val localTransportSimulationCore = if (pinnedTransportSimulationCore.exists()) pinnedTransportSimulationCore else rootProject.file("local-libs/transport-simulation-core-${property("mod.version")}.jar")
+
 dependencies {
 	minecraft("com.mojang:minecraft:${sc.current.version}")
 	mappings(loom.officialMojangMappings())
@@ -70,11 +83,16 @@ dependencies {
 	modImplementation(fletchingTable.modrinth("modmenu", sc.current.version))
 	modImplementationAndInclude("gg.essential:universalcraft-${property("dependency.universal_craft_minecraft")}-fabric:${property("dependency.universal_craft")}")
 
-	implementationAndShadow("org.mtr:transport-simulation-core:+")
+	if (localTransportSimulationCore.exists()) {
+		implementationAndShadow(files(localTransportSimulationCore))
+	} else {
+		implementationAndShadow("org.mtr:transport-simulation-core:+")
+	}
 	implementationAndShadow("com.logisticscraft:occlusionculling:+")
 	implementationAndInclude("gg.essential:elementa:${property("dependency.elementa")}")
 	implementationAndInclude("org.jetbrains.kotlin:kotlin-stdlib:+")
 	implementation("org.jspecify:jspecify:+")
+	compileOnly("com.google.code.findbugs:jsr305:3.0.2")
 
 	testImplementation("org.junit.jupiter:junit-jupiter-api:5.+")
 	testImplementation("org.junit.platform:junit-platform-launcher:1.+")

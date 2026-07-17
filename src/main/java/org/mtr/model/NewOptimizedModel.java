@@ -1,19 +1,12 @@
 package org.mtr.model;
 
-import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.*;
-import net.minecraft.client.Minecraft;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.client.renderer.rendertype.RenderType;
+import net.minecraft.resources.Identifier;
 import org.joml.Matrix4f;
 import org.jspecify.annotations.Nullable;
 
 import java.util.function.Consumer;
-
-//? if >= 1.21.4 {
-import net.minecraft.client.renderer.CompiledShaderProgram;
-//? } else {
-/*import net.minecraft.client.renderer.ShaderInstance;
- *///? }
 
 /**
  * One drawable mesh — a single texture, a single GPU vertex buffer, one draw call.
@@ -32,16 +25,9 @@ import net.minecraft.client.renderer.CompiledShaderProgram;
  */
 public final class NewOptimizedModel {
 
-	public final ResourceLocation texture;
+	public final Identifier texture;
 	@Nullable
-	private final VertexBuffer vertexBuffer;
-	private final VertexFormat.Mode drawMode;
-
-	/**
-	 * Reusable model-view matrix scratch — render is single-threaded on the GL thread, so
-	 * a single buffer avoids a per-draw allocation. See {@code docs/PERFORMANCE.md} §3.2.
-	 */
-	private static final Matrix4f MODEL_VIEW_SCRATCH = new Matrix4f();
+	private final MTRMesh mesh;
 	/**
 	 * Pre-built {@code colorModulator} arrays for every value of {@code lightMultiplier}
 	 * the renderer ever emits. The renderer derives {@code lightMultiplier} from a 4-bit
@@ -69,52 +55,26 @@ public final class NewOptimizedModel {
 	 * @param callback the vertex-emitter callback invoked exactly once to populate the
 	 *                 buffer, or {@code null} to skip buffer creation entirely
 	 */
-	public NewOptimizedModel(ResourceLocation texture, VertexFormat.Mode drawMode, @Nullable Consumer<VertexConsumer> callback) {
-		this.vertexBuffer = callback == null ? null : createVertexBuffer(drawMode, DefaultVertexFormat.NEW_ENTITY, callback);
+	public NewOptimizedModel(Identifier texture, VertexFormat.Mode drawMode, @Nullable Consumer<VertexConsumer> callback) {
+		this.mesh = callback == null ? null : createMesh(drawMode, DefaultVertexFormat.NEW_ENTITY, callback);
 		this.texture = texture;
-		this.drawMode = drawMode;
 	}
 
 	/**
-	 * Issue the draw call after {@link #begin(CompiledShaderProgram)} has bound the buffer.
+	 * Issue the draw call through Minecraft's current render type.
 	 *
 	 * @param matrix4f        the per-instance model matrix multiplied into the active view matrix
 	 * @param lightMultiplier brightness scale in {@code [0, 1]}; {@code 1} for full-bright stages
-	 * @param shaderProgram   the active shader, may be {@code null} during reload
+	 * @param renderType      the render pipeline and texture state for this stage
 	 */
-//? if >= 1.21.4 {
-	public void render(Matrix4f matrix4f, float lightMultiplier, @Nullable CompiledShaderProgram shaderProgram) {
-//? } else {
-	/*public void render(Matrix4f matrix4f, float lightMultiplier, @Nullable ShaderInstance shaderProgram) {
-//
-*///? }
-		if (vertexBuffer != null && shaderProgram != null) {
-			if (shaderProgram.MODEL_VIEW_MATRIX != null) {
-				// Reuse the static scratch matrix instead of `new Matrix4f(...)` per draw call.
-				MODEL_VIEW_SCRATCH.set(RenderSystem.getModelViewMatrix()).mul(matrix4f);
-				shaderProgram.MODEL_VIEW_MATRIX.set(MODEL_VIEW_SCRATCH);
-				shaderProgram.MODEL_VIEW_MATRIX.upload();
-			}
-			if (shaderProgram.COLOR_MODULATOR != null) {
-				shaderProgram.COLOR_MODULATOR.set(colorModulatorFor(lightMultiplier));
-				shaderProgram.COLOR_MODULATOR.upload();
-			}
-			vertexBuffer.draw();
+	public void render(Matrix4f matrix4f, float lightMultiplier, RenderType renderType) {
+		if (mesh != null) {
+			mesh.draw(renderType, matrix4f, lightMultiplier, lightMultiplier, lightMultiplier, 1);
 		}
 	}
 
-	public static VertexBuffer createVertexBuffer(VertexFormat.Mode drawMode, VertexFormat vertexFormat, Consumer<VertexConsumer> callback) {
-//? if >= 1.21.4 {
-		return VertexBuffer.uploadStatic(drawMode, vertexFormat, callback);
-//? } else {
-		/*final BufferBuilder builder = Tesselator.getInstance().begin(drawMode, vertexFormat);
-		callback.accept(builder);
-		final MeshData renderedBuffer = builder.build();
-		final VertexBuffer vertexBuffer = new VertexBuffer(VertexBuffer.Usage.STATIC);
-		vertexBuffer.bind();
-		vertexBuffer.upload(renderedBuffer);
-		return vertexBuffer;
-*///? }
+	public static MTRMesh createMesh(VertexFormat.Mode drawMode, VertexFormat vertexFormat, Consumer<VertexConsumer> callback) {
+		return new MTRMesh(drawMode, vertexFormat, callback);
 	}
 
 	private static float[] colorModulatorFor(float lightMultiplier) {
@@ -136,21 +96,4 @@ public final class NewOptimizedModel {
 		return new float[]{lightMultiplier, lightMultiplier, lightMultiplier, 1f};
 	}
 
-	/**
-	 * Bind this model's vertex buffer and initialise the shader uniforms for the current
-	 * GL state. Must be paired with one or more {@link #render(Matrix4f, float, CompiledShaderProgram)}
-	 * calls per frame, then the next mesh's {@code begin(...)}.
-	 */
-//? if >= 1.21.4 {
-	public void begin(@Nullable CompiledShaderProgram shaderProgram) {
-//? } else {
-	/*public void begin(@Nullable ShaderInstance shaderProgram) {
-//
-*///? }
-		if (vertexBuffer != null && shaderProgram != null) {
-			vertexBuffer.bind();
-			shaderProgram.setDefaultUniforms(drawMode, RenderSystem.getModelViewMatrix(), RenderSystem.getProjectionMatrix(), Minecraft.getInstance().getWindow());
-			shaderProgram.apply();
-		}
-	}
 }

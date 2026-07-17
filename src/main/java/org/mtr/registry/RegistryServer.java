@@ -10,7 +10,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.world.item.Item;
@@ -176,9 +176,9 @@ public final class RegistryServer {
 		ServerPlayNetworking.registerGlobalReceiver(MTR.PACKET_IDENTIFIER_C2S, (customPacketC2S, context) -> PacketBufferReceiver.receive(customPacketC2S.buffer(), packetBufferReceiver -> {
 			final Function<PacketBufferReceiver, ? extends PacketHandler> getInstance = MTRFabric.PACKETS.get(packetBufferReceiver.readString());
 			if (getInstance != null) {
-				getInstance.apply(packetBufferReceiver).runServer(context.player().server, context.player());
+				getInstance.apply(packetBufferReceiver).runServer(context.player().level().getServer(), context.player());
 			}
-		}, context.player().server::execute));
+		}, context.player().level().getServer()::execute));
 //? }
 
 //? if neoforge {
@@ -215,7 +215,7 @@ public final class RegistryServer {
 		final PacketBufferSender packetBufferSender = new PacketBufferSender();
 		packetBufferSender.writeString(data.getClass().getName());
 		data.write(packetBufferSender);
-		packetBufferSender.send(bytes -> ServerPlayNetworking.send(serverPlayerEntity, new CustomPacketS2C(bytes)), serverPlayerEntity.server::execute);
+		packetBufferSender.send(bytes -> ServerPlayNetworking.send(serverPlayerEntity, new CustomPacketS2C(bytes)), serverPlayerEntity.level().getServer()::execute);
 //? }
 
 //? if neoforge {
@@ -227,7 +227,7 @@ public final class RegistryServer {
 	}
 
 	private static <T extends U, U> ObjectHolder<T> register(Registry<U> registry, ResourceKey<Registry<U>> registryKey, String registryName, Function<ResourceKey<U>, T> factory) {
-		final ResourceKey<U> dataRegistryKey = ResourceKey.create(registryKey, ResourceLocation.fromNamespaceAndPath(MTR.MOD_ID, registryName));
+		final ResourceKey<U> dataRegistryKey = ResourceKey.create(registryKey, Identifier.fromNamespaceAndPath(MTR.MOD_ID, registryName));
 		final T data = Registry.register(registry, dataRegistryKey, factory.apply(dataRegistryKey));
 		final ObjectHolder<T> objectHolder = new ObjectHolder<>(() -> data);
 		OBJECTS_TO_REGISTER.add(objectHolder::get);

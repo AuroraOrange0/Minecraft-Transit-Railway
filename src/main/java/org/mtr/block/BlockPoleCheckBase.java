@@ -15,7 +15,7 @@ import org.mtr.generated.lang.TranslationProvider;
 
 import java.util.List;
 
-public abstract class BlockPoleCheckBase extends Block {
+public abstract class BlockPoleCheckBase extends Block implements BlockTooltipProvider {
 
 	public BlockPoleCheckBase(BlockBehaviour.Properties blockSettings) {
 		super(blockSettings);

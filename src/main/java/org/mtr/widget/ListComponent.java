@@ -6,9 +6,9 @@ import gg.essential.elementa.constraints.PixelConstraint;
 import gg.essential.universal.UMatrixStack;
 import kotlin.Pair;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.renderer.RenderType;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.client.renderer.rendertype.RenderType;
+import net.minecraft.client.renderer.rendertype.RenderTypes;
+import net.minecraft.resources.Identifier;
 import org.jspecify.annotations.Nullable;
 import org.mtr.client.CustomResourceLoader;
 import org.mtr.core.data.*;
@@ -65,7 +65,7 @@ public final class ListComponent<T> extends UIComponent {
 			.verticalTextAlignment(FontRenderOptions.Alignment.CENTER);
 
 		final PoseStack matrixStack = UConverters.convert(uMatrixStack);
-		final Drawing drawing = new Drawing(matrixStack, RenderType.gui());
+		final Drawing drawing = new Drawing(matrixStack, RenderTypes.debugQuads());
 		final ObjectArrayList<Runnable> deferredRenders = new ObjectArrayList<>();
 		final float left = getLeft();
 		final float right = getRight();
@@ -182,7 +182,7 @@ public final class ListComponent<T> extends UIComponent {
 		}
 	}
 
-	public static <T> void setGeneric(ListComponent<T> listComponent, ObjectCollection<T> genericDataList, Function<T, String> getName, ToIntFunction<T> getColor, ObjectArrayList<ObjectObjectImmutablePair<ResourceLocation, ListItem.ActionConsumer<T>>> actions) {
+	public static <T> void setGeneric(ListComponent<T> listComponent, ObjectCollection<T> genericDataList, Function<T, String> getName, ToIntFunction<T> getColor, ObjectArrayList<ObjectObjectImmutablePair<Identifier, ListItem.ActionConsumer<T>>> actions) {
 		final ObjectArrayList<ListItem<T>> dataList = new ObjectArrayList<>();
 
 		genericDataList.forEach(genericData -> dataList.add(ListItem.createChild(
@@ -197,7 +197,7 @@ public final class ListComponent<T> extends UIComponent {
 		listComponent.setData(dataList);
 	}
 
-	public static <T extends SimpleAreaBase> void setAreas(ListComponent<T> listComponent, ObjectCollection<T> areas, @Nullable TransportMode transportMode, ObjectArrayList<ObjectObjectImmutablePair<ResourceLocation, ListItem.ActionConsumer<T>>> actions) {
+	public static <T extends SimpleAreaBase> void setAreas(ListComponent<T> listComponent, ObjectCollection<T> areas, @Nullable TransportMode transportMode, ObjectArrayList<ObjectObjectImmutablePair<Identifier, ListItem.ActionConsumer<T>>> actions) {
 		final ObjectArrayList<T> sortedAreas = new ObjectArrayList<>();
 		areas.forEach(route -> {
 			if (transportMode == null || route.isTransportMode(transportMode)) {
@@ -208,7 +208,7 @@ public final class ListComponent<T> extends UIComponent {
 		setGeneric(listComponent, sortedAreas, NameColorDataBase::getName, NameColorDataBase::getColor, actions);
 	}
 
-	public static <T extends AreaBase<T, U>, U extends SavedRailBase<U, T>> void setSavedRails(ListComponent<U> listComponent, ObjectCollection<U> savedRails, ObjectArrayList<ObjectObjectImmutablePair<ResourceLocation, ListItem.ActionConsumer<U>>> actions) {
+	public static <T extends AreaBase<T, U>, U extends SavedRailBase<U, T>> void setSavedRails(ListComponent<U> listComponent, ObjectCollection<U> savedRails, ObjectArrayList<ObjectObjectImmutablePair<Identifier, ListItem.ActionConsumer<U>>> actions) {
 		final ObjectArrayList<U> sortedSavedRails = new ObjectArrayList<>(savedRails);
 		Collections.sort(sortedSavedRails);
 		final ObjectArrayList<ListItem<U>> dataList = new ObjectArrayList<>();
@@ -253,7 +253,7 @@ public final class ListComponent<T> extends UIComponent {
 		listComponent.setData(dataList);
 	}
 
-	public static void setRoutes(ListComponent<Route> listComponent, ObjectCollection<Route> routes, @Nullable TransportMode transportMode, boolean flattenRoutesByColor, ObjectArrayList<ObjectObjectImmutablePair<ResourceLocation, ListItem.ActionConsumer<Route>>> actions) {
+	public static void setRoutes(ListComponent<Route> listComponent, ObjectCollection<Route> routes, @Nullable TransportMode transportMode, boolean flattenRoutesByColor, ObjectArrayList<ObjectObjectImmutablePair<Identifier, ListItem.ActionConsumer<Route>>> actions) {
 		final ObjectArrayList<Route> sortedRoutes = new ObjectArrayList<>();
 		routes.forEach(route -> {
 			if (transportMode == null || route.isTransportMode(transportMode)) {
@@ -325,7 +325,7 @@ public final class ListComponent<T> extends UIComponent {
 		listComponent.setData(groupedRoutes);
 	}
 
-	public static void setRoutePlatforms(ListComponent<RoutePlatformData> scrollableListWidget, ObjectArrayList<RoutePlatformData> routePlatforms, ObjectArrayList<ObjectObjectImmutablePair<ResourceLocation, ListItem.ActionConsumer<RoutePlatformData>>> actions) {
+	public static void setRoutePlatforms(ListComponent<RoutePlatformData> scrollableListWidget, ObjectArrayList<RoutePlatformData> routePlatforms, ObjectArrayList<ObjectObjectImmutablePair<Identifier, ListItem.ActionConsumer<RoutePlatformData>>> actions) {
 		final ObjectArrayList<ListItem<RoutePlatformData>> dataList = new ObjectArrayList<>();
 
 		routePlatforms.forEach(routePlatformData -> {
@@ -347,7 +347,7 @@ public final class ListComponent<T> extends UIComponent {
 		scrollableListWidget.setData(dataList);
 	}
 
-	public static void setStationExits(ListComponent<StationExit> listComponent, ObjectCollection<StationExit> stationExits, boolean flatten, ObjectArrayList<ObjectObjectImmutablePair<ResourceLocation, ListItem.ActionConsumer<StationExit>>> actions) {
+	public static void setStationExits(ListComponent<StationExit> listComponent, ObjectCollection<StationExit> stationExits, boolean flatten, ObjectArrayList<ObjectObjectImmutablePair<Identifier, ListItem.ActionConsumer<StationExit>>> actions) {
 		final ObjectArrayList<ListItem<StationExit>> dataList = new ObjectArrayList<>();
 
 		stationExits.forEach(stationExit -> {
@@ -393,11 +393,11 @@ public final class ListComponent<T> extends UIComponent {
 		listComponent.setData(dataList);
 	}
 
-	public static <T> ObjectObjectImmutablePair<ResourceLocation, ListItem.ActionConsumer<T>> createUpButton(ObjectArrayList<T> dataList, @Nullable Runnable onSort) {
+	public static <T> ObjectObjectImmutablePair<Identifier, ListItem.ActionConsumer<T>> createUpButton(ObjectArrayList<T> dataList, @Nullable Runnable onSort) {
 		return new ObjectObjectImmutablePair<>(GuiHelper.UP_TEXTURE_ID, (indexList, data) -> moveListItem(dataList, indexList, -1, onSort));
 	}
 
-	public static <T> ObjectObjectImmutablePair<ResourceLocation, ListItem.ActionConsumer<T>> createDownButton(ObjectArrayList<T> dataList, @Nullable Runnable onSort) {
+	public static <T> ObjectObjectImmutablePair<Identifier, ListItem.ActionConsumer<T>> createDownButton(ObjectArrayList<T> dataList, @Nullable Runnable onSort) {
 		return new ObjectObjectImmutablePair<>(GuiHelper.DOWN_TEXTURE_ID, (indexList, data) -> moveListItem(dataList, indexList, 1, onSort));
 	}
 
@@ -405,7 +405,7 @@ public final class ListComponent<T> extends UIComponent {
 		final int index = indexList.getFirst();
 		if (direction > 0 && index < dataList.size() - 1 || direction < 0 && index > 0) {
 			final T data = dataList.remove(index);
-			if (Screen.hasShiftDown()) {
+			if (Minecraft.getInstance().hasShiftDown()) {
 				if (direction > 0) {
 					dataList.add(data);
 				} else {

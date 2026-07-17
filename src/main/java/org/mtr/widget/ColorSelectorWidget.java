@@ -1,7 +1,8 @@
 package org.mtr.widget;
 
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.rendertype.RenderType;
+import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.network.chat.Component;
 import org.apache.commons.lang3.StringUtils;
 import org.jspecify.annotations.Nullable;
@@ -65,7 +66,7 @@ public final class ColorSelectorWidget extends PopupWidgetBase {
 		greenTextField.setPosition(controlsX, getY() + GuiHelper.DEFAULT_PADDING * 3 + GuiHelper.DEFAULT_LINE_SIZE * 2);
 		blueTextField.setPosition(controlsX, getY() + GuiHelper.DEFAULT_PADDING * 4 + GuiHelper.DEFAULT_LINE_SIZE * 3);
 
-		final Drawing drawing = new Drawing(context.pose(), RenderType.gui());
+		final Drawing drawing = new Drawing(context.pose(), RenderTypes.debugQuads());
 		final int mainHeight = height - GuiHelper.DEFAULT_PADDING * 2 - GuiHelper.DEFAULT_LINE_SIZE;
 		final int mainWidth = width - GuiHelper.DEFAULT_PADDING * 4 - GuiHelper.DEFAULT_LINE_SIZE - CONTROLS_SIZE;
 		hoverMouseZone = MouseZone.NONE;
@@ -142,12 +143,12 @@ public final class ColorSelectorWidget extends PopupWidgetBase {
 	}
 
 	@Override
-	public void onClick(double mouseX, double mouseY) {
+	public void onClick(net.minecraft.client.input.MouseButtonEvent event, boolean doubleClick) {
 		draggingMouseZone = hoverMouseZone;
 	}
 
 	@Override
-	public void onRelease(double mouseX, double mouseY) {
+	public void onRelease(net.minecraft.client.input.MouseButtonEvent event) {
 		draggingMouseZone = MouseZone.NONE;
 	}
 

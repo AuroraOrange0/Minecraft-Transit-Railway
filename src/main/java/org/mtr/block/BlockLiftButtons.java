@@ -2,7 +2,8 @@ package org.mtr.block;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.util.Mth;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
@@ -150,18 +151,18 @@ public class BlockLiftButtons extends BlockWaterloggable implements EntityBlock 
 		}
 
 		@Override
-		protected void readNbt(CompoundTag nbtCompound) {
+		protected void readNbt(ValueInput nbtCompound) {
 			trackPositions.clear();
-			for (final long position : nbtCompound.getLongArray(KEY_TRACK_FLOOR_POS)) {
+			for (final long position : getLongArray(nbtCompound, KEY_TRACK_FLOOR_POS)) {
 				trackPositions.add(BlockPos.of(position));
 			}
 		}
 
 		@Override
-		protected void writeNbt(CompoundTag nbtCompound) {
+		protected void writeNbt(ValueOutput nbtCompound) {
 			final List<Long> trackPositionsList = new ArrayList<>();
 			trackPositions.forEach(position -> trackPositionsList.add(position.asLong()));
-			nbtCompound.putLongArray(KEY_TRACK_FLOOR_POS, trackPositionsList);
+			putLongArray(nbtCompound, KEY_TRACK_FLOOR_POS, trackPositionsList.stream().mapToLong(Long::longValue).toArray());
 		}
 
 		public void registerFloor(BlockPos pos, boolean isAdd) {

@@ -35,7 +35,7 @@ public class BlockTicketBarrier extends Block {
 	}
 
 	@Override
-	public void entityInside(BlockState state, Level world, BlockPos blockPos, Entity entity) {
+	protected void entityInside(BlockState state, Level world, BlockPos blockPos, Entity entity, net.minecraft.world.entity.InsideBlockEffectApplier effectApplier, boolean entityMoving) {
 		if (!world.isClientSide() && entity instanceof Player) {
 			final Direction facing = IBlock.getStatePropertySafe(state, BlockStateProperties.HORIZONTAL_FACING);
 			final Vec3 playerPosRotated = entity.position().subtract(blockPos.getX() + 0.5, 0, blockPos.getZ() + 0.5).yRot((float) Math.toRadians(facing.toYRot()));

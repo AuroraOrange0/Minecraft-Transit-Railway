@@ -75,8 +75,8 @@ public class BlockEscalatorStep extends BlockEscalatorBase {
 	}
 
 	@Override
-	protected void entityInside(BlockState state, Level world, BlockPos pos, Entity entity) {
-		super.entityInside(state, world, pos, entity);
+	protected void entityInside(BlockState state, Level world, BlockPos pos, Entity entity, net.minecraft.world.entity.InsideBlockEffectApplier effectApplier, boolean entityMoving) {
+		super.entityInside(state, world, pos, entity, effectApplier, entityMoving);
 		final Direction facing = IBlock.getStatePropertySafe(state, BlockStateProperties.HORIZONTAL_FACING);
 		final boolean direction = IBlock.getStatePropertySafe(state, DIRECTION);
 		final float speed = 0.1F;

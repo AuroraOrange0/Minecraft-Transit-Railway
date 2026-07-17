@@ -11,7 +11,7 @@ import org.mtr.generated.lang.TranslationProvider;
 
 import java.util.List;
 
-public class BlockStationColorSlab extends SlabBlock {
+public class BlockStationColorSlab extends SlabBlock implements BlockTooltipProvider {
 
 	public BlockStationColorSlab(BlockBehaviour.Properties settings) {
 		super(settings);

@@ -10,7 +10,7 @@ import net.minecraft.client.player.RemotePlayer;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.LightLayer;
 import net.minecraft.world.phys.AABB;
@@ -100,7 +100,7 @@ public final class RenderVehicles {
 				ridingCarPositionAndRotation = vehiclePropertiesList.get(ridingCarNumber).right().right();
 				offsetVector = ridingVehicleCarNumberAndOffset.right().left();
 				final Double tempOffsetRotation = ridingVehicleCarNumberAndOffset.right().right();
-				offsetRotation = tempOffsetRotation == null ? null : tempOffsetRotation + (Math.abs(Utilities.circularDifference(Math.round(clientPlayerEntity.getYRot()), Math.round(minecraftClient.gameRenderer.getMainCamera().getYRot()), 360)) > 90 ? Math.PI : 0);
+				offsetRotation = tempOffsetRotation == null ? null : tempOffsetRotation + (Math.abs(Utilities.circularDifference(Math.round(clientPlayerEntity.getYRot()), Math.round(minecraftClient.gameRenderer.getMainCamera().yRot()), 360)) > 90 ? Math.PI : 0);
 			}
 
 			// Iterate all cars of a vehicle
@@ -364,7 +364,7 @@ public final class RenderVehicles {
 			), renderingPositionAndRotation.yaw, renderingPositionAndRotation.pitch, renderingPositionAndRotation.roll);
 		} else {
 			// Offset rendering with rotation
-			final double ridingRotation = offsetRotation - ridingCarPositionAndRotation.yaw - Math.toRadians(Minecraft.getInstance().gameRenderer.getMainCamera().getYRot());
+			final double ridingRotation = offsetRotation - ridingCarPositionAndRotation.yaw - Math.toRadians(Minecraft.getInstance().gameRenderer.getMainCamera().yRot());
 			return new PositionAndRotation(new Vector(-offsetVector.x, -offsetVector.y, -offsetVector.z).rotateZ(ridingCarPositionAndRotation.roll).rotateX(ridingCarPositionAndRotation.pitch).rotateY(ridingCarPositionAndRotation.yaw).add(
 				renderingPositionAndRotation.position.x() - ridingCarPositionAndRotation.position.x(),
 				renderingPositionAndRotation.position.y() - ridingCarPositionAndRotation.position.y(),
@@ -482,7 +482,7 @@ public final class RenderVehicles {
 				Drawing.rotateXDegrees(matrixStack, 180);
 				Drawing.rotateYRadians(matrixStack, (float) (Math.PI + additionalRotation));
 //? if >= 1.21.4 {
-				minecraftClient.getEntityRenderDispatcher().render(playerEntity, 0, 0, 0, 0, matrixStack, minecraftClient.renderBuffers().bufferSource(), IGui.DEFAULT_LIGHT);
+				MainRenderer.submitEntity(playerEntity, matrixStack, IGui.DEFAULT_LIGHT);
 //? } else {
 				/*minecraftClient.getEntityRenderDispatcher().render(playerEntity, 0, 0, 0, 0, 0, matrixStack, minecraftClient.renderBuffers().bufferSource(), IGui.DEFAULT_LIGHT);
 //
@@ -494,12 +494,12 @@ public final class RenderVehicles {
 
 	private static void renderConnection(
 		boolean shouldRender1, boolean shouldRender2, boolean canHaveLight, PreviousConnectionPositions previousConnectionPositions,
-		@Nullable ResourceLocation innerSideTexture,
-		@Nullable ResourceLocation innerTopTexture,
-		@Nullable ResourceLocation innerBottomTexture,
-		@Nullable ResourceLocation outerSideTexture,
-		@Nullable ResourceLocation outerTopTexture,
-		@Nullable ResourceLocation outerBottomTexture,
+		@Nullable Identifier innerSideTexture,
+		@Nullable Identifier innerTopTexture,
+		@Nullable Identifier innerBottomTexture,
+		@Nullable Identifier outerSideTexture,
+		@Nullable Identifier outerTopTexture,
+		@Nullable Identifier outerBottomTexture,
 		PositionAndRotation positionAndRotation, boolean useOffset,
 		double vehicleLength, double width, double height, double yOffset, double zOffset, double oscillationAmount, boolean isOnRoute
 	) {

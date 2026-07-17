@@ -1,12 +1,13 @@
 package org.mtr.widget;
 
-import com.mojang.blaze3d.vertex.PoseStack;
 import lombok.Setter;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.renderer.RenderType;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.client.renderer.rendertype.RenderType;
+import net.minecraft.client.renderer.rendertype.RenderTypes;
+import net.minecraft.resources.Identifier;
 import org.jspecify.annotations.Nullable;
+import org.joml.Matrix3x2fStack;
 import org.mtr.tool.Drawing;
 import org.mtr.tool.GuiHelper;
 
@@ -20,14 +21,14 @@ public final class BetterButtonWidget extends ClickableWidgetBase {
 	private int textColor = GuiHelper.WHITE_COLOR;
 
 	@Nullable
-	private final ResourceLocation icon;
+	private final Identifier icon;
 	@Nullable
 	private final String text;
 	private final int textWidth;
 	private final int fixedWidth;
 	private final Runnable onPress;
 
-	public BetterButtonWidget(@Nullable ResourceLocation icon, @Nullable String text, int width, Runnable onPress) {
+	public BetterButtonWidget(@Nullable Identifier icon, @Nullable String text, int width, Runnable onPress) {
 		this.icon = icon;
 		this.text = text;
 		textWidth = text == null ? 0 : Minecraft.getInstance().font.width(text);
@@ -39,10 +40,10 @@ public final class BetterButtonWidget extends ClickableWidgetBase {
 	@Override
 	protected void renderWidget(GuiGraphics context, int mouseX, int mouseY, float delta) {
 		setDimensions();
-		final PoseStack matrixStack = context.pose();
+		final Matrix3x2fStack matrixStack = context.pose();
 
 		// Draw background
-		new Drawing(matrixStack, RenderType.gui())
+		new Drawing(matrixStack, RenderTypes.debugQuads())
 			.setVerticesWH(getX(), getY(), width, height)
 			.setColor(isMouseOver(mouseX, mouseY) ? hoverColor : backgroundColor)
 			.draw();
@@ -60,7 +61,7 @@ public final class BetterButtonWidget extends ClickableWidgetBase {
 	}
 
 	@Override
-	public void onClick(double mouseX, double mouseY) {
+	public void onClick(net.minecraft.client.input.MouseButtonEvent event, boolean doubleClick) {
 		onPress.run();
 	}
 

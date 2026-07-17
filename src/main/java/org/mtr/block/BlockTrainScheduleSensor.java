@@ -2,7 +2,8 @@ package org.mtr.block;
 
 import lombok.Getter;
 import net.minecraft.core.BlockPos;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
@@ -34,7 +35,7 @@ public class BlockTrainScheduleSensor extends BlockTrainPoweredSensorBase {
 	@Nullable
 	@Override
 	public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level world, BlockState state, BlockEntityType<T> type) {
-		return type == BlockEntityTypes.TRAIN_SCHEDULE_SENSOR.get() && world.isClientSide ? (world1, pos, state1, blockEntity) -> MTRClient.findClosePlatform(pos.above(), 5, platform -> {
+		return type == BlockEntityTypes.TRAIN_SCHEDULE_SENSOR.get() && world.isClientSide() ? (world1, pos, state1, blockEntity) -> MTRClient.findClosePlatform(pos.above(), 5, platform -> {
 			final ObjectArrayList<ArrivalResponse> arrivalResponseList = ArrivalsCacheClient.INSTANCE.requestArrivals(LongArrayList.of(platform.getId()));
 			for (final ArrivalResponse arrival : arrivalResponseList) {
 				if ((!((TrainScheduleSensorBlockEntity) blockEntity).realtimeOnly || arrival.getRealtime()) && BlockTrainSensorBase.matchesFilter(world1, pos, arrival.getRouteId(), 1) && (arrival.getArrival() - ArrivalsCacheClient.INSTANCE.getMillisOffset() - System.currentTimeMillis()) / 1000 == ((TrainScheduleSensorBlockEntity) blockEntity).seconds) {
@@ -58,13 +59,13 @@ public class BlockTrainScheduleSensor extends BlockTrainPoweredSensorBase {
 		}
 
 		@Override
-		protected void readNbt(CompoundTag nbtCompound) {
-			seconds = nbtCompound.getInt(KEY_SECONDS);
-			realtimeOnly = nbtCompound.getBoolean(KEY_REALTIME_ONLY);
+		protected void readNbt(ValueInput nbtCompound) {
+			seconds = nbtCompound.getIntOr(KEY_SECONDS, 0);
+			realtimeOnly = nbtCompound.getBooleanOr(KEY_REALTIME_ONLY, false);
 		}
 
 		@Override
-		protected void writeNbt(CompoundTag nbtCompound) {
+		protected void writeNbt(ValueOutput nbtCompound) {
 			nbtCompound.putInt(KEY_SECONDS, seconds);
 			nbtCompound.putBoolean(KEY_REALTIME_ONLY, realtimeOnly);
 		}

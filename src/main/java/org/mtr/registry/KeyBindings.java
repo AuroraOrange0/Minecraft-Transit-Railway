@@ -1,11 +1,13 @@
 package org.mtr.registry;
 
 import net.minecraft.client.KeyMapping;
+import net.minecraft.resources.Identifier;
 import org.lwjgl.glfw.GLFW;
 import org.mtr.MTR;
 import org.mtr.generated.lang.TranslationProvider;
 
 public final class KeyBindings {
+	private static final KeyMapping.Category CATEGORY = KeyMapping.Category.register(Identifier.fromNamespaceAndPath(MTR.MOD_ID, "keybinding"));
 
 	static {
 		LIFT_MENU = registerKeyBinding(TranslationProvider.KEY_MTR_LIFT_MENU.key, GLFW.GLFW_KEY_Z, TranslationProvider.CATEGORY_MTR_KEYBINDING.key);
@@ -24,7 +26,7 @@ public final class KeyBindings {
 	}
 
 	private static KeyMapping registerKeyBinding(String translationKey, int code, String category) {
-		final KeyMapping keyBinding = new KeyMapping(translationKey, code, category);
+		final KeyMapping keyBinding = new KeyMapping(translationKey, code, CATEGORY);
 		RegistryClient.registerKeyBinding(keyBinding);
 		return keyBinding;
 	}

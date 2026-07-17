@@ -18,7 +18,7 @@ import org.mtr.generated.lang.TranslationProvider;
 
 import java.util.List;
 
-public abstract class BlockStationNameBase extends Block implements EntityBlock {
+public abstract class BlockStationNameBase extends Block implements EntityBlock, BlockTooltipProvider {
 
 	public static final IntegerProperty COLOR = IntegerProperty.create("color", 0, 2);
 

@@ -1,7 +1,8 @@
 package org.mtr.block;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionResult;
@@ -49,18 +50,18 @@ public abstract class BlockTrainSensorBase extends Block implements EntityBlock 
 		}
 
 		@Override
-		protected void readNbt(CompoundTag nbtCompound) {
-			final long[] routeIdsArray = nbtCompound.getLongArray(KEY_ROUTE_IDS);
+		protected void readNbt(ValueInput nbtCompound) {
+			final long[] routeIdsArray = getLongArray(nbtCompound, KEY_ROUTE_IDS);
 			for (final long routeId : routeIdsArray) {
 				filterRouteIds.add(routeId);
 			}
-			stoppedOnly = nbtCompound.getBoolean(KEY_STOPPED_ONLY);
-			movingOnly = nbtCompound.getBoolean(KEY_MOVING_ONLY);
+			stoppedOnly = nbtCompound.getBooleanOr(KEY_STOPPED_ONLY, false);
+			movingOnly = nbtCompound.getBooleanOr(KEY_MOVING_ONLY, false);
 		}
 
 		@Override
-		protected void writeNbt(CompoundTag nbtCompound) {
-			nbtCompound.putLongArray(KEY_ROUTE_IDS, new ArrayList<>(filterRouteIds));
+		protected void writeNbt(ValueOutput nbtCompound) {
+			putLongArray(nbtCompound, KEY_ROUTE_IDS, filterRouteIds.toLongArray());
 			nbtCompound.putBoolean(KEY_STOPPED_ONLY, stoppedOnly);
 			nbtCompound.putBoolean(KEY_MOVING_ONLY, movingOnly);
 		}

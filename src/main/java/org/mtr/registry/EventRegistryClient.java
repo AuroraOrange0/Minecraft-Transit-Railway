@@ -5,7 +5,7 @@ import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.PackType;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.world.level.chunk.ChunkAccess;
@@ -21,13 +21,16 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientChunkEvents;
 import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
-import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
+import net.fabricmc.fabric.api.client.rendering.v1.world.WorldRenderEvents;
 import net.fabricmc.fabric.api.resource.ResourceManagerHelper;
 import net.fabricmc.fabric.api.resource.SimpleSynchronousResourceReloadListener;
-//? if >= 1.21.4 {
-import net.fabricmc.fabric.api.client.rendering.v1.HudLayerRegistrationCallback;
+//? if >= 1.21.11 {
+import net.fabricmc.fabric.api.client.rendering.v1.hud.HudElementRegistry;
+import net.fabricmc.fabric.api.client.rendering.v1.hud.VanillaHudElements;
+//? } else if >= 1.21.4 {
+/*import net.fabricmc.fabric.api.client.rendering.v1.HudLayerRegistrationCallback;
 import net.fabricmc.fabric.api.client.rendering.v1.IdentifiedLayer;
-//? }
+*///? }
 //? }
 
 //? if neoforge {
@@ -127,10 +130,10 @@ public final class EventRegistryClient {
 
 	public static void registerResourceReloadEvent(Runnable runnable) {
 //? if fabric {
-		final ResourceLocation identifier = ResourceLocation.fromNamespaceAndPath(Integer.toHexString(new Random().nextInt()), "resource");
+		final Identifier identifier = Identifier.fromNamespaceAndPath(Integer.toHexString(new Random().nextInt()), "resource");
 		ResourceManagerHelper.get(PackType.CLIENT_RESOURCES).registerReloadListener(new SimpleSynchronousResourceReloadListener() {
 			@Override
-			public ResourceLocation getFabricId() {
+			public Identifier getFabricId() {
 				return identifier;
 			}
 
@@ -150,10 +153,10 @@ public final class EventRegistryClient {
 	public static void registerWorldRenderEvent(MTRClient.WorldRenderCallback worldRenderCallback) {
 //? if fabric {
 		WorldRenderEvents.AFTER_ENTITIES.register(worldRenderContext -> {
-			final PoseStack matrixStack = worldRenderContext.matrixStack();
+			final PoseStack matrixStack = worldRenderContext.matrices();
 			final MultiBufferSource vertexConsumerProvider = worldRenderContext.consumers();
 			if (matrixStack != null && vertexConsumerProvider != null) {
-				worldRenderCallback.accept(matrixStack, vertexConsumerProvider, worldRenderContext.camera().getPosition());
+				worldRenderCallback.accept(matrixStack, vertexConsumerProvider, worldRenderContext.worldState().cameraRenderState.pos, worldRenderContext.commandQueue(), worldRenderContext.worldState().cameraRenderState);
 			}
 		});
 //? }
@@ -166,9 +169,11 @@ public final class EventRegistryClient {
 
 	public static void registerHudLayerRenderEvent(Consumer<GuiGraphics> hudLayerRenderCallback) {
 //? if fabric {
-//? if >= 1.21.4 {
-		HudLayerRegistrationCallback.EVENT.register(layeredDrawerWrapper -> layeredDrawerWrapper.attachLayerBefore(IdentifiedLayer.CHAT, ResourceLocation.fromNamespaceAndPath(MTR.MOD_ID, "gui"), (guiGraphics, delta) -> hudLayerRenderCallback.accept(guiGraphics)));
-//? } else {
+//? if >= 1.21.11 {
+		HudElementRegistry.attachElementBefore(VanillaHudElements.CHAT, Identifier.fromNamespaceAndPath(MTR.MOD_ID, "gui"), (guiGraphics, delta) -> hudLayerRenderCallback.accept(guiGraphics));
+//? } else if >= 1.21.4 {
+		/*HudLayerRegistrationCallback.EVENT.register(layeredDrawerWrapper -> layeredDrawerWrapper.attachLayerBefore(IdentifiedLayer.CHAT, Identifier.fromNamespaceAndPath(MTR.MOD_ID, "gui"), (guiGraphics, delta) -> hudLayerRenderCallback.accept(guiGraphics)));
+*///? } else {
 		/*HudRenderCallback.EVENT.register((guiGraphics, delta) -> hudLayerRenderCallback.accept(guiGraphics));
 //
 *///? }

@@ -1,12 +1,13 @@
 package org.mtr.render;
 
 import com.mojang.blaze3d.platform.Window;
-import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.rendertype.RenderType;
+import net.minecraft.client.renderer.rendertype.RenderTypes;
 import org.jspecify.annotations.Nullable;
+import org.joml.Matrix3x2fStack;
 import org.mtr.client.VehicleRidingMovement;
 import org.mtr.core.data.Vehicle;
 import org.mtr.core.data.VehicleExtraData;
@@ -58,13 +59,13 @@ public final class DrivingGuiRenderer {
 			final int speedometerY = window.getGuiScaledHeight() - TOOL_SIZE - EDGE_PADDING;
 			final int radius = TOOL_SIZE / 2;
 
-			final PoseStack matrixStack = context.pose();
-			matrixStack.pushPose();
-			matrixStack.translate(speedometerX + radius, speedometerY + radius, 0);
-			final Drawing drawing1 = new Drawing(matrixStack, RenderType.gui());
+			final Matrix3x2fStack matrixStack = context.pose();
+			matrixStack.pushMatrix();
+			matrixStack.translate(speedometerX + radius, speedometerY + radius);
+			final Drawing drawing1 = new Drawing(matrixStack, RenderTypes.debugQuads());
 
 			// Render speedometer background
-			matrixStack.pushPose();
+			matrixStack.pushMatrix();
 			for (int i = 0; i < 180; i += SPEEDOMETER_CIRCLE_INTERVAL) {
 				drawing1.setVertices(
 					-radius, -(float) SPEEDOMETER_CIRCLE_EDGE_LENGTH / 2,
@@ -76,11 +77,11 @@ public final class DrivingGuiRenderer {
 				).setColor(0xFF111111).draw();
 				Drawing.rotateZDegrees(matrixStack, SPEEDOMETER_CIRCLE_INTERVAL);
 			}
-			matrixStack.popPose();
+			matrixStack.popMatrix();
 
 			// Draw ATS background
-			matrixStack.pushPose();
-			matrixStack.translate(0, radius - 2 - ATS_RADIUS_1, 0);
+			matrixStack.pushMatrix();
+			matrixStack.translate(0, radius - 2 - ATS_RADIUS_1);
 			Drawing.rotateZDegrees(matrixStack, ATS_INTERVAL * 2.5F);
 			for (float i = 0; i < ATS_SLICES; i++) {
 				drawing1.setVertices(
@@ -117,10 +118,10 @@ public final class DrivingGuiRenderer {
 				}
 				Drawing.rotateZDegrees(matrixStack, ATS_INTERVAL);
 			}
-			matrixStack.popPose();
+			matrixStack.popMatrix();
 
 			// Draw speedometer ticks
-			matrixStack.pushPose();
+			matrixStack.pushMatrix();
 			final int maxSpeedKilometersPerHour = vehicleExtraData.getIsManualAllowed() ? (int) Math.round(vehicleExtraData.getMaxManualSpeed() * 3600) : RailType.DIAMOND.speedLimit;
 			Drawing.rotateZDegrees(matrixStack, SPEEDOMETER_START_ANGLE);
 			for (int i = 0; i <= maxSpeedKilometersPerHour; i += SPEEDOMETER_TICK_INTERVAL) {
@@ -130,71 +131,71 @@ public final class DrivingGuiRenderer {
 				).setColor(vehicle.getSpeedLimitKilometersPerHour() > 0 && i == Math.min(vehicle.getSpeedLimitKilometersPerHour(), maxSpeedKilometersPerHour) ? 0xFF00FF00 : IGui.ARGB_WHITE).draw();
 				Drawing.rotateZDegrees(matrixStack, (float) SPEEDOMETER_TICK_INTERVAL * SPEEDOMETER_SPAN / maxSpeedKilometersPerHour);
 			}
-			matrixStack.popPose();
+			matrixStack.popMatrix();
 
 			// Draw speedometer labels
-			matrixStack.pushPose();
+			matrixStack.pushMatrix();
 			Drawing.rotateZDegrees(matrixStack, SPEEDOMETER_START_ANGLE);
 			for (int i = 0; i <= maxSpeedKilometersPerHour; i += SPEEDOMETER_TICK_INTERVAL * 4) {
-				matrixStack.pushPose();
-				matrixStack.translate(-radius + 10 + IGui.LINE_HEIGHT / 2F, 0, 0);
+				matrixStack.pushMatrix();
+				matrixStack.translate(-radius + 10 + IGui.LINE_HEIGHT / 2F, 0);
 				Drawing.rotateZDegrees(matrixStack, -SPEEDOMETER_START_ANGLE - (float) i * SPEEDOMETER_SPAN / maxSpeedKilometersPerHour);
-				matrixStack.scale(0.5F, 0.5F, 1);
+				matrixStack.scale(0.5F, 0.5F);
 				drawCenteredText(context, String.valueOf(i), IGui.ARGB_WHITE);
-				matrixStack.popPose();
+				matrixStack.popMatrix();
 				Drawing.rotateZDegrees(matrixStack, (float) SPEEDOMETER_TICK_INTERVAL * 4 * SPEEDOMETER_SPAN / maxSpeedKilometersPerHour);
 			}
-			matrixStack.popPose();
+			matrixStack.popMatrix();
 
 			// Draw power level
-			matrixStack.pushPose();
-			matrixStack.translate(-radius * 0.3F, -TOOL_SIZE * 0.05F - SMALL_LINE_SPACING, 0);
+			matrixStack.pushMatrix();
+			matrixStack.translate(-radius * 0.3F, -TOOL_SIZE * 0.05F - SMALL_LINE_SPACING);
 			final int notch = vehicleExtraData.getPowerLevel();
 			final int notchColor = notch < -Vehicle.MAX_POWER_LEVEL ? 0xFFFF0000 : (notch < 0 ? ORANGE_COLOR : (notch > 0 ? BLUE_COLOR : IGui.ARGB_WHITE));
 			drawCenteredText(context, notch < -Vehicle.MAX_POWER_LEVEL ? "E" : (notch < 0 ? "B" + -notch : (notch > 0 ? "P" + notch : "N")), notchColor);
 			if (notch != 0 && notch >= -Vehicle.MAX_POWER_LEVEL) {
-				matrixStack.translate(0, SMALL_LINE_SPACING, 0);
-				matrixStack.scale(0.5F, 0.5F, 1);
+				matrixStack.translate(0, SMALL_LINE_SPACING);
+				matrixStack.scale(0.5F, 0.5F);
 				drawCenteredText(context, String.format("(%s%%)", Math.abs(notch) * 100 / Vehicle.POWER_LEVEL_RATIO), notchColor);
 			}
-			matrixStack.popPose();
+			matrixStack.popMatrix();
 
 			// Draw ATO status
-			matrixStack.pushPose();
-			matrixStack.translate(0, -TOOL_SIZE * 0.15F - SMALL_LINE_SPACING, 0);
+			matrixStack.pushMatrix();
+			matrixStack.translate(0, -TOOL_SIZE * 0.15F - SMALL_LINE_SPACING);
 			drawCenteredText(context, "ATO", vehicleExtraData.getIsCurrentlyManual() ? 0xFF222222 : 0xFF00FF00);
-			matrixStack.popPose();
+			matrixStack.popMatrix();
 
 			// Draw door status
-			matrixStack.pushPose();
-			matrixStack.translate(radius * 0.3F, -TOOL_SIZE * 0.05F - SMALL_LINE_SPACING, 0);
+			matrixStack.pushMatrix();
+			matrixStack.translate(radius * 0.3F, -TOOL_SIZE * 0.05F - SMALL_LINE_SPACING);
 			drawCenteredText(context, vehicleExtraData.getDoorMultiplier() > 0 ? "DO" : "DC", IGui.ARGB_WHITE);
-			matrixStack.translate(0, SMALL_LINE_SPACING, 0);
-			matrixStack.scale(0.5F, 0.5F, 1);
+			matrixStack.translate(0, SMALL_LINE_SPACING);
+			matrixStack.scale(0.5F, 0.5F);
 			drawCenteredText(context, String.format("(%s%%)", (int) Math.round(vehicle.persistentVehicleData.getDoorValue() * 100)), IGui.ARGB_WHITE);
-			matrixStack.popPose();
+			matrixStack.popMatrix();
 
 			// Draw digital speed
-			matrixStack.pushPose();
-			matrixStack.translate(0, TOOL_SIZE * 0.1F, 0);
+			matrixStack.pushMatrix();
+			matrixStack.translate(0, TOOL_SIZE * 0.1F);
 			final double speedKilometersPerHour = vehicle.getSpeed() * 3600;
 			final int speedColor = vehicle.getSpeedLimitKilometersPerHour() > 0 && speedKilometersPerHour > vehicle.getSpeedLimitKilometersPerHour() ? ORANGE_COLOR : IGui.ARGB_WHITE;
 			drawCenteredText(context, String.valueOf(Utilities.round(speedKilometersPerHour, 1)), speedColor);
-			matrixStack.translate(0, SMALL_LINE_SPACING, 0);
-			matrixStack.scale(0.5F, 0.5F, 1);
+			matrixStack.translate(0, SMALL_LINE_SPACING);
+			matrixStack.scale(0.5F, 0.5F);
 			drawCenteredText(context, "km/h", speedColor);
-			matrixStack.popPose();
+			matrixStack.popMatrix();
 
 			// Draw speedometer needle
-			matrixStack.pushPose();
+			matrixStack.pushMatrix();
 			Drawing.rotateZDegrees(matrixStack, SPEEDOMETER_START_ANGLE + (float) speedKilometersPerHour * SPEEDOMETER_SPAN / maxSpeedKilometersPerHour);
-			new Drawing(matrixStack, RenderType.gui()).setVertices(
+			new Drawing(matrixStack, RenderTypes.debugQuads()).setVertices(
 				-radius + 4, -0.5F,
 				0, 0.5F
 			).setColor(0xFFFF0000).draw();
-			matrixStack.popPose();
+			matrixStack.popMatrix();
 
-			matrixStack.popPose();
+			matrixStack.popMatrix();
 
 			// Draw platform stopping indicator
 			final DoubleObjectImmutablePair<DoubleDoubleImmutablePair> platformStoppingDetails = vehicle.getPlatformStoppingDetails();
@@ -207,18 +208,18 @@ public final class DrivingGuiRenderer {
 				final double positionY = (vehicleLength + platformStoppingDetails.leftDouble()) / (platformLength + vehicleLength) * (TOOL_SIZE - 1);
 				final Font textRenderer = minecraftClient.font;
 
-				final Drawing drawing2 = new Drawing(matrixStack, RenderType.gui());
+				final Drawing drawing2 = new Drawing(matrixStack, RenderTypes.debugQuads());
 				drawing2.setVertices(platformIndicatorX, platformIndicatorY, platformIndicatorX + PLATFORM_BAR_SIZE, platformIndicatorY + TOOL_SIZE).setColor(BLUE_COLOR).draw();
 				drawing2.setVertices(platformIndicatorX, platformIndicatorY + (float) targetY, platformIndicatorX + PLATFORM_BAR_SIZE, platformIndicatorY + (float) targetY + 1).setColor(0xFF001F4D).draw();
 				drawing2.setVertices(platformIndicatorX, platformIndicatorY + (float) positionY, platformIndicatorX + PLATFORM_BAR_SIZE, platformIndicatorY + (float) positionY + 1).setColor(0xFFFF0000).draw();
 
 				final String text = Utilities.round(platformStoppingDetails.leftDouble(), 1) + " m";
 				final int textWidth = textRenderer.width(text);
-				matrixStack.pushPose();
-				matrixStack.translate(platformIndicatorX - PADDING / 2F, platformIndicatorY + positionY + 0.5, 0);
-				matrixStack.scale(0.5F, 0.5F, 1);
+				matrixStack.pushMatrix();
+				matrixStack.translate(platformIndicatorX - PADDING / 2F, (float) (platformIndicatorY + positionY + 0.5));
+				matrixStack.scale(0.5F, 0.5F);
 				context.drawString(textRenderer, text, -textWidth, -IGui.TEXT_HEIGHT / 2, IGui.ARGB_WHITE, true);
-				matrixStack.popPose();
+				matrixStack.popMatrix();
 			}
 		}
 

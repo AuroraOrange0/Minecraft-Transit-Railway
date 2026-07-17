@@ -81,7 +81,7 @@ public class RenderRouteSign<T extends BlockRouteSignBase.BlockEntityBase> exten
 	}
 
 	@Override
-	public boolean shouldRenderOffScreen(T blockEntity) {
+	public boolean shouldRenderOffScreen() {
 		return true;
 	}
 }

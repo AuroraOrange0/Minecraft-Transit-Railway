@@ -7,11 +7,14 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.component.TooltipDisplay;
 import net.minecraft.world.item.context.UseOnContext;
 import org.mtr.generated.lang.TranslationProvider;
 import org.mtr.registry.DataComponentTypes;
 
 import java.util.List;
+import java.util.ArrayList;
+import java.util.function.Consumer;
 
 public abstract class ItemBlockClickingBase extends Item {
 
@@ -43,6 +46,12 @@ public abstract class ItemBlockClickingBase extends Item {
 	}
 
 	@Override
+	public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay display, Consumer<Component> tooltip, TooltipFlag type) {
+		final ArrayList<Component> components = new ArrayList<>();
+		appendHoverText(stack, context, components, type);
+		components.forEach(tooltip);
+	}
+
 	public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltip, TooltipFlag type) {
 		final BlockPos blockPos = stack.get(DataComponentTypes.START_POS.get());
 		if (blockPos != null) {

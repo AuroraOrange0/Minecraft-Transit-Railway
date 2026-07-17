@@ -6,9 +6,10 @@ import gg.essential.elementa.components.UIWrappedText;
 import gg.essential.elementa.constraints.*;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.rendertype.RenderType;
+import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import org.jspecify.annotations.Nullable;
 import org.mtr.core.tool.Utilities;
 import org.mtr.libraries.it.unimi.dsi.fastutil.ints.IntArrayList;
@@ -67,32 +68,32 @@ public final class GuiHelper {
 	public static final int DEFAULT_ICON_SIZE = DEFAULT_LINE_SIZE - DEFAULT_PADDING;
 	public static final int STANDARD_SCREEN_WIDTH = 320;
 
-	public static final ResourceLocation ADD_TEXTURE_ID = ResourceLocation.parse("textures/gui/sprites/mtr/icon_add.png");
-	public static final ResourceLocation EDIT_TEXTURE_ID = ResourceLocation.parse("textures/gui/sprites/mtr/icon_edit.png");
-	public static final ResourceLocation UP_TEXTURE_ID = ResourceLocation.parse("textures/gui/sprites/mtr/icon_up.png");
-	public static final ResourceLocation DOWN_TEXTURE_ID = ResourceLocation.parse("textures/gui/sprites/mtr/icon_down.png");
-	public static final ResourceLocation CHEVRON_UP_TEXTURE_ID = ResourceLocation.parse("textures/gui/sprites/mtr/icon_chevron_up.png");
-	public static final ResourceLocation CHEVRON_DOWN_TEXTURE_ID = ResourceLocation.parse("textures/gui/sprites/mtr/icon_chevron_down.png");
-	public static final ResourceLocation EXPAND_ALL_TEXTURE_ID = ResourceLocation.parse("textures/gui/sprites/mtr/icon_expand_all.png");
-	public static final ResourceLocation COLLAPSE_ALL_TEXTURE_ID = ResourceLocation.parse("textures/gui/sprites/mtr/icon_collapse_all.png");
-	public static final ResourceLocation ZOOM_IN_TEXTURE_ID = ResourceLocation.parse("textures/gui/sprites/mtr/icon_zoom_in.png");
-	public static final ResourceLocation ZOOM_OUT_TEXTURE_ID = ResourceLocation.parse("textures/gui/sprites/mtr/icon_zoom_out.png");
-	public static final ResourceLocation FIND_TEXTURE_ID = ResourceLocation.parse("textures/gui/sprites/mtr/icon_find.png");
-	public static final ResourceLocation CHECK_TEXTURE_ID = ResourceLocation.parse("textures/gui/sprites/mtr/icon_check.png");
-	public static final ResourceLocation RESET_TEXTURE_ID = ResourceLocation.parse("textures/gui/sprites/mtr/icon_reset.png");
-	public static final ResourceLocation COLOR_TEXTURE_ID = ResourceLocation.parse("textures/gui/sprites/mtr/icon_color.png");
-	public static final ResourceLocation SELECT_TEXTURE_ID = ResourceLocation.parse("textures/gui/sprites/mtr/icon_select.png");
-	public static final ResourceLocation MAP_TEXTURE_ID = ResourceLocation.parse("textures/gui/sprites/mtr/icon_map.png");
-	public static final ResourceLocation EDITOR_TEXTURE_ID = ResourceLocation.parse("textures/gui/sprites/mtr/icon_editor.png");
-	public static final ResourceLocation SETTINGS_TEXTURE_ID = ResourceLocation.parse("textures/gui/sprites/mtr/icon_settings.png");
-	public static final ResourceLocation DELETE_TEXTURE_ID = ResourceLocation.parse("textures/gui/sprites/mtr/icon_delete.png");
+	public static final Identifier ADD_TEXTURE_ID = Identifier.parse("textures/gui/sprites/mtr/icon_add.png");
+	public static final Identifier EDIT_TEXTURE_ID = Identifier.parse("textures/gui/sprites/mtr/icon_edit.png");
+	public static final Identifier UP_TEXTURE_ID = Identifier.parse("textures/gui/sprites/mtr/icon_up.png");
+	public static final Identifier DOWN_TEXTURE_ID = Identifier.parse("textures/gui/sprites/mtr/icon_down.png");
+	public static final Identifier CHEVRON_UP_TEXTURE_ID = Identifier.parse("textures/gui/sprites/mtr/icon_chevron_up.png");
+	public static final Identifier CHEVRON_DOWN_TEXTURE_ID = Identifier.parse("textures/gui/sprites/mtr/icon_chevron_down.png");
+	public static final Identifier EXPAND_ALL_TEXTURE_ID = Identifier.parse("textures/gui/sprites/mtr/icon_expand_all.png");
+	public static final Identifier COLLAPSE_ALL_TEXTURE_ID = Identifier.parse("textures/gui/sprites/mtr/icon_collapse_all.png");
+	public static final Identifier ZOOM_IN_TEXTURE_ID = Identifier.parse("textures/gui/sprites/mtr/icon_zoom_in.png");
+	public static final Identifier ZOOM_OUT_TEXTURE_ID = Identifier.parse("textures/gui/sprites/mtr/icon_zoom_out.png");
+	public static final Identifier FIND_TEXTURE_ID = Identifier.parse("textures/gui/sprites/mtr/icon_find.png");
+	public static final Identifier CHECK_TEXTURE_ID = Identifier.parse("textures/gui/sprites/mtr/icon_check.png");
+	public static final Identifier RESET_TEXTURE_ID = Identifier.parse("textures/gui/sprites/mtr/icon_reset.png");
+	public static final Identifier COLOR_TEXTURE_ID = Identifier.parse("textures/gui/sprites/mtr/icon_color.png");
+	public static final Identifier SELECT_TEXTURE_ID = Identifier.parse("textures/gui/sprites/mtr/icon_select.png");
+	public static final Identifier MAP_TEXTURE_ID = Identifier.parse("textures/gui/sprites/mtr/icon_map.png");
+	public static final Identifier EDITOR_TEXTURE_ID = Identifier.parse("textures/gui/sprites/mtr/icon_editor.png");
+	public static final Identifier SETTINGS_TEXTURE_ID = Identifier.parse("textures/gui/sprites/mtr/icon_settings.png");
+	public static final Identifier DELETE_TEXTURE_ID = Identifier.parse("textures/gui/sprites/mtr/icon_delete.png");
 
 	private static final int SHADOW_COLOR_DARK = 0x11000000;
 	private static final int SHADOW_COLOR_LIGHT = 0x11FFFFFF;
 
 //? if < 1.21.4 {
 	/*private static final RenderStateShard.ShaderStateShard POSITION_TEXTURE_COLOR_SHADER = new RenderStateShard.ShaderStateShard(GameRenderer::getPositionTexColorShader);
-	private static final Function<ResourceLocation, RenderType> GUI_TEXTURED = Util.memoize((resourceLocation) -> RenderType.create("gui_textured", DefaultVertexFormat.POSITION_TEX_COLOR, VertexFormat.Mode.QUADS, 786432, RenderType.CompositeState.builder().setTextureState(new RenderStateShard.TextureStateShard(resourceLocation, false, false)).setShaderState(POSITION_TEXTURE_COLOR_SHADER).setTransparencyState(RenderStateShard.TRANSLUCENT_TRANSPARENCY).setDepthTestState(RenderStateShard.LEQUAL_DEPTH_TEST).createCompositeState(false)));
+	private static final Function<Identifier, RenderType> GUI_TEXTURED = Util.memoize((resourceLocation) -> RenderType.create("gui_textured", DefaultVertexFormat.POSITION_TEX_COLOR, VertexFormat.Mode.QUADS, 786432, RenderType.CompositeState.builder().setTextureState(new RenderStateShard.TextureStateShard(resourceLocation, false, false)).setShaderState(POSITION_TEXTURE_COLOR_SHADER).setTransparencyState(RenderStateShard.TRANSLUCENT_TRANSPARENCY).setDepthTestState(RenderStateShard.LEQUAL_DEPTH_TEST).createCompositeState(false)));
 *///? }
 
 	/**
@@ -181,9 +182,9 @@ public final class GuiHelper {
 		);
 	}
 
-	public static RenderType getGuiTexturedRenderType(ResourceLocation texture) {
+	public static RenderType getGuiTexturedRenderType(Identifier texture) {
 //? if >= 1.21.4 {
-		return RenderType.guiTextured(texture);
+		return RenderTypes.entityTranslucent(texture);
 //? } else {
 		/*return GUI_TEXTURED.apply(texture);
 //
@@ -313,15 +314,15 @@ public final class GuiHelper {
 
 	private static void drawText(GuiGraphics context, @Nullable String text1, @Nullable Component text2, double x, double y, double z, int color) {
 		if ((text1 != null || text2 != null) && (color & 0xFF000000) != 0) {
-			final PoseStack matrixStack = context.pose();
-			matrixStack.pushPose();
-			matrixStack.translate(x, y, z);
+			final org.joml.Matrix3x2fStack matrixStack = context.pose();
+			matrixStack.pushMatrix();
+			matrixStack.translate((float) x, (float) y);
 			if (text1 != null) {
 				context.drawString(Minecraft.getInstance().font, text1, 0, 0, color, false);
 			} else {
 				context.drawString(Minecraft.getInstance().font, text2, 0, 0, color, false);
 			}
-			matrixStack.popPose();
+			matrixStack.popMatrix();
 		}
 	}
 

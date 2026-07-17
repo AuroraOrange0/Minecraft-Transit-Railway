@@ -86,20 +86,20 @@ public class TicketSystem {
 
 	private static int getPlayerScore(Level world, Player player, String objective, String title) {
 		final Objective scoreboardObjective = getOrCreateScoreboardObjective(world, objective, title);
-		return scoreboardObjective == null ? 0 : world.getScoreboard().getOrCreatePlayerScore(ScoreHolder.forNameOnly(player.getGameProfile().getName()), scoreboardObjective).get();
+		return scoreboardObjective == null ? 0 : world.getScoreboard().getOrCreatePlayerScore(ScoreHolder.forNameOnly(player.getGameProfile().name()), scoreboardObjective).get();
 	}
 
 	private static void setPlayerScore(Level world, Player player, String objective, String title, int value) {
 		final Objective scoreboardObjective = getOrCreateScoreboardObjective(world, objective, title);
 		if (scoreboardObjective != null) {
-			world.getScoreboard().getOrCreatePlayerScore(ScoreHolder.forNameOnly(player.getGameProfile().getName()), scoreboardObjective).set(value);
+			world.getScoreboard().getOrCreatePlayerScore(ScoreHolder.forNameOnly(player.getGameProfile().name()), scoreboardObjective).set(value);
 		}
 	}
 
 	private static void incrementPlayerScore(Level world, Player player, String objective, String title, int value) {
 		final Objective scoreboardObjective = getOrCreateScoreboardObjective(world, objective, title);
 		if (scoreboardObjective != null) {
-			world.getScoreboard().getOrCreatePlayerScore(ScoreHolder.forNameOnly(player.getGameProfile().getName()), scoreboardObjective).add(value);
+			world.getScoreboard().getOrCreatePlayerScore(ScoreHolder.forNameOnly(player.getGameProfile().name()), scoreboardObjective).add(value);
 		}
 	}
 

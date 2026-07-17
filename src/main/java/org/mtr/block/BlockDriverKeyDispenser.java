@@ -4,7 +4,8 @@ import lombok.Getter;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.component.DataComponents;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -132,15 +133,15 @@ public class BlockDriverKeyDispenser extends BlockWaterloggable implements Entit
 		}
 
 		@Override
-		protected void readNbt(CompoundTag nbtCompound) {
-			dispenseBasicDriverKey = nbtCompound.getBoolean(KEY_DISPENSE_BASIC_DRIVER_KEY);
-			dispenseAdvancedDriverKey = nbtCompound.getBoolean(KEY_DISPENSE_ADVANCED_DRIVER_KEY);
-			dispenseGuardKey = nbtCompound.getBoolean(KEY_DISPENSE_GUARD_KEY);
-			timeout = nbtCompound.getLong(KEY_TIMEOUT);
+		protected void readNbt(ValueInput nbtCompound) {
+			dispenseBasicDriverKey = nbtCompound.getBooleanOr(KEY_DISPENSE_BASIC_DRIVER_KEY, false);
+			dispenseAdvancedDriverKey = nbtCompound.getBooleanOr(KEY_DISPENSE_ADVANCED_DRIVER_KEY, false);
+			dispenseGuardKey = nbtCompound.getBooleanOr(KEY_DISPENSE_GUARD_KEY, false);
+			timeout = nbtCompound.getLongOr(KEY_TIMEOUT, 0);
 		}
 
 		@Override
-		protected void writeNbt(CompoundTag nbtCompound) {
+		protected void writeNbt(ValueOutput nbtCompound) {
 			nbtCompound.putBoolean(KEY_DISPENSE_BASIC_DRIVER_KEY, dispenseBasicDriverKey);
 			nbtCompound.putBoolean(KEY_DISPENSE_ADVANCED_DRIVER_KEY, dispenseAdvancedDriverKey);
 			nbtCompound.putBoolean(KEY_DISPENSE_GUARD_KEY, dispenseGuardKey);

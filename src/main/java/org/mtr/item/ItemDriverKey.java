@@ -5,9 +5,12 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.component.TooltipDisplay;
 import org.mtr.generated.lang.TranslationProvider;
 
 import java.util.List;
+import java.util.ArrayList;
+import java.util.function.Consumer;
 
 public abstract class ItemDriverKey extends Item {
 
@@ -25,6 +28,12 @@ public abstract class ItemDriverKey extends Item {
 	}
 
 	@Override
+	public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay display, Consumer<Component> tooltip, TooltipFlag type) {
+		final ArrayList<Component> components = new ArrayList<>();
+		appendHoverText(stack, context, components, type);
+		components.forEach(tooltip);
+	}
+
 	public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltip, TooltipFlag type) {
 		if (canBoardAnyVehicle) {
 			tooltip.add(TranslationProvider.TOOLTIP_MTR_CAN_BOARD_ANY_VEHICLE_TRUE.getMutableText().withStyle(ChatFormatting.GOLD));

@@ -3,7 +3,6 @@ package org.mtr.widget;
 import gg.essential.universal.UMatrixStack;
 import kotlin.Pair;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.BlockPos;
 import org.jspecify.annotations.Nullable;
 import org.mtr.core.tool.Utilities;
@@ -79,7 +78,7 @@ public final class SignPreviewComponent extends SlotBackgroundComponent {
 			final Color color;
 			final boolean drawCross;
 
-			if (Screen.hasShiftDown()) {
+			if (Minecraft.getInstance().hasShiftDown()) {
 				if (signIds[signIndex] != null) {
 					hoverDeleteIndex = signIndex;
 					color = new Color(0xFF, 0, 0, 0x7F);

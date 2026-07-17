@@ -3,8 +3,8 @@ package org.mtr.registry;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.color.block.BlockColor;
-import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
+import net.minecraft.client.renderer.blockentity.state.BlockEntityRenderState;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -17,7 +17,14 @@ import java.util.Arrays;
 import java.util.function.Function;
 
 //? if fabric {
-import net.fabricmc.fabric.api.blockrenderlayer.v1.BlockRenderLayerMap;
+//? if >= 1.21.11 {
+import net.fabricmc.fabric.api.client.rendering.v1.BlockRenderLayerMap;
+import net.minecraft.client.renderer.chunk.ChunkSectionLayer;
+//? } else {
+/*import net.fabricmc.fabric.api.blockrenderlayer.v1.BlockRenderLayerMap;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.rendertype.RenderTypes;
+*///? }
 import net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.client.rendering.v1.ColorProviderRegistry;
@@ -35,7 +42,15 @@ import org.mtr.neoforge.ModEventBusClient;
 
 public final class RegistryClient {
 
-	public static <T extends BlockEntity, U extends T> void registerBlockEntityRenderer(ObjectHolder<BlockEntityType<U>> blockEntityType, BlockEntityRendererProvider<T> factory) {
+//? if >= 1.21.11 {
+	public static final ChunkSectionLayer BLOCK_RENDER_LAYER_CUTOUT = ChunkSectionLayer.CUTOUT;
+	public static final ChunkSectionLayer BLOCK_RENDER_LAYER_TRANSLUCENT = ChunkSectionLayer.TRANSLUCENT;
+//? } else {
+	/*public static final RenderType BLOCK_RENDER_LAYER_CUTOUT = RenderType.cutout();
+	public static final RenderType BLOCK_RENDER_LAYER_TRANSLUCENT = RenderType.translucent();
+*///? }
+
+	public static <T extends BlockEntity, U extends T, S extends BlockEntityRenderState> void registerBlockEntityRenderer(ObjectHolder<BlockEntityType<U>> blockEntityType, BlockEntityRendererProvider<T, S> factory) {
 //? if fabric {
 		BlockEntityRenderers.register(blockEntityType.get(), factory);
 //? }
@@ -46,9 +61,17 @@ public final class RegistryClient {
 *///? }
 	}
 
-	public static void registerBlockRenderType(RenderType renderLayer, ObjectHolder<Block> block) {
+//? if >= 1.21.11 {
+	public static void registerBlockRenderType(ChunkSectionLayer renderLayer, ObjectHolder<Block> block) {
+//? } else {
+	/*public static void registerBlockRenderType(RenderType renderLayer, ObjectHolder<Block> block) {
+*///? }
 //? if fabric {
-		BlockRenderLayerMap.INSTANCE.putBlock(block.get(), renderLayer);
+//? if >= 1.21.11 {
+		BlockRenderLayerMap.putBlock(block.get(), renderLayer);
+//? } else {
+		/*BlockRenderLayerMap.INSTANCE.putBlock(block.get(), renderLayer);
+*///? }
 //? }
 
 //? if neoforge {

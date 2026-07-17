@@ -1,7 +1,6 @@
 package org.mtr.map;
 
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
-import com.mojang.blaze3d.vertex.VertexBuffer;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.SectionPos;
@@ -18,6 +17,7 @@ import org.mtr.cache.CachedFileResource;
 import org.mtr.libraries.it.unimi.dsi.fastutil.bytes.ByteArrayList;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import org.mtr.model.NewOptimizedModel;
+import org.mtr.model.MTRMesh;
 import org.mtr.tool.Drawing;
 
 import java.awt.*;
@@ -26,7 +26,7 @@ import java.nio.file.Path;
 public final class MapTileResource extends CachedFileResource {
 
 	@Nullable
-	private VertexBuffer vertexBuffer;
+	private MTRMesh mesh;
 
 	private final Level world;
 	private final MapTileProvider.MapType mapType;
@@ -139,11 +139,11 @@ public final class MapTileResource extends CachedFileResource {
 	@Override
 	protected void dataUpdated(byte @Nullable [] data) {
 		if (data == null) {
-			this.vertexBuffer = null;
+			this.mesh = null;
 		} else {
 			final boolean[] noVertices = {true};
 
-			final VertexBuffer vertexBuffer = NewOptimizedModel.createVertexBuffer(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR, vertexConsumer -> {
+			final MTRMesh mesh = NewOptimizedModel.createMesh(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR, vertexConsumer -> {
 				final Drawing drawing = new Drawing(vertexConsumer);
 				int pixelOffsetX = 0;
 				int pixelOffsetY = 0;
@@ -181,17 +181,17 @@ public final class MapTileResource extends CachedFileResource {
 			});
 
 			if (noVertices[0]) {
-				vertexBuffer.close();
-				this.vertexBuffer = null;
+				mesh.close();
+				this.mesh = null;
 			} else {
-				this.vertexBuffer = vertexBuffer;
+				this.mesh = mesh;
 			}
 		}
 	}
 
 	@Nullable
-	public VertexBuffer getVertexBuffer() {
-		return vertexBuffer;
+	public MTRMesh getMesh() {
+		return mesh;
 	}
 
 	/**
@@ -208,17 +208,17 @@ public final class MapTileResource extends CachedFileResource {
 		final BiomeSpecialEffects biomeEffects = world.getBiome(blockPos).value().getSpecialEffects();
 
 		if (GRASS_COLOR_BLOCKS.contains(block)) {
-			return new Color(biomeEffects.getGrassColorOverride().orElse(defaultColor));
+			return new Color(biomeEffects.grassColorOverride().orElse(defaultColor));
 		} else if (FOLIAGE_COLOR_BLOCKS.contains(block)) {
-			return new Color(biomeEffects.getFoliageColorOverride().orElse(defaultColor));
+			return new Color(biomeEffects.foliageColorOverride().orElse(defaultColor));
 		} else if (block.defaultMapColor() == MapColor.WATER) {
 			for (int i = 1; i < WATER_DEPTH_CHECK; i++) {
 				final BlockPos checkPos = blockPos.below(i);
 				if (world.getBlockState(checkPos).getMapColor(world, checkPos) != MapColor.WATER) {
-					return blendColors(getBlockColor(checkPos), WATER_DEPTH_CHECK - i, new Color(biomeEffects.getWaterColor()), i + WATER_DEPTH_CHECK);
+					return blendColors(getBlockColor(checkPos), WATER_DEPTH_CHECK - i, new Color(biomeEffects.waterColor()), i + WATER_DEPTH_CHECK);
 				}
 			}
-			return new Color(biomeEffects.getWaterColor());
+			return new Color(biomeEffects.waterColor());
 		} else {
 			return new Color(defaultColor);
 		}

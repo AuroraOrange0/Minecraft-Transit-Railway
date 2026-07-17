@@ -9,11 +9,14 @@ import net.minecraft.commands.Commands;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.level.GameRules;
+import net.minecraft.server.permissions.LevelBasedPermissionSet;
+import net.minecraft.server.permissions.PermissionLevel;
+import net.minecraft.server.permissions.PermissionSet;
+import net.minecraft.world.level.gamerules.GameRules;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.storage.LevelResource;
 import org.apache.commons.io.FileUtils;
@@ -82,8 +85,8 @@ public final class MTR {
 	private static Consumer<Webserver> webserverSetup;
 
 	public static final String MOD_ID = "mtr";
-	public static final CustomPacketPayload.Type<CustomPacketS2C> PACKET_IDENTIFIER_S2C = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(MOD_ID, "packet_s2c"));
-	public static final CustomPacketPayload.Type<CustomPacketC2S> PACKET_IDENTIFIER_C2S = new CustomPacketPayload.Type<>(ResourceLocation.fromNamespaceAndPath(MOD_ID, "packet_c2s"));
+	public static final CustomPacketPayload.Type<CustomPacketS2C> PACKET_IDENTIFIER_S2C = new CustomPacketPayload.Type<>(Identifier.fromNamespaceAndPath(MOD_ID, "packet_s2c"));
+	public static final CustomPacketPayload.Type<CustomPacketC2S> PACKET_IDENTIFIER_C2S = new CustomPacketPayload.Type<>(Identifier.fromNamespaceAndPath(MOD_ID, "packet_c2s"));
 	public static final Logger LOGGER = LogManager.getLogger("MinecraftTransitRailway");
 	public static final int SECONDS_PER_MC_HOUR = 50;
 	public static final int AUTOSAVE_INTERVAL = 30000;
@@ -154,7 +157,7 @@ public final class MTR {
 					// Instant deploy depot(s) by name
 					.then(depotOperationFromCommand(Commands.literal("instantDeploy"), DepotOperation.INSTANT_DEPLOY))
 					// Force copy a world backup from one folder another
-					.then(Commands.literal("restoreWorld").requires(serverCommandSource -> serverCommandSource.hasPermission(4)).then(Commands.argument("worldDirectory", StringArgumentType.string()).then(Commands.argument("backupDirectory", StringArgumentType.string()).executes(contextHandler -> {
+					.then(Commands.literal("restoreWorld").requires(serverCommandSource -> hasPermission(serverCommandSource, 4)).then(Commands.argument("worldDirectory", StringArgumentType.string()).then(Commands.argument("backupDirectory", StringArgumentType.string()).executes(contextHandler -> {
 						final Path runPath = contextHandler.getSource().getServer().getServerDirectory();
 						final Path worldDirectory = runPath.resolve(StringArgumentType.getString(contextHandler, "worldDirectory"));
 						final Path backupDirectory = runPath.resolve(StringArgumentType.getString(contextHandler, "backupDirectory"));
@@ -219,7 +222,7 @@ public final class MTR {
 						new SetTime(
 							(minecraftServer.overworld().getDayTime() + 6000) * SECONDS_PER_MC_HOUR,
 							MILLIS_PER_MC_DAY,
-							minecraftServer.getGameRules().getBoolean(GameRules.RULE_DAYLIGHT)
+							minecraftServer.overworld().getGameRules().get(GameRules.ADVANCE_TIME)
 						),
 						response -> canSendWorldTimeUpdate = true,
 						SerializedDataBase.class
@@ -324,7 +327,7 @@ public final class MTR {
 	}
 
 	public static String getWorldId(Level world) {
-		final ResourceLocation identifier = world.dimension().location();
+		final Identifier identifier = world.dimension().identifier();
 		return String.format("%s/%s", identifier.getNamespace(), identifier.getPath());
 	}
 
@@ -383,7 +386,7 @@ public final class MTR {
 	}
 
 	private static LiteralCommandNode<CommandSourceStack> depotOperationFromCommand(LiteralArgumentBuilder<CommandSourceStack> commandBuilder, DepotOperation depotOperation) {
-		return commandBuilder.requires(serverCommandSource -> serverCommandSource.hasPermission(2)).then(Commands.literal("allDepots").executes(contextHandler -> {
+		return commandBuilder.requires(serverCommandSource -> hasPermission(serverCommandSource, 2)).then(Commands.literal("allDepots").executes(contextHandler -> {
 			contextHandler.getSource().sendSuccess(depotOperation.translationHolderAll::getText, true);
 			return depotOperationFromCommand(contextHandler.getSource().getLevel(), "", depotOperation);
 		})).then(Commands.literal("depot").then(Commands.argument("name", StringArgumentType.greedyString()).executes(contextHandler -> {
@@ -398,6 +401,11 @@ public final class MTR {
 		depotOperationByName.setFilter(filter);
 		sendMessageC2S(depotOperation.operation, world.getServer(), world, depotOperationByName, null, null);
 		return 1;
+	}
+
+	private static boolean hasPermission(CommandSourceStack commandSource, int level) {
+		final PermissionSet permissions = commandSource.permissions();
+		return permissions == PermissionSet.ALL_PERMISSIONS || permissions instanceof LevelBasedPermissionSet levelBasedPermissions && levelBasedPermissions.level().isEqualOrHigherThan(PermissionLevel.byId(level));
 	}
 
 	private static void updatePlayer(ServerPlayer serverPlayerEntity, boolean isRiding) {

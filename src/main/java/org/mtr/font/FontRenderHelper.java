@@ -5,8 +5,9 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.FontDescription;
 import net.minecraft.network.chat.Style;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.FormattedCharSequence;
 import org.jspecify.annotations.Nullable;
 import org.mtr.MTR;
@@ -18,7 +19,7 @@ import java.awt.*;
 
 public final class FontRenderHelper {
 
-	public static final ResourceLocation MTR_FONT = ResourceLocation.fromNamespaceAndPath(MTR.MOD_ID, "mtr");
+	public static final Identifier MTR_FONT = Identifier.fromNamespaceAndPath(MTR.MOD_ID, "mtr");
 	private static final float LINE_SPACING = 0.25F;
 
 	public static FloatFloatImmutablePair render(@Nullable PoseStack matrixStack, String text, FontRenderOptions fontRenderOptions) {
@@ -100,11 +101,11 @@ public final class FontRenderHelper {
 		return new float[]{Minecraft.getInstance().font.width(orderedText) * xScale / GuiHelper.MINECRAFT_FONT_SIZE, yScale * (1 + LINE_SPACING)};
 	}
 
-	private static FormattedCharSequence getOrderedText(String text, @Nullable ResourceLocation font) {
-		return (font == null ? Component.literal(text) : Component.literal(text).setStyle(Style.EMPTY.withFont(font))).getVisualOrderText();
+	private static FormattedCharSequence getOrderedText(String text, @Nullable Identifier font) {
+		return (font == null ? Component.literal(text) : Component.literal(text).setStyle(Style.EMPTY.withFont(new FontDescription.Resource(font)))).getVisualOrderText();
 	}
 
-	private static FormattedCharSequence[] getOrderedTextArray(String[] lines, @Nullable ResourceLocation font) {
+	private static FormattedCharSequence[] getOrderedTextArray(String[] lines, @Nullable Identifier font) {
 		final FormattedCharSequence[] orderedText = new FormattedCharSequence[lines.length];
 		for (int i = 0; i < lines.length; i++) {
 			orderedText[i] = getOrderedText(lines[i], font);

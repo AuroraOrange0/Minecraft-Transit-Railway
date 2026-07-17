@@ -80,6 +80,11 @@ public record StoredVertexData(
 		}
 
 		@Override
+		public VertexConsumer setColor(int color) {
+			return this;
+		}
+
+		@Override
 		public VertexConsumer setUv(float u, float v) {
 			textureEntries.add(new Vector2f(u, v));
 			return this;
@@ -98,6 +103,11 @@ public record StoredVertexData(
 		@Override
 		public VertexConsumer setNormal(float x, float y, float z) {
 			normalEntries.add(new Vector3f(x, y, z));
+			return this;
+		}
+
+		@Override
+		public VertexConsumer setLineWidth(float width) {
 			return this;
 		}
 	}

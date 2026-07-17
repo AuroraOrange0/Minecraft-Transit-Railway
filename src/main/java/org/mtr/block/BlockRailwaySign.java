@@ -4,7 +4,8 @@ import lombok.Getter;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -49,7 +50,7 @@ import net.minecraft.world.level.ScheduledTickAccess;
 /*import net.minecraft.world.level.LevelAccessor;
  *///? }
 
-public class BlockRailwaySign extends Block implements IBlock, EntityBlock {
+public class BlockRailwaySign extends Block implements IBlock, EntityBlock, BlockTooltipProvider {
 
 	public final int length;
 	public final boolean isOdd;
@@ -123,7 +124,7 @@ public class BlockRailwaySign extends Block implements IBlock, EntityBlock {
 				}
 			}
 			world.setBlock(pos.relative(facing.getClockWise(), getMiddleLength() + 1), defaultBlockState().setValue(BlockStateProperties.HORIZONTAL_FACING, facing.getOpposite()), 3);
-			world.blockUpdated(pos, Blocks.AIR);
+			world.updateNeighborsAt(pos, Blocks.AIR, null);
 			state.updateNeighbourShapes(world, pos, 3);
 		}
 	}
@@ -222,24 +223,24 @@ public class BlockRailwaySign extends Block implements IBlock, EntityBlock {
 		}
 
 		@Override
-		protected void readNbt(CompoundTag nbtCompound) {
+		protected void readNbt(ValueInput nbtCompound) {
 			final LongAVLTreeSet legacySelectedIds = new LongAVLTreeSet();
-			Arrays.stream(nbtCompound.getLongArray(KEY_SELECTED_IDS)).forEach(legacySelectedIds::add);
+			Arrays.stream(getLongArray(nbtCompound, KEY_SELECTED_IDS)).forEach(legacySelectedIds::add);
 
 			for (int i = 0; i < signIds.length; i++) {
 				selectedIds[i].clear();
 				selectedIds[i].addAll(legacySelectedIds);
-				Arrays.stream(nbtCompound.getLongArray(KEY_SELECTED_IDS + i)).forEach(selectedIds[i]::add);
+				Arrays.stream(getLongArray(nbtCompound, KEY_SELECTED_IDS + i)).forEach(selectedIds[i]::add);
 
-				final String signId = nbtCompound.getString(KEY_SIGN_LENGTH + i);
+				final String signId = nbtCompound.getStringOr(KEY_SIGN_LENGTH + i, "");
 				signIds[i] = signId.isEmpty() ? null : (Arrays.asList(LEGACY_SIGNS).contains(signId) ? signId.toLowerCase(Locale.ENGLISH) : signId);
 			}
 		}
 
 		@Override
-		protected void writeNbt(CompoundTag nbtCompound) {
+		protected void writeNbt(ValueOutput nbtCompound) {
 			for (int i = 0; i < signIds.length; i++) {
-				nbtCompound.putLongArray(KEY_SELECTED_IDS + i, new ArrayList<>(selectedIds[i]));
+				putLongArray(nbtCompound, KEY_SELECTED_IDS + i, selectedIds[i].toLongArray());
 				nbtCompound.putString(KEY_SIGN_LENGTH + i, signIds[i] == null ? "" : signIds[i]);
 			}
 		}

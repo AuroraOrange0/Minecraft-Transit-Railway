@@ -96,13 +96,16 @@ public abstract class ImageComponentBase extends UIComponent {
 	}
 
 	public static void drawTexture(IntSupplier glIdSupplier, Consumer<UVertexConsumer> consumer) {
+		// Dynamic textures may upload on first access. Minecraft 1.21.11 forbids
+		// texture uploads after UniversalCraft has opened its render pass.
+		final int glId = glIdSupplier.getAsInt();
 		final UBufferBuilder bufferBuilder = UBufferBuilder.create(UGraphics.DrawMode.QUADS, UGraphics.CommonVertexFormats.POSITION_TEXTURE_COLOR);
 		consumer.accept(bufferBuilder);
 
 		try (final UBuiltBuffer builtBuffer = bufferBuilder.build()) {
 			if (builtBuffer != null) {
 				builtBuffer.drawAndClose(TEXTURE_COLOR_QUAD_PIPELINE, drawCallBuilder -> {
-					drawCallBuilder.texture(0, glIdSupplier.getAsInt());
+					drawCallBuilder.texture(0, glId);
 					return Unit.INSTANCE;
 				});
 			}

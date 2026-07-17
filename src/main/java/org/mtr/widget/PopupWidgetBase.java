@@ -1,7 +1,8 @@
 package org.mtr.widget;
 
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.rendertype.RenderType;
+import net.minecraft.client.renderer.rendertype.RenderTypes;
 import org.mtr.tool.Drawing;
 import org.mtr.tool.GuiHelper;
 
@@ -36,7 +37,7 @@ public abstract class PopupWidgetBase extends ClickableWidgetBase {
 			buttonGroup.renderWidget(context, mouseX, mouseY, delta);
 
 			// Draw background
-			final Drawing drawing = new Drawing(context.pose(), RenderType.gui());
+			final Drawing drawing = new Drawing(context.pose(), RenderTypes.debugQuads());
 			GuiHelper.drawShadow(drawing, getX(), getY(), getX() + width, getY() + height, 0, 8, -1);
 			drawing.setVerticesWH(getX(), getY(), width, height - GuiHelper.DEFAULT_LINE_SIZE).setColor(GuiHelper.BACKGROUND_COLOR).draw();
 			drawing.setVerticesWH(getX(), getY() + height - GuiHelper.DEFAULT_LINE_SIZE, width, 1).setColor(GuiHelper.BACKGROUND_ACCENT_COLOR).draw();

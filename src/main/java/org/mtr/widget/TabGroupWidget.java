@@ -1,12 +1,13 @@
 package org.mtr.widget;
 
-import com.mojang.blaze3d.vertex.PoseStack;
 import lombok.Getter;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.rendertype.RenderType;
+import net.minecraft.client.renderer.rendertype.RenderTypes;
 import org.mtr.tool.Drawing;
 import org.mtr.tool.GuiAnimation;
 import org.mtr.tool.GuiHelper;
+import org.joml.Matrix3x2fStack;
 
 import java.util.function.Consumer;
 import java.util.function.IntConsumer;
@@ -42,8 +43,8 @@ public final class TabGroupWidget extends ClickableWidgetBase {
 		buttonGroup.setPosition(getX(), getY());
 		buttonGroup.renderWidget(context, mouseX, mouseY, delta);
 
-		final PoseStack matrixStack = context.pose();
-		final Drawing drawing = new Drawing(matrixStack, RenderType.gui());
+		final Matrix3x2fStack matrixStack = context.pose();
+		final Drawing drawing = new Drawing(matrixStack, RenderTypes.debugQuads());
 
 		// Handle animation
 		guiAnimation1.tick();

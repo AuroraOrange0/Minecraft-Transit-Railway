@@ -3,7 +3,6 @@ package org.mtr.resource;
 import net.minecraft.world.phys.AABB;
 import org.mtr.core.tool.ConditionalList;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList;
-import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectDoubleImmutablePair;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectImmutableList;
 import org.mtr.model.BuiltVehicleModelHolder;
 
@@ -30,19 +29,19 @@ public final class VehicleResourceCache {
 		this.doorways = doorways;
 
 		double totalArea = 0;
-		final ObjectArrayList<ObjectDoubleImmutablePair<AABB>> floorsWithArea = new ObjectArrayList<>();
+		final ObjectArrayList<FloorWithArea> floorsWithArea = new ObjectArrayList<>();
 		for (final AABB floor : floors) {
 			final double area = floor.getXsize() * floor.getZsize();
 			totalArea += area;
-			floorsWithArea.add(new ObjectDoubleImmutablePair<>(floor, area));
+			floorsWithArea.add(new FloorWithArea(floor, area));
 		}
 
 		double totalNormalizedArea = 0;
 		final ObjectArrayList<FloorWithNormalizedArea> floorsWithNormalizedArea = new ObjectArrayList<>();
 		if (totalArea > 0) {
-			for (final ObjectDoubleImmutablePair<AABB> floorWithArea : floorsWithArea) {
-				floorsWithNormalizedArea.add(new FloorWithNormalizedArea(floorWithArea.left(), totalNormalizedArea));
-				totalNormalizedArea += floorWithArea.rightDouble() / totalArea;
+			for (final FloorWithArea floorWithArea : floorsWithArea) {
+				floorsWithNormalizedArea.add(new FloorWithNormalizedArea(floorWithArea.floor(), totalNormalizedArea));
+				totalNormalizedArea += floorWithArea.area() / totalArea;
 			}
 		}
 		this.floorsWithNormalizedArea = new ObjectImmutableList<>(floorsWithNormalizedArea);
@@ -73,5 +72,8 @@ public final class VehicleResourceCache {
 	@FunctionalInterface
 	public interface ModelConsumer {
 		void accept(int index, BuiltVehicleModelHolder builtVehicleModelHolder);
+	}
+
+	private record FloorWithArea(AABB floor, double area) {
 	}
 }

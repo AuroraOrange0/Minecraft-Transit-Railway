@@ -1,6 +1,7 @@
 package org.mtr.data;
 
 import net.minecraft.client.gui.components.Checkbox;
+import net.minecraft.client.input.InputWithModifiers;
 import org.jspecify.annotations.Nullable;
 import org.mtr.generated.lang.TranslationProvider;
 import org.mtr.libraries.it.unimi.dsi.fastutil.objects.ObjectArrayList;
@@ -277,7 +278,17 @@ public interface IGui {
 
 	static void setChecked(Checkbox checkboxWidget, boolean value) {
 		if (checkboxWidget.selected() != value) {
-			checkboxWidget.onPress();
+			checkboxWidget.onPress(new InputWithModifiers() {
+				@Override
+				public int input() {
+					return 0;
+				}
+
+				@Override
+				public int modifiers() {
+					return 0;
+				}
+			});
 		}
 	}
 

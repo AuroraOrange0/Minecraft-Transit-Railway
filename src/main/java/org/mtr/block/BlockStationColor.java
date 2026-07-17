@@ -11,7 +11,7 @@ import org.mtr.generated.lang.TranslationProvider;
 
 import java.util.List;
 
-public class BlockStationColor extends Block {
+public class BlockStationColor extends Block implements BlockTooltipProvider {
 
 	public BlockStationColor(BlockBehaviour.Properties settings) {
 		super(settings);

@@ -16,5 +16,4 @@ dependencies {
 	implementation("it.unimi.dsi:fastutil:+")
 	implementation("commons-io:commons-io:2.+")
 	implementation("org.apache.httpcomponents:httpmime:+")
-	implementation("org.mtr:transport-simulation-core-build-tools:+")
 }

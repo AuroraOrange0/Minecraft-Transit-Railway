@@ -9,8 +9,8 @@ pluginManagement {
 }
 
 plugins {
-	id("dev.kikugie.stonecutter") version "+"
-	id("org.gradle.toolchains.foojay-resolver-convention") version "+"
+	id("dev.kikugie.stonecutter") version "0.9.6"
+	id("org.gradle.toolchains.foojay-resolver-convention") version "1.0.0"
 }
 
 stonecutter {
@@ -20,13 +20,10 @@ stonecutter {
 		}
 
 		versions(
-			"1.21.1-fabric" to "1.21.1",
-			"1.21.1-neoforge" to "1.21.1",
-			"1.21.4-fabric" to "1.21.4",
-			"1.21.4-neoforge" to "1.21.4",
+			"1.21.11-fabric" to "1.21.11",
 		)
 
-		vcsVersion = "1.21.4-fabric"
+		vcsVersion = "1.21.11-fabric"
 	}
 }
 

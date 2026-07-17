@@ -1,13 +1,17 @@
 package org.mtr.widget;
 
-import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.EditBox;
-import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.rendertype.RenderType;
+import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.network.chat.Component;
 import org.jspecify.annotations.Nullable;
+import org.joml.Matrix3x2fStack;
+import net.minecraft.client.input.CharacterEvent;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.input.MouseButtonEvent;
 import org.mtr.mixin.TextFieldSelectionEndAccessor;
 import org.mtr.screen.TextCase;
 import org.mtr.tool.Drawing;
@@ -61,8 +65,8 @@ public final class BetterTextFieldWidget extends ClickableWidgetBase {
 		setDimensions();
 		final Minecraft minecraftClient = Minecraft.getInstance();
 		final Font textRenderer = minecraftClient.font;
-		final PoseStack matrixStack = context.pose();
-		final Drawing drawing = new Drawing(matrixStack, RenderType.gui());
+		final Matrix3x2fStack matrixStack = context.pose();
+		final Drawing drawing = new Drawing(matrixStack, RenderTypes.debugQuads());
 
 		// Draw background
 		drawing.setVerticesWH(getX(), getY(), width, height).setColor(GuiHelper.BLACK_COLOR).draw();
@@ -116,14 +120,14 @@ public final class BetterTextFieldWidget extends ClickableWidgetBase {
 		}
 
 		// Draw label
-		matrixStack.pushPose();
-		matrixStack.translate(getX() + GuiHelper.DEFAULT_PADDING, getY() + LABEL_TEXT_START + guiAnimationLabelY.getCurrentValue(), 0);
+		matrixStack.pushMatrix();
+		matrixStack.translate(getX() + GuiHelper.DEFAULT_PADDING, (float) (getY() + LABEL_TEXT_START + guiAnimationLabelY.getCurrentValue()));
 		final float scale = (float) guiAnimationLabelScale.getCurrentValue() + 0.5F;
 		if (scale != 1) {
-			matrixStack.scale(scale, scale, 1);
+			matrixStack.scale(scale, scale);
 		}
 		context.drawString(textRenderer, label, 0, 0, GuiHelper.LIGHT_GRAY_COLOR, false);
-		matrixStack.popPose();
+		matrixStack.popMatrix();
 
 		// Draw text
 		if (!text.isEmpty()) {
@@ -132,11 +136,11 @@ public final class BetterTextFieldWidget extends ClickableWidgetBase {
 	}
 
 	@Override
-	public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+	public boolean keyPressed(KeyEvent event) {
 		if (visible) {
 			final String oldText = getText();
 			refreshTextFieldWidget();
-			final boolean result = textFieldWidget.keyPressed(keyCode, scanCode, modifiers);
+			final boolean result = textFieldWidget.keyPressed(event);
 			setText(oldText, getText(), true);
 			return result;
 		} else {
@@ -145,11 +149,11 @@ public final class BetterTextFieldWidget extends ClickableWidgetBase {
 	}
 
 	@Override
-	public boolean charTyped(char chr, int modifiers) {
+	public boolean charTyped(CharacterEvent event) {
 		if (visible) {
 			final String oldText = getText();
 			refreshTextFieldWidget();
-			final boolean result = textFieldWidget.charTyped(chr, modifiers);
+			final boolean result = textFieldWidget.charTyped(event);
 			setText(oldText, getText(), true);
 			return result;
 		} else {
@@ -158,21 +162,21 @@ public final class BetterTextFieldWidget extends ClickableWidgetBase {
 	}
 
 	@Override
-	public void onClick(double mouseX, double mouseY) {
+	public void onClick(MouseButtonEvent event, boolean doubleClick) {
 		refreshTextFieldWidget();
-		textFieldWidget.onClick(mouseX, mouseY);
+		textFieldWidget.onClick(event, doubleClick);
 	}
 
 	@Override
-	public boolean mouseClicked(double mouseX, double mouseY, int button) {
+	public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
 		if (visible) {
-			if (isMouseOver(mouseX, mouseY)) {
+			if (isMouseOver(event.x(), event.y())) {
 				setFocused(true);
-				if (button == 1) {
+				if (event.button() == 1) {
 					setText(getText(), "", true);
 					return true;
 				} else {
-					return super.mouseClicked(mouseX, mouseY, button);
+					return super.mouseClicked(event, doubleClick);
 				}
 			} else {
 				setFocused(false);

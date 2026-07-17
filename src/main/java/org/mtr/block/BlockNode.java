@@ -35,7 +35,7 @@ import org.mtr.registry.Items;
 
 import java.util.List;
 
-public class BlockNode extends BlockWaterloggable implements SimpleWaterloggedBlock {
+public class BlockNode extends BlockWaterloggable implements SimpleWaterloggedBlock, BlockTooltipProvider {
 
 	public final TransportMode transportMode;
 

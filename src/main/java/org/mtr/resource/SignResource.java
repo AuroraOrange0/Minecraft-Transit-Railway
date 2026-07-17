@@ -2,10 +2,11 @@ package org.mtr.resource;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.rendertype.RenderType;
+import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import org.jspecify.annotations.Nullable;
 import org.mtr.MTRClient;
 import org.mtr.cache.GenericLongCache;
@@ -41,7 +42,7 @@ import java.util.stream.Collectors;
 
 public final class SignResource extends SignResourceSchema {
 
-	public final ResourceLocation textureId;
+	public final Identifier textureId;
 	public final boolean hasCustomText;
 	/**
 	 * Default signs (the ones bundled with Minecraft Transit Railway) have IDs starting with {@code !}
@@ -121,7 +122,7 @@ public final class SignResource extends SignResourceSchema {
 
 		// Draw background
 		if (renderBackground) {
-			new Drawing(matrixStack, vertexConsumerProvider.getBuffer(RenderType.gui())).setVerticesWH(x, y, signResources.length * signSize, signSize).setColor(GuiHelper.BLACK_COLOR | backgroundColor).draw();
+			new Drawing(matrixStack, vertexConsumerProvider.getBuffer(RenderTypes.debugQuads())).setVerticesWH(x, y, signResources.length * signSize, signSize).setColor(GuiHelper.BLACK_COLOR | backgroundColor).draw();
 		}
 
 		final ObjectArrayList<Consumer<PoseStack>> deferredRenders = new ObjectArrayList<>();
@@ -132,7 +133,7 @@ public final class SignResource extends SignResourceSchema {
 
 			if (signResource != null) {
 				final Drawing textureDrawing = new Drawing(matrixStack, vertexConsumerProvider.getBuffer(GuiHelper.getGuiTexturedRenderType(signResource.textureId)));
-				final ResourceLocation font = signResource.font.isEmpty() ? FontRenderHelper.MTR_FONT : ResourceLocation.parse(signResource.font);
+				final Identifier font = signResource.font.isEmpty() ? FontRenderHelper.MTR_FONT : Identifier.parse(signResource.font);
 
 				if (signResource.signType == SignType.NORMAL) {
 					textureDrawing.setVertices(

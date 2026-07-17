@@ -1,5 +1,6 @@
 package org.mtr.block;
 
+import com.mojang.serialization.Codec;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
@@ -9,6 +10,10 @@ import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
+
+import java.util.Arrays;
 
 public abstract class BlockEntityExtension extends BlockEntity {
 
@@ -27,20 +32,28 @@ public abstract class BlockEntityExtension extends BlockEntity {
 	}
 
 	@Override
-	protected final void loadAdditional(CompoundTag nbtCompound, HolderLookup.Provider registries) {
-		super.loadAdditional(nbtCompound, registries);
-		readNbt(nbtCompound);
+	protected final void loadAdditional(ValueInput input) {
+		super.loadAdditional(input);
+		readNbt(input);
 	}
 
 	@Override
-	protected final void saveAdditional(CompoundTag nbtCompound, HolderLookup.Provider registries) {
-		super.saveAdditional(nbtCompound, registries);
-		writeNbt(nbtCompound);
+	protected final void saveAdditional(ValueOutput output) {
+		super.saveAdditional(output);
+		writeNbt(output);
 	}
 
-	protected void readNbt(CompoundTag nbtCompound) {
+	protected void readNbt(ValueInput input) {
 	}
 
-	protected void writeNbt(CompoundTag nbtCompound) {
+	protected void writeNbt(ValueOutput output) {
+	}
+
+	protected static long[] getLongArray(ValueInput input, String key) {
+		return input.read(key, Codec.LONG_STREAM).orElseGet(java.util.stream.LongStream::empty).toArray();
+	}
+
+	protected static void putLongArray(ValueOutput output, String key, long[] values) {
+		output.store(key, Codec.LONG_STREAM, Arrays.stream(values));
 	}
 }
