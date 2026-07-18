@@ -55,7 +55,7 @@ public final class Client extends ClientSchema {
 	}
 
 	public boolean showBetaWarningScreen() {
-		return !Keys.MOD_VERSION.equals(betaWarningVersion);
+		return false && !Keys.MOD_VERSION.equals(betaWarningVersion);
 	}
 
 	public void toggleChatAnnouncements() {
